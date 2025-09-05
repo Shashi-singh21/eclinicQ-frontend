@@ -1,5 +1,4 @@
 import { Routes, Route } from "react-router-dom";
-import Layout from "./components/Layout_sidebar";
 import Layout from "./components/Layouts/Layout_sidebar";
 import Dashboard from "./pages/Layout_sidebar/Dashboard";
 import Doctor from "./pages/Layout_sidebar/Doctor";
@@ -27,7 +26,7 @@ function App() {
     <Routes>
       {/* Landing page */}
 
-      <Route path="/" element={<GetStarted />} />
+      {/* <Route path="/" element={<GetStarted />} /> */}
 
       {/* <Route path="/" element={<GetStarted />} /> */}
       <Route path="/" element={<DummyLogin />} />
@@ -41,7 +40,7 @@ function App() {
         <Route path="settings" element={<Settings />} />
 
         {/* Registration flow nested under Layout */}
-        <Route path="register" element={<Layout_registration />}>
+        {/* <Route path="register" element={<Layout_registration />}>
           <Route path="account" element={<Step1 />} />
           <Route path="account1" element={<Step2 />} />
           <Route path="account2" element={<Step3 />} />
@@ -55,7 +54,7 @@ function App() {
           <Route path="hospital4" element={<Step5 />} />
 
 
-        </Route>
+        </Route> */}
         <Route path="doctor1" element={<MainPage/>} />
         <Route path="hos1" element={<MainPageHos/>} />
 

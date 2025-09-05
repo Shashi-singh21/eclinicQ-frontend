@@ -1,16 +1,3 @@
-<<<<<<< HEAD
-import React from 'react'
-
-const Navbar = () => {
-  return (
-    <div className='w-full h-12 border-b-[0.5px]  border-[#D6D6D6] flex items-center'>
-        
-    </div>
-  )
-}
-
-export default Navbar
-=======
 import { ChevronDown , BellIcon, Stethoscope, Building2 } from 'lucide-react'
 import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -144,4 +131,3 @@ const Navbar = () => {
 }
 
 export default Navbar
->>>>>>> dev
