@@ -1,11 +1,50 @@
-import React from "react";
+import { Routes, Route } from "react-router-dom";
+import Layout from "./components/Layouts/Layout_sidebar";
+import Dashboard from "./pages/Layout_sidebar/Dashboard";
+import Doctor from "./pages/Layout_sidebar/Doctor";
+import Hospitals from "./pages/Layout_sidebar/Hospitals";
+import Patients from "./pages/Layout_sidebar/Patients";
+import Settings from "./pages/Layout_sidebar/Settings";
 import GetStarted from "./pages/GetStarted";
+import Layout_registration_new from "./components/Layouts/Layout_registration_new";
+import MainPage from "./pages/DoctorList/DoctorInfo/MainPage";
+import MainPageHos from "./pages/HospitalList/HospitalInfo/MainPageHos";
+import { RegistrationProvider } from "./context/RegistrationContext";
+import DummyLogin from "./pages/DummyLogin";
 
 
-export default function App() {
+function App() {
   return (
-    <>
-      <GetStarted/>
-    </>
+    <Routes>
+      {/* Landing page */}
+      {/* <Route path="/" element={<GetStarted />} /> */}
+      <Route path="/" element={<DummyLogin />} />
+
+      {/* Admin panel routes */}
+      <Route element={<Layout />}>
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="doctor" element={<Doctor />} />
+        <Route path="hospital" element={<Hospitals />} />
+        <Route path="patients" element={<Patients />} />
+        <Route path="settings" element={<Settings />} />
+
+        <Route path="doctor1" element={<MainPage/>} />
+        <Route path="hos1" element={<MainPageHos/>} />
+
+        {/* Registration flow with single routes */}
+        <Route path="register/doctor" element={
+          <RegistrationProvider>
+            <Layout_registration_new />
+          </RegistrationProvider>
+        } />
+        <Route path="register/hospital" element={
+          <RegistrationProvider>
+            <Layout_registration_new />
+          </RegistrationProvider>
+        } />
+      </Route>
+    </Routes>
   );
 }
+
+export default App;

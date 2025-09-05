@@ -1,15 +1,35 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom';
 import InfoBox from "../components/GetStarted/InfoBox";
 
 const GetStarted = () => {
+  const navigate = useNavigate();
+
+  const handleHospitalRegistration = () => {
+    navigate('/register/hospital');
+  };
+
+  const handleDoctorRegistration = () => {
+    navigate('/register/doctor');
+  };
+
+  const handleHospitalLogin = () => {
+    navigate('/dashboard');
+  };
+
   return (
     <div className="min-h-screen flex p-3 bg-white">
       
       <div className="flex-1 flex flex-col justify-center items-center">
         
-        <div className="text-2xl font-bold text-blue-700 mb-7">
-          Logo Placeholder
+        <div className="mb-7">
+          <img 
+            className="max-w-[160px] h-auto object-contain" 
+            src="logo.png" 
+            alt="logo" 
+          />
         </div>
+
         <div className='text-center mb-8 flex flex-col gap-[1px]'>
             <span className="text-[36px] font-bold text-[#424242]">
           Healthcare Management System
@@ -40,7 +60,31 @@ const GetStarted = () => {
             ]}
             buttonText="Start Registration"
             buttonVariant="primary"
+            onClick={handleHospitalRegistration}
           />
+          
+          <InfoBox
+            title="Doctor Registration"
+            description="Join our network of healthcare professionals"
+            steps={[
+              {
+                heading: "Account Creation",
+                text: "Personal and professional information setup",
+              },
+              {
+                heading: "Document Verification",
+                text: "Medical council registration and credentials",
+              },
+              {
+                heading: "Profile Completion",
+                text: "Specialization and practice details",
+              }
+            ]}
+            buttonText="Register as Doctor"
+            buttonVariant="primary"
+            onClick={handleDoctorRegistration}
+          />
+          
           <InfoBox
             title="Hospital Login"
             description="Secure access to your hospital management system"
@@ -60,6 +104,7 @@ const GetStarted = () => {
             ]}
             buttonText="Login to Dashboard"
             buttonVariant="secondary"
+            onClick={handleHospitalLogin}
           />
         </div>
       </div>
