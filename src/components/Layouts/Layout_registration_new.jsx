@@ -4,7 +4,6 @@ import SidebarSteps from "../Sidebar/SidebarSteps";
 import RegistrationFooter from "../RegistrationFooter";
 import RegistrationFlow from "../RegistrationFlow";
 import React, { useRef, useState } from "react";
-// import useDoctorRegisterStore from '../../store/useDoctorRegisterStore';
 import Step1 from '../../pages/Doctor_registration/Step1';
 
 const Layout_registration_new = () => {
@@ -92,11 +91,11 @@ const Layout_registration_new = () => {
         // On Step 5, submit all data to API, then go to Step 6
         setFooterLoading(true);
         const apiData = mapToApiSchema();
-  // TODO: Add your API call or form submission logic here
-  // Example: await api.submit(apiData);
-  setFooterLoading(false);
-  alert('Registration successful!');
-  nextStep();
+        // TODO: Add your API call or form submission logic here
+        // Example: await api.submit(apiData);
+        setFooterLoading(false);
+        alert('Registration successful!');
+        nextStep();
       } else if (currentStep === 6) {
         // Navigate to doctor profile/dashboard
         navigate('/doctor');
