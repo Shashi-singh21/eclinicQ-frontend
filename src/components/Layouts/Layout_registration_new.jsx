@@ -12,6 +12,7 @@ const Layout_registration_new = () => {
   const [footerLoading, setFooterLoading] = useState(false);
   // Ref for Step1 form
   const step1Ref = useRef();
+  const hos1Ref = useRef();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -103,6 +104,19 @@ const Layout_registration_new = () => {
         nextStep();
       }
     } else if (registrationType === 'hospital') {
+      // Step 1: trigger form submit via ref, only move if valid
+      if (currentStep === 1 && hos1Ref.current && hos1Ref.current.submit) {
+        const result = await hos1Ref.current.submit();
+        if (result) {
+          // Check if user is a doctor to determine next step
+          if (formData.isDoctor === 'yes') {
+            nextStep();
+          } else {
+            nextStep();
+          }
+        }
+        return;
+      }
       // Handle Step 1 for hospital (Account Creation) - conditional navigation
       if (currentStep === 1) {
         // Check if user is a doctor to determine next step
@@ -431,9 +445,11 @@ const Layout_registration_new = () => {
         {/* Content - Scrollable */}
 
         <main className="flex-1 overflow-y-auto">
-          {/* Render Step1 with ref for doctor step 1, else use RegistrationFlow */}
+          {/* Render Step1 with ref for doctor step 1, Hos_1 with ref for hospital step 1, else use RegistrationFlow */}
           {registrationType === 'doctor' && currentStep === 1 ? (
             <Step1 ref={step1Ref} />
+          ) : registrationType === 'hospital' && currentStep === 1 ? (
+            <RegistrationFlow type={registrationType} ref={hos1Ref} />
           ) : (
             <RegistrationFlow type={registrationType} />
           )}

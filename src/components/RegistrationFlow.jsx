@@ -18,7 +18,8 @@ import Hos_5 from '../pages/Hospital_registration/Hos_5';
 import Hos_6 from '../pages/Hospital_registration/Hos_6';
 import Hos_7 from '../pages/Hospital_registration/Hos_7';
 
-const RegistrationFlow = ({ type }) => {
+
+const RegistrationFlow = React.forwardRef(({ type }, ref) => {
   const { currentStep, formData } = useRegistration();
 
   // Render the appropriate step component based on registration type and current step
@@ -43,10 +44,9 @@ const RegistrationFlow = ({ type }) => {
     } else if (type === 'hospital') {
       // Handle conditional step rendering based on isDoctor selection
       if (formData.isDoctor === 'no') {
-        // User is not a doctor, skip step 2 (Doctor Registration)
         switch (currentStep) {
           case 1:
-            return <Hos_1 />;
+            return <Hos_1 ref={ref} />;
           case 2:
             return <Hos_3 />; // Hospital Details
           case 3:
@@ -58,13 +58,12 @@ const RegistrationFlow = ({ type }) => {
           case 6:
             return <Hos_7 />; // Registration Complete
           default:
-            return <Hos_1 />;
+            return <Hos_1 ref={ref} />;
         }
       } else {
-        // User is a doctor, show all steps including Doctor Registration
         switch (currentStep) {
           case 1:
-            return <Hos_1 />;
+            return <Hos_1 ref={ref} />;
           case 2:
             return <Hos_2 />;
           case 3:
@@ -78,7 +77,7 @@ const RegistrationFlow = ({ type }) => {
           case 7:
             return <Hos_7 />;
           default:
-            return <Hos_1 />;
+            return <Hos_1 ref={ref} />;
         }
       }
     }
@@ -87,6 +86,6 @@ const RegistrationFlow = ({ type }) => {
   };
 
   return renderStepComponent();
-};
+});
 
 export default RegistrationFlow;

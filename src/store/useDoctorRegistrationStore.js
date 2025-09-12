@@ -4,20 +4,6 @@ import axiosInstance from '../lib/axios';
 const initialState = {
   // Step 1
   userId: '',
-  firstName: '',
-  lastName: '',
-  emailId: '',
-  phone: '',
-  gender: '',
-  city: '',
-  mfa: {
-    emailId: false,
-    phone: false,
-  },
-  profilePhotoKey: '',
-  role: 'doctor',
-
-  // Step 2
   specialization: '',
   experienceYears: '',
   medicalCouncilName: '',

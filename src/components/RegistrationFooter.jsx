@@ -4,8 +4,7 @@ import useDoctorRegistrationStore from '../store/useDoctorRegistrationStore';
 
 const RegistrationFooter = ({ onCancel, onNext, onPrev, currentStep, maxSteps, nextLabel = "Save & Next →", disablePrev = false }) => {
   const { registrationType } = useRegistration();
-
-  // For Step 6 (success page), show the button in footer but with different label
+  
   if (currentStep === 6) {
     return (
       <footer className="flex-shrink-0 p-4 border-t border-gray-200 flex justify-between bg-white">

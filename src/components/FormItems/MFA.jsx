@@ -18,8 +18,8 @@ const MFA = ({ formData, handleInputChange }) => {
             <input
               type="checkbox"
               name="emailVerification"
-              checked={formData?.emailVerification || false}
-              onChange={handleInputChange}
+              checked={true}
+              disabled
               className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
             />
             <span className="text-sm text-gray-700">Email Verification</span>
@@ -29,8 +29,8 @@ const MFA = ({ formData, handleInputChange }) => {
             <input
               type="checkbox"
               name="smsVerification"
-              checked={formData?.smsVerification || false}
-              onChange={handleInputChange}
+              checked={true}
+              disabled
               className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
             />
             <span className="text-sm text-gray-700">SMS Verification</span>
