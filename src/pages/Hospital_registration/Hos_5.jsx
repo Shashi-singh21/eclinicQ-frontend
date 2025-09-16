@@ -2,9 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { CheckCircle, Circle } from 'lucide-react';
 import { useRegistration } from '../../context/RegistrationContext';
 import { ProgressBar, AgreementBox, ActionButton } from '../../components/FormItems';
+import useHospitalRegistrationStore from '../../store/useHospitalRegistrationStore';
 
 const Hos_5 = () => {
   const { currentStep, nextStep, prevStep, updateFormData, formData } = useRegistration();
+  // Pull review data from the hospital store
+  const name = useHospitalRegistrationStore((s) => s.name);
+  const type = useHospitalRegistrationStore((s) => s.type);
+  const emailId = useHospitalRegistrationStore((s) => s.emailId);
+  const phone = useHospitalRegistrationStore((s) => s.phone);
+  const address = useHospitalRegistrationStore((s) => s.address);
+  const city = useHospitalRegistrationStore((s) => s.city);
+  const state = useHospitalRegistrationStore((s) => s.state);
+  const pincode = useHospitalRegistrationStore((s) => s.pincode);
+  const url = useHospitalRegistrationStore((s) => s.url);
+  const establishmentYear = useHospitalRegistrationStore((s) => s.establishmentYear);
+  const noOfBeds = useHospitalRegistrationStore((s) => s.noOfBeds);
+  const medicalSpecialties = useHospitalRegistrationStore((s) => s.medicalSpecialties);
+  const hospitalServices = useHospitalRegistrationStore((s) => s.hospitalServices);
+  const accreditation = useHospitalRegistrationStore((s) => s.accreditation);
+  const operatingHours = useHospitalRegistrationStore((s) => s.operatingHours);
+  const documents = useHospitalRegistrationStore((s) => s.documents);
   const currentSubStep = formData.hosStep5SubStep || 1;
   const [termsAccepted, setTermsAccepted] = useState(formData.hosTermsAccepted || false);
   const [privacyAccepted, setPrivacyAccepted] = useState(formData.hosPrivacyAccepted || false);
@@ -12,57 +30,13 @@ const Hos_5 = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  // Compose hospital payload from formData (Hos_3, Hos_4, Hos_5)
-  const buildHospitalPayload = () => {
-    // Address
-    const address = {
-      blockNo: formData.blockNumber || '',
-      landmark: formData.landmark || '',
-      street: formData.roadAreaStreet || ''
-    };
-    // Documents
-    const documents = [];
-    if (formData.gstin) documents.push({ no: formData.gstin, type: 'GST', url: formData.gstinFile || '' });
-    if (formData.stateHealthReg) documents.push({ no: formData.stateHealthReg, type: 'State Health Reg No', url: formData.stateHealthRegFile || '' });
-    if (formData.panCard) documents.push({ no: formData.panCard, type: 'Pan Card', url: formData.panCardFile || '' });
-    if (formData.cinNumber) documents.push({ no: formData.cinNumber, type: 'CIN', url: formData.cinFile || '' });
-    if (formData.rohiniId) documents.push({ no: formData.rohiniId, type: 'Rohini ID', url: formData.rohiniFile || '' });
-    if (formData.nabhAccreditation) documents.push({ no: formData.nabhAccreditation, type: 'NABH', url: formData.nabhFile || '' });
-
-    // Operating Hours
-    const days = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
-    const operatingHours = days.map(day => ({
-      dayOfWeek: day,
-      isAvailable: (formData.operatingHours || []).includes(day.charAt(0).toUpperCase() + day.slice(1)),
-      is24Hours: formData[`${day}24Hours`] || false,
-      timeRanges: [
-        { startTime: formData[`${day}StartTime`] || "09:00", endTime: formData[`${day}EndTime`] || "18:00" }
-      ]
-    }));
-
-    return {
-      name: formData.hospitalName,
-      type: formData.hospitalType,
-      emailId: formData.hospitalEmail,
-      phone: formData.hospitalContact,
-      address,
-      city: formData.city,
-      state: formData.state,
-      pincode: formData.pincode,
-      url: formData.website,
-      logo: formData.logoKey || '',
-      image: formData.hospitalImageKey || '',
-      latitude: formData.latitude || 0,
-      longitude: formData.longitude || 0,
-      medicalSpecialties: formData.medicalSpecialties || [],
-      hospitalServices: formData.hospitalServices || [],
-      establishmentYear: formData.establishedYear,
-      noOfBeds: formData.numberOfBeds,
-      accreditation: formData.accreditations || [],
-      adminId: formData.adminId || '',
-      documents,
-      operatingHours
-    };
+  // Helper to get document number by type from store
+  const getDocNo = (typeLabel) => {
+    const t = String(typeLabel || '').toLowerCase();
+    const match = (documents || []).find(
+      (d) => String(d?.type || '').toLowerCase() === t
+    );
+    return match?.no || '';
   };
 
   // No submit logic here; submission is handled in Hos_6
@@ -124,81 +98,81 @@ const Hos_5 = () => {
 
       <div className="space-y-6">
         {/* Hospital Information */}
-        <div className="bg-white border border-gray-300 rounded-md p-4">
+  <div className="bg-white border border-gray-300 rounded-md p-4">
           <h3 className="text-base font-medium text-gray-900 mb-4">Hospital Information</h3>
           <div className="grid grid-cols-2 gap-x-12">
             <div className="space-y-2">
               <div className="flex items-center">
                 <span className="text-gray-600 text-sm w-32">Hospital Name</span>
                 <span className="text-gray-600 text-sm">:</span>
-                <span className="text-gray-900 text-sm font-medium ml-2">{formData.hospitalName}</span>
+    <span className="text-gray-900 text-sm font-medium ml-2">{name}</span>
               </div>
               <div className="flex items-center">
                 <span className="text-gray-600 text-sm w-32">Hospital Type</span>
                 <span className="text-gray-600 text-sm">:</span>
-                <span className="text-gray-900 text-sm font-medium ml-2">{formData.hospitalType}</span>
+    <span className="text-gray-900 text-sm font-medium ml-2">{type}</span>
               </div>
               <div className="flex items-center">
                 <span className="text-gray-600 text-sm w-32">Contact Email</span>
                 <span className="text-gray-600 text-sm">:</span>
-                <span className="text-gray-900 text-sm font-medium ml-2">{formData.hospitalEmail}</span>
+    <span className="text-gray-900 text-sm font-medium ml-2">{emailId}</span>
               </div>
               <div className="flex items-center">
                 <span className="text-gray-600 text-sm w-32">Contact Number</span>
                 <span className="text-gray-600 text-sm">:</span>
-                <span className="text-gray-900 text-sm font-medium ml-2">{formData.hospitalContact}</span>
+    <span className="text-gray-900 text-sm font-medium ml-2">{phone}</span>
               </div>
               <div className="flex items-center">
                 <span className="text-gray-600 text-sm w-32">Established Year</span>
                 <span className="text-gray-600 text-sm">:</span>
-                <span className="text-gray-900 text-sm font-medium ml-2">{formData.establishedYear}</span>
+    <span className="text-gray-900 text-sm font-medium ml-2">{establishmentYear}</span>
               </div>
               <div className="flex items-center">
                 <span className="text-gray-600 text-sm w-32">Number of Beds</span>
                 <span className="text-gray-600 text-sm">:</span>
-                <span className="text-gray-900 text-sm font-medium ml-2">{formData.numberOfBeds}</span>
+    <span className="text-gray-900 text-sm font-medium ml-2">{noOfBeds}</span>
               </div>
               <div className="flex items-center">
                 <span className="text-gray-600 text-sm w-32">Website</span>
                 <span className="text-gray-600 text-sm">:</span>
-                <span className="text-gray-900 text-sm font-medium ml-2">{formData.website}</span>
+    <span className="text-gray-900 text-sm font-medium ml-2">{url}</span>
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex items-center">
                 <span className="text-gray-600 text-sm w-32">Block/Shop/House No.</span>
                 <span className="text-gray-600 text-sm">:</span>
-                <span className="text-gray-900 text-sm font-medium ml-2">{formData.blockNumber}</span>
+    <span className="text-gray-900 text-sm font-medium ml-2">{address?.blockNo}</span>
               </div>
               <div className="flex items-center">
                 <span className="text-gray-600 text-sm w-32">Road/Area/Street</span>
                 <span className="text-gray-600 text-sm">:</span>
-                <span className="text-gray-900 text-sm font-medium ml-2">{formData.roadAreaStreet}</span>
+    <span className="text-gray-900 text-sm font-medium ml-2">{address?.street}</span>
               </div>
               <div className="flex items-center">
                 <span className="text-gray-600 text-sm w-32">Landmark</span>
                 <span className="text-gray-600 text-sm">:</span>
-                <span className="text-gray-900 text-sm font-medium ml-2">{formData.landmark}</span>
+    <span className="text-gray-900 text-sm font-medium ml-2">{address?.landmark}</span>
               </div>
               <div className="flex items-center">
                 <span className="text-gray-600 text-sm w-32">Pincode</span>
                 <span className="text-gray-600 text-sm">:</span>
-                <span className="text-gray-900 text-sm font-medium ml-2">{formData.pincode}</span>
+    <span className="text-gray-900 text-sm font-medium ml-2">{pincode}</span>
               </div>
               <div className="flex items-center">
                 <span className="text-gray-600 text-sm w-32">City</span>
                 <span className="text-gray-600 text-sm">:</span>
-                <span className="text-gray-900 text-sm font-medium ml-2">{formData.city}</span>
+    <span className="text-gray-900 text-sm font-medium ml-2">{city}</span>
               </div>
               <div className="flex items-center">
                 <span className="text-gray-600 text-sm w-32">State</span>
                 <span className="text-gray-600 text-sm">:</span>
-                <span className="text-gray-900 text-sm font-medium ml-2">{formData.state}</span>
+    <span className="text-gray-900 text-sm font-medium ml-2">{state}</span>
               </div>
               <div className="flex items-center">
                 <span className="text-gray-600 text-sm w-32">Hospital URL</span>
                 <span className="text-gray-600 text-sm">:</span>
-                <span className="text-gray-900 text-sm font-medium ml-2">{formData.hospitalUrl}</span>
+    <span className="text-gray-900 text-sm font-medium ml-2">{url}</span>
               </div>
             </div>
           </div>
@@ -211,23 +185,23 @@ const Hos_5 = () => {
             <div className="flex items-start">
               <span className="text-gray-600 text-sm w-32 flex-shrink-0">Medical Specialties</span>
               <span className="text-gray-600 text-sm">:</span>
-              <span className="text-gray-900 text-sm font-medium ml-2">{(formData.medicalSpecialties || []).join(', ')}</span>
+              <span className="text-gray-900 text-sm font-medium ml-2">{(medicalSpecialties || []).join(', ')}</span>
             </div>
             <div className="flex items-start">
               <span className="text-gray-600 text-sm w-32 flex-shrink-0">Hospital Services</span>
               <span className="text-gray-600 text-sm">:</span>
-              <span className="text-gray-900 text-sm font-medium ml-2">{(formData.hospitalServices || []).join(', ')}</span>
+              <span className="text-gray-900 text-sm font-medium ml-2">{(hospitalServices || []).join(', ')}</span>
             </div>
             <div className="flex items-start">
               <span className="text-gray-600 text-sm w-32 flex-shrink-0">Accreditations</span>
               <span className="text-gray-600 text-sm">:</span>
-              <span className="text-gray-900 text-sm font-medium ml-2">{(formData.accreditations || []).join(', ')}</span>
+              <span className="text-gray-900 text-sm font-medium ml-2">{(accreditation || []).join(', ')}</span>
             </div>
             <div className="flex items-start">
               <span className="text-gray-600 text-sm w-32 flex-shrink-0">Operating Hours</span>
               <span className="text-gray-600 text-sm">:</span>
               <div className="text-gray-900 text-sm font-medium ml-2">
-                {(formData.operatingHours || []).map(day => (
+                {(operatingHours || []).map(day => (
                   <div key={day}>{day}</div>
                 ))}
               </div>
@@ -238,41 +212,41 @@ const Hos_5 = () => {
         {/* Document Verification (from Hos_4) */}
         <div className="bg-white border border-gray-300 rounded-md p-4">
           <h3 className="text-base font-medium text-gray-900 mb-4">Document Verification</h3>
-          <div className="space-y-2">
+      <div className="space-y-2">
             <div className="flex items-center">
               <span className="text-gray-600 text-sm w-32">GSTIN</span>
               <span className="text-gray-600 text-sm">:</span>
-              <span className="text-gray-900 text-sm font-medium ml-2">{formData.gstin}</span>
+        <span className="text-gray-900 text-sm font-medium ml-2">{getDocNo('GST')}</span>
             </div>
             <div className="flex items-center">
               <span className="text-gray-600 text-sm w-32">ABHA Facility ID</span>
               <span className="text-gray-600 text-sm">:</span>
-              <span className="text-gray-900 text-sm font-medium ml-2">{formData.abhaId}</span>
+        <span className="text-gray-900 text-sm font-medium ml-2">{getDocNo('ABHA')}</span>
             </div>
             <div className="flex items-center">
               <span className="text-gray-600 text-sm w-32">CIN Number</span>
               <span className="text-gray-600 text-sm">:</span>
-              <span className="text-gray-900 text-sm font-medium ml-2">{formData.cinNumber}</span>
+        <span className="text-gray-900 text-sm font-medium ml-2">{getDocNo('CIN')}</span>
             </div>
             <div className="flex items-center">
               <span className="text-gray-600 text-sm w-32">State Health Reg. No</span>
               <span className="text-gray-600 text-sm">:</span>
-              <span className="text-gray-900 text-sm font-medium ml-2">{formData.stateHealthReg}</span>
+        <span className="text-gray-900 text-sm font-medium ml-2">{getDocNo('State Health Reg No')}</span>
             </div>
             <div className="flex items-center">
               <span className="text-gray-600 text-sm w-32">PAN Card</span>
               <span className="text-gray-600 text-sm">:</span>
-              <span className="text-gray-900 text-sm font-medium ml-2">{formData.panCard}</span>
+        <span className="text-gray-900 text-sm font-medium ml-2">{getDocNo('Pan Card')}</span>
             </div>
             <div className="flex items-center">
               <span className="text-gray-600 text-sm w-32">Rohini ID</span>
               <span className="text-gray-600 text-sm">:</span>
-              <span className="text-gray-900 text-sm font-medium ml-2">{formData.rohiniId}</span>
+        <span className="text-gray-900 text-sm font-medium ml-2">{getDocNo('Rohini ID')}</span>
             </div>
             <div className="flex items-center">
               <span className="text-gray-600 text-sm w-32">NABH Accreditation</span>
               <span className="text-gray-600 text-sm">:</span>
-              <span className="text-gray-900 text-sm font-medium ml-2">{formData.nabhAccreditation}</span>
+        <span className="text-gray-900 text-sm font-medium ml-2">{getDocNo('NABH')}</span>
             </div>
           </div>
         </div>
