@@ -61,8 +61,9 @@ const QueueTable = ({ onCheckIn, checkedInToken, checkedInTokens, items, removin
       }))
     : rows;
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
-  <div className="relative overflow-x-auto overflow-y-visible rounded-lg">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-full min-h-0 flex flex-col">
+      {/* Scroll area for the table content */}
+      <div className="relative overflow-x-auto overflow-y-auto rounded-t-lg flex-1 min-h-0">
   <table className="min-w-full text-sm table-fixed border-separate border-spacing-0">
           <colgroup>
             <col style={{ width: COL_W.token }} />
@@ -224,8 +225,10 @@ const QueueTable = ({ onCheckIn, checkedInToken, checkedInTokens, items, removin
         </table>
       </div>
 
-      {/* Footer pagination bar to mirror design (optional placeholder) */}
-      <div className="px-4 py-2 border-t border-gray-200 text-xs text-gray-500">10 / Page • Go to Page</div>
+      {/* Footer pagination bar fixed within panel */}
+      <div className="px-4 py-2 border-t border-gray-200 text-xs text-gray-600 bg-white rounded-b-lg sticky bottom-0">
+        10 / Page • Go to Page
+      </div>
     </div>
   );
 };

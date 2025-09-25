@@ -465,8 +465,8 @@ const Queue = () => {
         </div>
       </div>
 
-      {/* Main Content Area: Overview full-width, then columns */}
-      <div className="px-0 pt-0 pb-2 h-[calc(100vh-100px)] flex flex-col overflow-hidden">
+  {/* Main Content Area: Overview full-width, then columns */}
+  <div className="px-0 pt-0 pb-2 h-[calc(100vh-100px)] flex flex-col overflow-hidden">
         {/* Current Token Banner (session mode) */}
         {sessionStarted && (
           <div className="">
@@ -489,7 +489,8 @@ const Queue = () => {
           </div>
         )}
         {/* Overview Section (full width) */}
-        <div className="p-2">
+  {/* Make this container flex so the columns section can take remaining height and scroll inside */}
+  <div className="p-2 flex flex-col flex-1 min-h-0">
         <div className=" flex flex-col gap-2">
           <h3 className="text-[#424242] font-medium">Overview</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -586,10 +587,10 @@ const Queue = () => {
 
         </div>
 
-        {/* Columns area: left table + right requests (stack on small screens). Make horizontally scrollable to honor fixed right width */}
-  <div className="w-full flex flex-col lg:flex-row gap-3 flex-1 overflow-x-auto overflow-y-visible">
+        {/* Columns area: left table + right requests (stack on small screens) */}
+        <div className="w-full flex flex-col lg:flex-row gap-3 flex-1 min-h-0 overflow-hidden">
           {/* Left Side - Patient Queue Table (using reusable component) */}
-          <div className="flex-1 min-w-0 overflow-hidden">
+          <div className="flex-1 min-w-0 min-h-0 overflow-hidden flex flex-col">
             <QueueTable
               onCheckIn={handleCheckIn}
               checkedInToken={checkedInToken}
@@ -611,7 +612,7 @@ const Queue = () => {
             />
           </div>
 
-          {/* Right Side - Appointment Requests (fixed width per spec) */}
+          {/* Right Side - Appointment Requests (fixed width, scrollable items) */}
           <div className="shrink-0 w-[400px] bg-white rounded-[12px] border-[0.5px] border-[#D6D6D6] h-full overflow-y-auto">
             <div className="">
               <div className="p-3 flex items-center gap-2 bg-[#D6D6D6] bg-opacity-10 border-b-[0.5px] border-gray-400">
