@@ -13,3 +13,25 @@ html, body {
   width: 100%;
   box-sizing: border-box;
 }
+
+/* Simple animations for queue transitions */
+@keyframes rowExit {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(12px); }
+}
+@keyframes rowEnter {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes cardExit {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-8px); }
+}
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.row-exit { animation: rowExit 300ms ease-in forwards; }
+.row-enter { animation: rowEnter 320ms ease-out; }
+.active-card-exit { animation: cardExit 300ms ease-in forwards; }
+.active-card-enter { animation: cardEnter 320ms ease-out; }

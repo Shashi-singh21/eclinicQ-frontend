@@ -6,6 +6,250 @@ import Badge from '../../../components/Badge';
 import OverviewStatCard from '../../../components/OverviewStatCard';
 import Toggle from '../../../components/FormItems/Toggle';
 import QueueTable from './QueueTable';
+
+// PreScreening Drawer redesigned to match the screenshot with dynamic values
+const PreScreeningDrawer = ({ show, patient, onClose, onSave, initialVitals }) => {
+  // Normalize patient coming from queue row
+  const name = patient?.patientName || patient?.name || "";
+  const genderShort = patient?.gender || ""; // 'M' / 'F'
+  const gender = genderShort === 'M' ? 'Male' : genderShort === 'F' ? 'Female' : genderShort || '';
+  // From age like "12/05/1985 (39Y)" derive dob and age
+  const ageStr = patient?.age || "";
+  const dob = ageStr.split(" (")[0] || "";
+  const ageYears = (ageStr.match(/\((\d+)Y\)/) || [])[1] || "";
+  const token = patient?.token ?? "";
+
+  const [vitals, setVitals] = useState({
+    bpSys: "",
+    bpDia: "",
+    spo2: "",
+    pulse: "",
+    respRate: "",
+    tempC: "",
+    heightFt: "",
+    heightIn: "",
+    weightKg: "",
+    waistCm: "",
+    bmi: "",
+    pain: "",
+  });
+
+  // Load existing vitals for this token (if any)
+  useEffect(() => {
+    if (!show) return;
+    if (initialVitals && token) {
+      setVitals((s) => ({ ...s, ...initialVitals }));
+    }
+  }, [show, token, initialVitals]);
+
+  // Auto-calc BMI when height/weight changes
+  useEffect(() => {
+    const hFt = parseFloat(vitals.heightFt) || 0;
+    const hIn = parseFloat(vitals.heightIn) || 0;
+    const totalIn = hFt * 12 + hIn;
+    const meters = totalIn > 0 ? totalIn * 0.0254 : 0;
+    const kg = parseFloat(vitals.weightKg) || 0;
+    const bmi = meters > 0 ? kg / (meters * meters) : 0;
+    const val = bmi ? bmi.toFixed(1) : "";
+    if (val !== vitals.bmi) setVitals((s) => ({ ...s, bmi: val }));
+  }, [vitals.heightFt, vitals.heightIn, vitals.weightKg]);
+
+  const set = (field) => (e) => setVitals((s) => ({ ...s, [field]: e.target.value }));
+
+  const Label = ({ children }) => (
+    <div className="text-[12px] text-gray-700 mb-1 font-medium">{children}</div>
+  );
+  const Box = ({ children }) => (
+    <div className="bg-white border border-gray-200 rounded-md px-2 py-1.5 flex items-center gap-2">{children}</div>
+  );
+  const Unit = ({ children }) => (
+    <span className="text-[11px] text-gray-500 ml-auto">{children}</span>
+  );
+
+  const handleSave = () => {
+    onSave?.({ token, vitals });
+    onClose?.();
+  };
+
+  return (
+    <>
+      {/* Overlay */}
+      <div
+        className={`fixed inset-0 bg-black bg-opacity-30 z-40 transition-opacity duration-300 ${show ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        onClick={onClose}
+      />
+      {/* Drawer */}
+      <div
+        className={`fixed z-50 transition-transform duration-500 ${show ? 'translate-x-0' : 'translate-x-full'}`}
+        style={{
+          top: 32,
+          right: show ? 32 : 0,
+          bottom: 32,
+          width: 640,
+          maxWidth: '100vw',
+          background: 'white',
+          borderTopLeftRadius: 16,
+          borderBottomLeftRadius: 16,
+          boxShadow: '0 8px 32px 0 rgba(0,0,0,0.18)',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <div className="p-6 flex flex-col h-full">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-[18px] font-semibold">Add Pre-Screening</h2>
+            <div className="flex items-center gap-3">
+              <button className="text-blue-600 text-sm font-medium border border-blue-200 rounded px-2 py-1 bg-blue-50">Print Rx</button>
+              <button className="text-gray-400 hover:text-gray-600" onClick={onClose}>✕</button>
+            </div>
+          </div>
+          {/* Patient Details */}
+          <div className="bg-[#F8FAFC] rounded-lg p-4 flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <AvatarCircle name={name} size="l" />
+              <div>
+                <div className="font-bold text-[16px]">{name}</div>
+                <div className="text-[11px] text-gray-600">{gender} | {dob} {ageYears && `( ${ageYears}Y )`}</div>
+                <div className="text-[11px] text-blue-600 mt-1">MRN: P654321 | ABHA ID: ABHA-98765-XYZ</div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-[11px] text-gray-500">Token Number</div>
+              <div className="text-[22px] font-bold text-blue-600">{String(token || 0).padStart(2,'0')}</div>
+            </div>
+          </div>
+
+          {/* Vitals & Biometrics */}
+          <div className="mb-4">
+            <div className="flex items-center justify-between">
+              <div className="font-semibold text-[14px] mb-2">Vitals & Biometrics</div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              {/* BP */}
+              <div>
+                <Label>Blood Pressure</Label>
+                <div className="flex gap-2">
+                  <Box>
+                    <input value={vitals.bpSys} onChange={set('bpSys')} className="w-16 outline-none text-sm" placeholder="Sys" inputMode="numeric" />
+                  </Box>
+                  <Box>
+                    <input value={vitals.bpDia} onChange={set('bpDia')} className="w-16 outline-none text-sm" placeholder="Dia" inputMode="numeric" />
+                    <Unit>mmHg</Unit>
+                  </Box>
+                </div>
+              </div>
+
+              {/* SpO2 */}
+              <div>
+                <Label>Oxygen Saturation</Label>
+                <Box>
+                  <input value={vitals.spo2} onChange={set('spo2')} className="w-20 outline-none text-sm" placeholder="Value" inputMode="numeric" />
+                  <Unit>%</Unit>
+                </Box>
+              </div>
+
+              {/* Pulse */}
+              <div>
+                <Label>Pulse Rate</Label>
+                <Box>
+                  <input value={vitals.pulse} onChange={set('pulse')} className="w-20 outline-none text-sm" placeholder="Value" inputMode="numeric" />
+                  <Unit>bpm</Unit>
+                </Box>
+              </div>
+
+              {/* RR */}
+              <div>
+                <Label>Respiratory Rate</Label>
+                <Box>
+                  <input value={vitals.respRate} onChange={set('respRate')} className="w-20 outline-none text-sm" placeholder="Value" inputMode="numeric" />
+                  <Unit>rpm</Unit>
+                </Box>
+              </div>
+
+              {/* Temp */}
+              <div>
+                <Label>Body Temperature</Label>
+                <Box>
+                  <input value={vitals.tempC} onChange={set('tempC')} className="w-20 outline-none text-sm" placeholder="Value" inputMode="numeric" />
+                  <Unit>°C</Unit>
+                </Box>
+              </div>
+
+              {/* Height */}
+              <div>
+                <Label>Height</Label>
+                <div className="flex gap-2">
+                  <Box>
+                    <input value={vitals.heightFt} onChange={set('heightFt')} className="w-16 outline-none text-sm" placeholder="ft" inputMode="numeric" />
+                    <Unit>ft</Unit>
+                  </Box>
+                  <Box>
+                    <input value={vitals.heightIn} onChange={set('heightIn')} className="w-16 outline-none text-sm" placeholder="in" inputMode="numeric" />
+                    <Unit>in</Unit>
+                  </Box>
+                </div>
+              </div>
+
+              {/* Weight */}
+              <div>
+                <Label>Weight</Label>
+                <Box>
+                  <input value={vitals.weightKg} onChange={set('weightKg')} className="w-20 outline-none text-sm" placeholder="Value" inputMode="numeric" />
+                  <Unit>kg</Unit>
+                </Box>
+              </div>
+
+              {/* Waist */}
+              <div>
+                <Label>Waist Circumference</Label>
+                <Box>
+                  <input value={vitals.waistCm} onChange={set('waistCm')} className="w-20 outline-none text-sm" placeholder="Value" inputMode="numeric" />
+                  <Unit>cm</Unit>
+                </Box>
+              </div>
+
+              {/* BMI */}
+              <div>
+                <Label>BMI</Label>
+                <Box>
+                  <input value={vitals.bmi} readOnly className="w-20 outline-none text-sm bg-transparent" placeholder="" />
+                </Box>
+              </div>
+
+              {/* Pain */}
+              <div>
+                <Label>Pain Scale</Label>
+                <Box>
+                  <input value={vitals.pain} onChange={set('pain')} className="w-20 outline-none text-sm" placeholder="Value" inputMode="numeric" />
+                </Box>
+              </div>
+            </div>
+          </div>
+
+          {/* Medical History */}
+          <div className="mb-4">
+            <div className="font-semibold text-[14px] mb-2">Medical History</div>
+            <div className="flex gap-2 mb-2 text-xs">
+              <span className="text-blue-600 border border-blue-200 rounded px-2 py-1 cursor-pointer">Problems</span>
+              <span className="text-gray-500 border border-gray-200 rounded px-2 py-1 cursor-pointer">Allergies</span>
+              <span className="text-gray-500 border border-gray-200 rounded px-2 py-1 cursor-pointer">Immunizations</span>
+              <span className="text-gray-500 border border-gray-200 rounded px-2 py-1 cursor-pointer">Social</span>
+              <span className="text-gray-500 border border-gray-200 rounded px-2 py-1 cursor-pointer">Family History</span>
+            </div>
+            <div className="text-xs text-blue-600 cursor-pointer">+ Add Problems & Conditions</div>
+          </div>
+
+          {/* Save Button */}
+          <div className="flex justify-end mt-auto">
+            <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" onClick={handleSave}>Save & Continue</button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
 import { appointement } from "../../../../public/index.js";
 const Queue = () => {
   const [activeFilter, setActiveFilter] = useState("All");
@@ -18,6 +262,7 @@ const Queue = () => {
   const [patientStartedAt, setPatientStartedAt] = useState(null); // ms timestamp
   const [elapsed, setElapsed] = useState(0); // seconds for active patient
   const [removingToken, setRemovingToken] = useState(null);
+  const [incomingToken, setIncomingToken] = useState(null);
 
   // Sample queue data matching the design
   const [queueData, setQueueData] = useState([
@@ -112,6 +357,12 @@ const Queue = () => {
     if (!activePatient) return;
     // start slide-out animation for active row
     setRemovingToken(activePatient.token);
+    // animate active card exit
+    const activeCard = document.querySelector('#active-patient-card');
+    if (activeCard) {
+      activeCard.classList.remove('active-card-enter');
+      activeCard.classList.add('active-card-exit');
+    }
     setTimeout(() => {
       setQueueData((prev) => {
         const newArr = prev.filter((_, i) => i !== currentIndex);
@@ -119,6 +370,8 @@ const Queue = () => {
         const nextIdx = newArr.length === 0 ? 0 : Math.min(currentIndex, newArr.length - 1);
         setCurrentIndex(nextIdx);
         if (newArr.length > 0) {
+          const nextToken = newArr[nextIdx]?.token;
+          setIncomingToken(nextToken);
           setPatientStartedAt(Date.now());
           setElapsed(0);
         } else {
@@ -128,6 +381,15 @@ const Queue = () => {
         return newArr;
       });
       setRemovingToken(null);
+      // animate new active card enter shortly after DOM updates
+      setTimeout(() => {
+        const card = document.querySelector('#active-patient-card');
+        if (card) {
+          card.classList.remove('active-card-exit');
+          card.classList.add('active-card-enter');
+        }
+        setIncomingToken(null);
+      }, 30);
     }, ANIM_MS);
   };
 
@@ -138,6 +400,39 @@ const Queue = () => {
       setPatientStartedAt(Date.now());
       setElapsed(0);
     }
+  };
+
+  // State for check-in UI
+  const [checkedInTokens, setCheckedInTokens] = useState(new Set()); // tokens that are checked-in
+  const [checkedInToken, setCheckedInToken] = useState(null); // active token for drawer
+  const [showPreScreen, setShowPreScreen] = useState(false);
+  const [showRightDiv, setShowRightDiv] = useState(false);
+  const [rightDivPatient, setRightDivPatient] = useState(null);
+  const [preScreenData, setPreScreenData] = useState({}); // token -> vitals
+
+
+  // Handler for Check-In button
+  const handleCheckIn = (row) => {
+    // Add token to checked-in set and open drawer for that token
+    setCheckedInTokens((prev) => new Set(prev).add(row.token));
+    setCheckedInToken(row.token);
+    setShowPreScreen(true);
+  };
+
+  // Handler for closing pre-screening and showing right div
+  const handlePreScreenClose = () => {
+    setShowPreScreen(false);
+    // Find patient by token
+    const patient = queueData.find((p) => p.token === checkedInToken) || {};
+    setRightDivPatient(patient);
+    setTimeout(() => setShowRightDiv(true), 1000); // 1s delay
+  };
+
+  // Handler to close right div
+  const handleRightDivClose = () => {
+    setShowRightDiv(false);
+    setCheckedInToken(null);
+    setRightDivPatient(null);
   };
 
   return (
@@ -194,6 +489,7 @@ const Queue = () => {
           </div>
         )}
         {/* Overview Section (full width) */}
+        <div className="p-2">
         <div className=" flex flex-col gap-2">
           <h3 className="text-[#424242] font-medium">Overview</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -206,9 +502,9 @@ const Queue = () => {
 
         {/* Active Patient - only when session is ON */}
         {sessionStarted && activePatient && (
-          <div className="mb-3">
+          <div className="mb-2 p-2">
             <h3 className="text-gray-800 font-semibold mb-2">Active Patient</h3>
-            <div className="bg-white rounded-lg border border-blue-200 px-4 py-3 flex items-center justify-between text-sm">
+            <div id="active-patient-card" className="bg-white rounded-lg border border-blue-200 px-4 py-3 flex items-center justify-between text-sm active-card-enter">
               {/* Left composite info */}
               <div className="flex items-center gap-4 min-w-0">
                 <AvatarCircle name={activePatient.patientName} size="s" />
@@ -291,10 +587,28 @@ const Queue = () => {
         </div>
 
         {/* Columns area: left table + right requests (stack on small screens). Make horizontally scrollable to honor fixed right width */}
-        <div className="w-ffull flex flex-col lg:flex-row gap-3 flex-1 overflow-x-auto overflow-y-hidden">
+  <div className="w-full flex flex-col lg:flex-row gap-3 flex-1 overflow-x-auto overflow-y-visible">
           {/* Left Side - Patient Queue Table (using reusable component) */}
           <div className="flex-1 min-w-0 overflow-hidden">
-            <QueueTable />
+            <QueueTable
+              onCheckIn={handleCheckIn}
+              checkedInToken={checkedInToken}
+              checkedInTokens={checkedInTokens}
+              items={queueData}
+              removingToken={removingToken}
+              incomingToken={incomingToken}
+              onRevokeCheckIn={(token) => {
+                setCheckedInTokens((prev) => {
+                  const n = new Set(prev);
+                  n.delete(token);
+                  return n;
+                });
+                if (checkedInToken === token) setCheckedInToken(null);
+              }}
+              onMarkNoShow={(token) => {
+                setQueueData((prev) => prev.filter((p) => p.token !== token));
+              }}
+            />
           </div>
 
           {/* Right Side - Appointment Requests (fixed width per spec) */}
@@ -351,6 +665,16 @@ const Queue = () => {
             </div>
           </div>
         </div>
+        {/* PreScreening Drawer ONLY */}
+        <PreScreeningDrawer
+          show={showPreScreen}
+          patient={queueData.find((p) => p.token === checkedInToken)}
+          onClose={handlePreScreenClose}
+          onSave={({ token, vitals }) => setPreScreenData((s) => ({ ...s, [token]: vitals }))}
+          initialVitals={checkedInToken ? preScreenData[checkedInToken] : undefined}
+        />
+        </div>
+        
       </div>
     </div>
   );
