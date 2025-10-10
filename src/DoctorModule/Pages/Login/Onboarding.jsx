@@ -26,7 +26,12 @@ const Onboarding = ({ onContinue }) => {
   useEffect(() => {
     if (didFetchRef.current) return;
     didFetchRef.current = true;
-    const code = "4633fbae-9b06-46dd-ab25-1e3cc1e29a0a";
+    const code = searchParams.get('code');
+    if (!code) {
+      setError('No invitation code found in URL.');
+      setLoading(false);
+      return;
+    }
     const params = { code, _ts: Date.now() };
     const headers = {
       'Cache-Control': 'no-cache, no-store, must-revalidate',
