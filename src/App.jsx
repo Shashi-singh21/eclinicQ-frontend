@@ -23,6 +23,10 @@ import FDDashboard from "./FrontDeskModule/Pages/Dashboard/FDDashboard";
 import FDQueue from "./FrontDeskModule/Pages/Queue/Queue";
 import FDPatients from "./FrontDeskModule/Pages/Patients/Patient";
 import FDPatientDetails from "./FrontDeskModule/Pages/Patients/PatientDetails";
+import FDCalendar from "./FrontDeskModule/Pages/Calendar/Calendar";
+import FDClinics from "./FrontDeskModule/Pages/Settings/FDClinics";
+import FDConsultation from "./FrontDeskModule/Pages/Settings/FDConsultation";
+import FDStaffPermissions from "./FrontDeskModule/Pages/Settings/FDStaffPermissions";
 
 function App() {
   return (
@@ -67,9 +71,13 @@ function App() {
       <Route path="fd" element={<FDLayout />}>
         <Route index element={<Navigate to="queue" replace />} />
         <Route path="queue" element={<FDQueue />} />
+  <Route path="calendar" element={<FDCalendar />} />
         <Route path="patients" element={<FDPatients />} />
         <Route path="patients/:id" element={<FDPatientDetails />} />
-        {/* settings/account could later mirror doctor settings if needed */}
+  {/* Settings */}
+  <Route path="settings/clinics" element={<FDClinics />} />
+  <Route path="settings/consultation" element={<FDConsultation />} />
+  <Route path="settings/staff-permissions" element={<FDStaffPermissions />} />
       </Route>
 
     </Routes>

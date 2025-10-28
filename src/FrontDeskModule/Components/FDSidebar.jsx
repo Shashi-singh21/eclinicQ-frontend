@@ -31,10 +31,9 @@ const FDSidebar = () => {
   ];
 
   const settingsSubItems = [
-    { label: "Clinics Details", to: "/fd/settings/clinics" },
+    { label: "Clinic Details", to: "/fd/settings/clinics" },
     { label: "Consultation Details", to: "/fd/settings/consultation" },
     { label: "Staff Permissions", to: "/fd/settings/staff-permissions" },
-    { label: "Rx Template", to: "/fd/settings/rx-template" },
   ];
 
   return (
