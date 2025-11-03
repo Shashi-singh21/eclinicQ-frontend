@@ -8,6 +8,16 @@ import Toggle from '../../../components/FormItems/Toggle'
 import TimeInput from '../../../components/FormItems/TimeInput'
 import MapLocation from '../../../components/FormItems/MapLocation'
 
+// Global drawer animation keyframes (used by all drawers in this page)
+const DrawerKeyframes = () => (
+  <style>{`
+    @keyframes drawerIn { from { transform: translateX(100%); opacity: 0.6; } to { transform: translateX(0%); opacity: 1; } }
+    @keyframes drawerOut { from { transform: translateX(0%); opacity: 1; } to { transform: translateX(100%); opacity: 0.6; } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: .3; } }
+    @keyframes fadeOut { from { opacity: .3; } to { opacity: 0; } }
+  `}</style>
+)
+
 // A light-weight field renderer
 const InfoField = ({ label, value, right }) => (
   <div className="grid grid-cols-12 gap-2 text-[13px] leading-5">
@@ -35,6 +45,451 @@ const SectionCard = ({ title, subtitle, action, children }) => (
     </div>
   </div>
 )
+
+// ======== Drawer: Edit Basic Info ========
+const BasicInfoDrawer = ({ open, onClose, initial, onSave }) => {
+  const [form, setForm] = useState(() => ({...initial}))
+  const [headlineCount, setHeadlineCount] = useState(initial?.headline?.length || 0)
+  const [closing, setClosing] = useState(false)
+
+  useEffect(() => {
+    setForm({ ...initial })
+    setHeadlineCount(initial?.headline?.length || 0)
+  }, [initial, open])
+
+  useEffect(() => {
+    const onEsc = (e) => e.key === 'Escape' && onClose?.()
+    window.addEventListener('keydown', onEsc)
+    return () => window.removeEventListener('keydown', onEsc)
+  }, [onClose])
+
+  if (!open && !closing) return null
+
+  const requestClose = () => {
+    // Play exit animation before unmounting
+    setClosing(true)
+    setTimeout(() => {
+      setClosing(false)
+      onClose?.()
+    }, 220)
+  }
+
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+  const toggleLang = (lang) => {
+    setForm((f) => {
+      const has = f.languages?.includes(lang)
+      const next = has ? f.languages.filter((l) => l !== lang) : [...(f.languages||[]), lang]
+      return { ...f, languages: next }
+    })
+  }
+  const canSave = form.firstName && form.lastName && form.phone && form.email
+
+  return (
+    <div className="fixed inset-0 z-50">
+      <div className={`absolute inset-0 bg-black/30 ${closing ? 'animate-[fadeOut_.2s_ease-in_forwards]' : 'animate-[fadeIn_.25s_ease-out_forwards]'}`} onClick={requestClose} />
+      <aside className={`absolute top-16 right-5 bottom-5 w-[600px] bg-white shadow-2xl border border-[#E6E6E6] rounded-xl overflow-hidden ${closing ? 'animate-[drawerOut_.22s_ease-in_forwards]' : 'animate-[drawerIn_.25s_ease-out_forwards]'}`} role="dialog" aria-modal="true">
+        {/* Header */}
+        <div className="px-3 py-2 border-b border-[#EFEFEF] flex items-center justify-between">
+          <h3 className="text-[16px] font-semibold text-[#424242]">Edit Basic Info</h3>
+          <div className="flex items-center gap-3">
+            <button disabled={!canSave} onClick={() => canSave && onSave(form)} className={'text-xs md:text-sm h-8 px-3 rounded-md transition ' + (!canSave ? 'bg-[#F2F2F2] text-[#9AA1A9] cursor-not-allowed' : 'bg-[#2F66F6] text-white hover:bg-[#1e4cd8]')}>Update</button>
+            <button onClick={requestClose} className="w-8 h-8 rounded-full grid place-items-center hover:bg-gray-100" aria-label="Close">✕</button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="p-3 overflow-y-auto h-[calc(100%-48px)]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {/* First/Last */}
+            <label className="block">
+              <span className="text-[12px] text-[#424242] font-medium">First Name <span className="text-red-500">*</span></span>
+              <input value={form.firstName||''} onChange={(e)=>set('firstName', e.target.value)} placeholder="Milind" className="mt-1 h-8 w-full rounded-md border border-[#E6E6E6] px-3 text-sm outline-none focus:border-[#BFD3FF] focus:ring-2 focus:ring-[#EAF2FF]" />
+            </label>
+            <label className="block">
+              <span className="text-[12px] text-[#424242] font-medium">Last Name <span className="text-red-500">*</span></span>
+              <input value={form.lastName||''} onChange={(e)=>set('lastName', e.target.value)} placeholder="Chauhan" className="mt-1 h-8 w-full rounded-md border border-[#E6E6E6] px-3 text-sm outline-none focus:border-[#BFD3FF] focus:ring-2 focus:ring-[#EAF2FF]" />
+            </label>
+
+            {/* Phone */}
+            <label className="block">
+              <span className="text-[12px] text-[#424242] font-medium">Mobile Number <span className="text-red-500">*</span></span>
+              <div className="mt-1 h-8 w-full rounded-md border border-[#E6E6E6] flex items-center px-2 focus-within:border-[#BFD3FF] focus-within:ring-2 focus-within:ring-[#EAF2FF]">
+                <input value={form.phone||''} onChange={(e)=>set('phone', e.target.value)} placeholder="91753 67487" className="flex-1 outline-none text-sm px-1" />
+                <span className="ml-1 inline-flex items-center text-green-600 text-[12px]">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </span>
+              </div>
+              <div className="text-[12px] text-[#6B7280] mt-1">To change your Mobile & Email please <a className="text-[#2F66F6]" href="#" onClick={(e)=>e.preventDefault()}>Call Us</a></div>
+            </label>
+
+            {/* Email */}
+            <label className="block">
+              <span className="text-[12px] text-[#424242] font-medium">Email <span className="text-red-500">*</span></span>
+              <div className="mt-1 h-8 w-full rounded-md border border-[#E6E6E6] flex items-center px-2 focus-within:border-[#BFD3FF] focus-within:ring-2 focus-within:ring-[#EAF2FF]">
+                <input type="email" value={form.email||''} onChange={(e)=>set('email', e.target.value)} placeholder="milind@example.com" className="flex-1 outline-none text-sm px-1" />
+                <span className="ml-1 inline-flex items-center text-green-600 text-[12px]">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </span>
+              </div>
+            </label>
+
+            {/* Gender */}
+            <div className="col-span-1 md:col-span-2">
+              <div className="text-[12px] text-[#424242] font-medium">Gender <span className="text-red-500">*</span></div>
+              <div className="mt-1 flex items-center gap-6 text-[13px] text-[#424242]">
+                {['Male','Female','Other'].map((g)=> (
+                  <label key={g} className="inline-flex items-center gap-2"><input type="radio" name="gender" checked={form.gender===g} onChange={()=>set('gender', g)} />{g}</label>
+                ))}
+              </div>
+            </div>
+
+            {/* Language */}
+            <div className="col-span-1 md:col-span-2">
+              <div className="text-[12px] text-[#424242] font-medium">Language</div>
+              <div className="mt-1 flex flex-wrap gap-3 text-[13px] text-[#424242]">
+                {['English','Hindi','Marathi','Gujarati','Kannada'].map((l) => (
+                  <label key={l} className="inline-flex items-center gap-2 border rounded-md px-2 py-1 text-[12px]">
+                    <input type="checkbox" checked={!!form.languages?.includes(l)} onChange={()=>toggleLang(l)} /> {l}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* City */}
+            <label className="block">
+              <span className="text-[12px] text-[#424242] font-medium">City <span className="text-red-500">*</span></span>
+              <div className="relative mt-1">
+                <select value={form.city||''} onChange={(e)=>set('city', e.target.value)} className="h-8 w-full rounded-md border border-[#E6E6E6] px-3 text-sm outline-none appearance-none focus:border-[#BFD3FF] focus:ring-2 focus:ring-[#EAF2FF]">
+                  <option>Akola, Maharashtra</option>
+                  <option>Mumbai, Maharashtra</option>
+                  <option>Pune, Maharashtra</option>
+                  <option>Ahmedabad, Gujarat</option>
+                </select>
+                <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400">▾</span>
+              </div>
+            </label>
+
+            {/* Website */}
+            <label className="block">
+              <span className="text-[12px] text-[#424242] font-medium">Website</span>
+              <input value={form.website||''} onChange={(e)=>set('website', e.target.value)} placeholder="Paste Website Link" className="mt-1 h-8 w-full rounded-md border border-[#E6E6E6] px-3 text-sm outline-none focus:border-[#BFD3FF] focus:ring-2 focus:ring-[#EAF2FF]" />
+            </label>
+          </div>
+
+          {/* Headline */}
+          <div className="mt-3">
+            <div className="text-[12px] text-[#424242] font-medium">Profile Headline</div>
+            <div className="mt-1">
+              <textarea value={form.headline||''} onChange={(e)=>{ set('headline', e.target.value); setHeadlineCount(e.target.value.length) }} rows={2} className="w-full rounded-md border border-[#E6E6E6] px-3 py-2 text-sm outline-none focus:border-[#BFD3FF] focus:ring-2 focus:ring-[#EAF2FF]" />
+              <div className="text-[12px] text-[#6B7280] text-right">{headlineCount}/220</div>
+            </div>
+          </div>
+
+          {/* About */}
+          <div className="mt-3">
+            <div className="text-[12px] text-[#424242] font-medium mb-1">About Us</div>
+            <div className="border border-gray-200 rounded-md">
+              <div className="px-2 py-1 border-b border-gray-200 text-gray-600 text-sm flex items-center gap-2">
+                <button className="hover:text-gray-900">✎</button>
+                <button className="hover:text-gray-900 font-bold">B</button>
+                <button className="hover:text-gray-900 italic">I</button>
+                <button className="hover:text-gray-900 underline">U</button>
+                <button className="hover:text-gray-900">•</button>
+              </div>
+              <textarea value={form.about||''} onChange={(e)=>set('about', e.target.value)} className="w-full min-h-[160px] p-3 text-sm outline-none" />
+              <div className="px-3 pb-2 text-[12px] text-gray-500 text-right">{(form.about||'').length}/1600</div>
+            </div>
+          </div>
+
+        </div>
+  </aside>
+    </div>
+  )
+}
+
+// Reusable small inputs used by other drawers
+const FieldLabel = ({ children, required }) => (
+  <span className="text-[12px] text-[#424242] font-medium">{children} {required && <span className="text-red-500">*</span>}</span>
+)
+
+const TextInput = (props) => (
+  <input {...props} className={`mt-1 h-8 w-full rounded-md border border-[#E6E6E6] px-3 text-sm outline-none focus:border-[#BFD3FF] focus:ring-2 focus:ring-[#EAF2FF] ${props.className||''}`} />
+)
+
+const SelectInput = ({ children, ...props }) => (
+  <div className="relative">
+    <select {...props} className="mt-1 h-9 w-full rounded-md border border-[#E6E6E6] px-3 text-sm outline-none appearance-none focus:border-[#BFD3FF] focus:ring-2 focus:ring-[#EAF2FF]">
+      {children}
+    </select>
+    <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400">▾</span>
+  </div>
+)
+
+// Drawer: Education (Add/Edit)
+const EducationDrawer = ({ open, onClose, initial, onSave, mode = 'add' }) => {
+  const [closing, setClosing] = useState(false)
+  const [data, setData] = useState(() => initial || { school: '', gradType: '', degree: '', field: '', start: '', end: '', proof: '' })
+
+  useEffect(() => { setData(initial || { school: '', gradType: '', degree: '', field: '', start: '', end: '', proof: '' }) }, [initial, open])
+  useEffect(() => { const onEsc = (e)=> e.key==='Escape' && requestClose(); window.addEventListener('keydown', onEsc); return ()=>window.removeEventListener('keydown', onEsc) }, [])
+  if (!open && !closing) return null
+  const requestClose = () => { setClosing(true); setTimeout(()=>{ setClosing(false); onClose?.() }, 220) }
+  const set = (k,v)=> setData((d)=>({ ...d, [k]: v }))
+  const canSave = data.school && data.gradType && data.degree && data.field && data.start && data.end
+
+  return (
+    <div className="fixed inset-0 z-50">
+      <div className={`absolute inset-0 bg-black/30 ${closing ? 'animate-[fadeOut_.2s_ease-in_forwards]' : 'animate-[fadeIn_.25s_ease-out_forwards]'}`} onClick={requestClose} />
+      <aside className={`absolute top-16 right-5 bottom-5 w-[600px] bg-white shadow-2xl border border-[#E6E6E6] rounded-xl overflow-hidden ${closing ? 'animate-[drawerOut_.22s_ease-in_forwards]' : 'animate-[drawerIn_.25s_ease-out_forwards]'}`} role="dialog" aria-modal="true">
+        <div className="px-3 py-2 border-b border-[#EFEFEF] flex items-center justify-between">
+          <h3 className="text-[16px] font-semibold text-[#424242]">{mode==='edit' ? 'Edit Education' : 'Add Education'}</h3>
+          <div className="flex items-center gap-3">
+            <button disabled={!canSave} onClick={()=> canSave && onSave?.(data)} className={'text-xs md:text-sm h-8 px-3 rounded-md transition ' + (!canSave ? 'bg-[#F2F2F2] text-[#9AA1A9] cursor-not-allowed' : 'bg-[#2F66F6] text-white hover:bg-[#1e4cd8]')}>{mode==='edit' ? 'Save' : 'Save'}</button>
+            <button onClick={requestClose} className="w-8 h-8 rounded-full grid place-items-center hover:bg-gray-100" aria-label="Close">✕</button>
+          </div>
+        </div>
+        <div className="p-3 overflow-y-auto grid grid-cols-1 gap-2">
+          <label className="block">
+            <FieldLabel required>School/College/ University</FieldLabel>
+            <TextInput placeholder="Select or Enter Institute Name" value={data.school} onChange={(e)=>set('school', e.target.value)} />
+          </label>
+          <label className="block">
+            <FieldLabel required>Graduation Type</FieldLabel>
+            <SelectInput value={data.gradType} onChange={(e)=>set('gradType', e.target.value)}>
+              <option value="" disabled>Select Type</option>
+              <option>Graduation</option>
+              <option>Post-Graduation</option>
+              <option>Fellowship</option>
+            </SelectInput>
+          </label>
+          <label className="block">
+            <FieldLabel required>Degree</FieldLabel>
+            <SelectInput value={data.degree} onChange={(e)=>set('degree', e.target.value)}>
+              <option value="" disabled>Select or Enter Degree</option>
+              <option>MBBS</option>
+              <option>MD</option>
+              <option>DNB</option>
+              <option>MS</option>
+            </SelectInput>
+          </label>
+          <label className="block">
+            <FieldLabel required>Field Of Study</FieldLabel>
+            <TextInput placeholder="Select or Enter your Field of Study" value={data.field} onChange={(e)=>set('field', e.target.value)} />
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block"><FieldLabel required>Start Year</FieldLabel><TextInput placeholder="2025" value={data.start} onChange={(e)=>set('start', e.target.value)} /></label>
+            <label className="block"><FieldLabel required>Year of Completion</FieldLabel><TextInput placeholder="2025" value={data.end} onChange={(e)=>set('end', e.target.value)} /></label>
+          </div>
+          <div>
+            <div className="flex items-center gap-1">
+              <FieldLabel>Upload Proof</FieldLabel>
+              <span className="text-[#9AA1A9]" title="Optional"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>
+            </div>
+            {/* Dropzone */}
+            <label className="mt-1 border border-dashed border-[#CFE0FF] rounded-md h-24 grid place-items-center text-center">
+              <input type="file" className="hidden" onChange={(e)=>{ const f=e.target.files?.[0]; if(f){ set('proof', f.name) } }} />
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-[#2F66F6]">↥</span>
+                <span className="text-[13px] text-[#2F66F6]">Upload File</span>
+                {data.proof ? <span className="text-[11px] text-gray-600">{data.proof}</span> : null}
+              </div>
+            </label>
+            <div className="text-[11px] text-gray-500 mt-1">Support Size upto 1MB in .png, .jpg, .svg, .webp</div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  )
+}
+
+// Drawer: Experience
+const ExperienceDrawer = ({ open, onClose, onSave }) => {
+  const [closing, setClosing] = useState(false)
+  const [data, setData] = useState({ role: '', type: '', org: '', start: '', end: '', current: false, location: '', desc: '' })
+  useEffect(() => { if(open){ setData({ role: '', type: '', org: '', start: '', end: '', current: false, location: '', desc: '' }) } }, [open])
+  if (!open && !closing) return null
+  const requestClose = ()=>{ setClosing(true); setTimeout(()=>{ setClosing(false); onClose?.() }, 220) }
+  const set = (k,v)=> setData((d)=>({ ...d, [k]: v }))
+  const canSave = data.role && data.type && data.org && (data.current || (data.start && data.end))
+  return (
+    <div className="fixed inset-0 z-50">
+      <div className={`absolute inset-0 bg-black/30 ${closing ? 'animate-[fadeOut_.2s_ease-in_forwards]' : 'animate-[fadeIn_.25s_ease-out_forwards]'}`} onClick={requestClose} />
+      <aside className={`absolute top-16 right-5 bottom-5 w-[600px] bg-white shadow-2xl border border-[#E6E6E6] rounded-xl overflow-hidden ${closing ? 'animate-[drawerOut_.22s_ease-in_forwards]' : 'animate-[drawerIn_.25s_ease-out_forwards]'}`} role="dialog" aria-modal="true">
+        <div className="px-3 py-2 border-b border-[#EFEFEF] flex items-center justify-between">
+          <h3 className="text-[16px] font-semibold text-[#424242]">Add Experience</h3>
+          <div className="flex items-center gap-3">
+            <button disabled={!canSave} onClick={()=> canSave && onSave?.(data)} className={'text-xs md:text-sm h-8 px-3 rounded-md transition ' + (!canSave ? 'bg-[#F2F2F2] text-[#9AA1A9] cursor-not-allowed' : 'bg-[#2F66F6] text-white hover:bg-[#1e4cd8]')}>Save</button>
+            <button onClick={requestClose} className="w-8 h-8 rounded-full grid place-items-center hover:bg-gray-100" aria-label="Close">✕</button>
+          </div>
+        </div>
+  <div className="p-3 overflow-y-auto  grid grid-cols-1 gap-2">
+          <label className="block"><FieldLabel required>Job Title</FieldLabel><TextInput placeholder="General Physician - CEO" value={data.role} onChange={(e)=>set('role', e.target.value)} /></label>
+          <label className="block"><FieldLabel required>Employment Type</FieldLabel><SelectInput value={data.type} onChange={(e)=>set('type', e.target.value)}><option value="" disabled>Select</option><option>Full-Time</option><option>Part-Time</option><option>Contract</option></SelectInput></label>
+          <label className="block"><FieldLabel required>Hospital or Clinic Name</FieldLabel><TextInput placeholder="Chauhan Clinic, Akola" value={data.org} onChange={(e)=>set('org', e.target.value)} /></label>
+          <div className="grid grid-cols-2 gap-3 items-end">
+            <label className="block"><FieldLabel required>Start Date</FieldLabel><TextInput placeholder="Aug, 2014" value={data.start} onChange={(e)=>set('start', e.target.value)} /></label>
+            <label className="block"><FieldLabel required>End Date</FieldLabel><TextInput placeholder="Present or Aug, 2018" value={data.end} onChange={(e)=>set('end', e.target.value)} disabled={data.current} /></label>
+          </div>
+          <label className="inline-flex items-center gap-2 text-[13px] text-[#424242]"><input type="checkbox" checked={data.current} onChange={(e)=>set('current', e.target.checked)} /> I am currently working in this role</label>
+          <label className="block"><FieldLabel>Location</FieldLabel><TextInput placeholder="Akola, Maharashtra" value={data.location} onChange={(e)=>set('location', e.target.value)} /></label>
+          <div>
+            <FieldLabel>Description</FieldLabel>
+            <div className="border border-gray-200 rounded-md">
+              <div className="px-2 py-1 border-b border-gray-200 text-gray-600 text-sm flex items-center gap-2"><button className="hover:text-gray-900">✎</button><button className="hover:text-gray-900 font-bold">B</button><button className="hover:text-gray-900 italic">I</button><button className="hover:text-gray-900 underline">U</button><button className="hover:text-gray-900">•</button></div>
+              <textarea className="w-full min-h-[120px] p-3 text-sm outline-none" value={data.desc} onChange={(e)=>set('desc', e.target.value)} />
+              <div className="px-3 pb-2 text-[12px] text-gray-500 text-right">{data.desc.length}/800</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  )
+}
+
+// Drawer: Award
+const AwardDrawer = ({ open, onClose, onSave }) => {
+  const [closing, setClosing] = useState(false)
+  const [data, setData] = useState({ title: '', issuer: '', with: '', date: '', url: '', desc: '' })
+  useEffect(()=>{ if(open){ setData({ title: '', issuer: '', with: '', date: '', url: '', desc: '' })}}, [open])
+  if(!open && !closing) return null
+  const requestClose = ()=>{ setClosing(true); setTimeout(()=>{ setClosing(false); onClose?.() }, 220) }
+  const set = (k,v)=> setData((d)=>({ ...d, [k]: v }))
+  const canSave = data.title && data.issuer && data.date
+  return (
+    <div className="fixed inset-0 z-50">
+      <div className={`absolute inset-0 bg-black/30 ${closing ? 'animate-[fadeOut_.2s_ease-in_forwards]' : 'animate-[fadeIn_.25s_ease-out_forwards]'}`} onClick={requestClose} />
+      <aside className={`absolute top-16 right-5 bottom-5 w-[600px] bg-white shadow-2xl border border-[#E6E6E6] rounded-xl overflow-hidden ${closing ? 'animate-[drawerOut_.22s_ease-in_forwards]' : 'animate-[drawerIn_.25s_ease-out_forwards]'}`} role="dialog" aria-modal="true">
+        <div className="px-3 py-2 border-b border-[#EFEFEF] flex items-center justify-between">
+          <h3 className="text-[16px] font-semibold text-[#424242]">Add Award</h3>
+          <div className="flex items-center gap-3"><button disabled={!canSave} onClick={()=>canSave && onSave?.(data)} className={'text-xs md:text-sm h-8 px-3 rounded-md transition ' + (!canSave ? 'bg-[#F2F2F2] text-[#9AA1A9] cursor-not-allowed' : 'bg-[#2F66F6] text-white hover:bg-[#1e4cd8]')}>Save</button><button onClick={requestClose} className="w-8 h-8 rounded-full grid place-items-center hover:bg-gray-100" aria-label="Close">✕</button></div>
+        </div>
+  <div className="p-3 overflow-y-auto  grid grid-cols-1 gap-2">
+          <label className="block"><FieldLabel required>Award Name</FieldLabel><TextInput placeholder="Best Resident" value={data.title} onChange={(e)=>set('title', e.target.value)} /></label>
+          <label className="block"><FieldLabel required>Issuer Name</FieldLabel><TextInput placeholder="Manipal Hospital" value={data.issuer} onChange={(e)=>set('issuer', e.target.value)} /></label>
+          <label className="block"><FieldLabel>Associated With</FieldLabel><TextInput placeholder="Association/Group/Department" value={data.with} onChange={(e)=>set('with', e.target.value)} /></label>
+          <label className="block"><FieldLabel required>Issue Date</FieldLabel><TextInput type="date" value={data.date} onChange={(e)=>set('date', e.target.value)} /></label>
+          <label className="block"><FieldLabel>Award URL</FieldLabel><TextInput placeholder="https://..." value={data.url} onChange={(e)=>set('url', e.target.value)} /></label>
+          <div>
+            <FieldLabel>Description</FieldLabel>
+            <div className="border border-gray-200 rounded-md">
+              <div className="px-2 py-1 border-b border-gray-200 text-gray-600 text-sm flex items-center gap-2"><button className="hover:text-gray-900">✎</button><button className="hover:text-gray-900 font-bold">B</button><button className="hover:text-gray-900 italic">I</button><button className="hover:text-gray-900 underline">U</button><button className="hover:text-gray-900">•</button></div>
+              <textarea className="w-full min-h-[100px] p-3 text-sm outline-none" value={data.desc} onChange={(e)=>set('desc', e.target.value)} />
+              <div className="px-3 pb-2 text-[12px] text-gray-500 text-right">{data.desc.length}/500</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  )
+}
+
+// Drawer: Publication
+const PublicationDrawer = ({ open, onClose, onSave }) => {
+  const [closing, setClosing] = useState(false)
+  const [data, setData] = useState({ title: '', publisher: '', citation: '', date: '', url: '', desc: '' })
+  useEffect(()=>{ if(open){ setData({ title: '', publisher: '', citation: '', date: '', url: '', desc: '' })}}, [open])
+  if(!open && !closing) return null
+  const requestClose = ()=>{ setClosing(true); setTimeout(()=>{ setClosing(false); onClose?.() }, 220) }
+  const set = (k,v)=> setData((d)=>({ ...d, [k]: v }))
+  const canSave = data.title && data.publisher && data.date
+  return (
+    <div className="fixed inset-0 z-50">
+      <div className={`absolute inset-0 bg-black/30 ${closing ? 'animate-[fadeOut_.2s_ease-in_forwards]' : 'animate-[fadeIn_.25s_ease-out_forwards]'}`} onClick={requestClose} />
+      <aside className={`absolute top-16 right-5 bottom-5 w-[600px] bg-white shadow-2xl border border-[#E6E6E6] rounded-xl overflow-hidden ${closing ? 'animate-[drawerOut_.22s_ease-in_forwards]' : 'animate-[drawerIn_.25s_ease-out_forwards]'}`} role="dialog" aria-modal="true">
+        <div className="px-3 py-2 border-b border-[#EFEFEF] flex items-center justify-between">
+          <h3 className="text-[16px] font-semibold text-[#424242]">Add Publication</h3>
+          <div className="flex items-center gap-3"><button disabled={!canSave} onClick={()=>canSave && onSave?.(data)} className={'text-xs md:text-sm h-8 px-3 rounded-md transition ' + (!canSave ? 'bg-[#F2F2F2] text-[#9AA1A9] cursor-not-allowed' : 'bg-[#2F66F6] text-white hover:bg-[#1e4cd8]')}>Save</button><button onClick={requestClose} className="w-8 h-8 rounded-full grid place-items-center hover:bg-gray-100" aria-label="Close">✕</button></div>
+        </div>
+  <div className="p-3 overflow-y-auto  grid grid-cols-1 gap-2">
+          <label className="block"><FieldLabel required>Title</FieldLabel><TextInput placeholder="Title" value={data.title} onChange={(e)=>set('title', e.target.value)} /></label>
+          <label className="block"><FieldLabel required>Publication / Publisher</FieldLabel><TextInput placeholder="Publisher" value={data.publisher} onChange={(e)=>set('publisher', e.target.value)} /></label>
+          <label className="block"><FieldLabel>Citation</FieldLabel><TextInput placeholder="APA/MLA or reference" value={data.citation} onChange={(e)=>set('citation', e.target.value)} /></label>
+          <label className="block"><FieldLabel required>Publication Date</FieldLabel><TextInput type="date" value={data.date} onChange={(e)=>set('date', e.target.value)} /></label>
+          <label className="block"><FieldLabel>Publication URL</FieldLabel><TextInput placeholder="https://..." value={data.url} onChange={(e)=>set('url', e.target.value)} /></label>
+          <div>
+            <FieldLabel>Description</FieldLabel>
+            <div className="border border-gray-200 rounded-md">
+              <div className="px-2 py-1 border-b border-gray-200 text-gray-600 text-sm flex items-center gap-2"><button className="hover:text-gray-900">✎</button><button className="hover:text-gray-900 font-bold">B</button><button className="hover:text-gray-900 italic">I</button><button className="hover:text-gray-900 underline">U</button><button className="hover:text-gray-900">•</button></div>
+              <textarea className="w-full min-h-[100px] p-3 text-sm outline-none" value={data.desc} onChange={(e)=>set('desc', e.target.value)} />
+              <div className="px-3 pb-2 text-[12px] text-gray-500 text-right">{data.desc.length}/500</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  )
+}
+
+// Drawer: Professional Details (Registration)
+const ProfessionalDrawer = ({ open, onClose, initial, onSave }) => {
+  const [closing, setClosing] = useState(false)
+  const [form, setForm] = useState(initial || { mrn: '', year: '', council: '', proof: '' })
+  useEffect(()=>{ setForm(initial || { mrn: '', year: '', council: '', proof: '' }) }, [initial, open])
+  if(!open && !closing) return null
+  const requestClose = ()=>{ setClosing(true); setTimeout(()=>{ setClosing(false); onClose?.() }, 220) }
+  const set = (k,v)=> setForm((f)=>({ ...f, [k]: v }))
+  const canSave = form.mrn && form.year && form.council
+  return (
+    <div className="fixed inset-0 z-50">
+      <div className={`absolute inset-0 bg-black/30 ${closing ? 'animate-[fadeOut_.2s_ease-in_forwards]' : 'animate-[fadeIn_.25s_ease-out_forwards]'}`} onClick={requestClose} />
+      <aside className={`absolute top-16 right-5 bottom-5 w-[600px] bg-white shadow-2xl border border-[#E6E6E6] rounded-xl overflow-hidden ${closing ? 'animate-[drawerOut_.22s_ease-in_forwards]' : 'animate-[drawerIn_.25s_ease-out_forwards]'}`} role="dialog" aria-modal="true">
+        <div className="px-3 py-2 border-b border-[#EFEFEF] flex items-center justify-between">
+          <h3 className="text-[16px] font-semibold text-[#424242]">Edit Professional Details</h3>
+          <div className="flex items-center gap-3"><button disabled={!canSave} onClick={()=>canSave && onSave?.(form)} className={'text-xs md:text-sm h-8 px-3 rounded-md transition ' + (!canSave ? 'bg-[#F2F2F2] text-[#9AA1A9] cursor-not-allowed' : 'bg-[#2F66F6] text-white hover:bg-[#1e4cd8]')}>Save</button><button onClick={requestClose} className="w-8 h-8 rounded-full grid place-items-center hover:bg-gray-100" aria-label="Close">✕</button></div>
+        </div>
+  <div className="p-3 overflow-y-auto grid grid-cols-1 gap-2">
+          <label className="block"><FieldLabel required>Medical Council Registration Number</FieldLabel><TextInput value={form.mrn} onChange={(e)=>set('mrn', e.target.value)} /></label>
+          <label className="block"><FieldLabel required>Registration Year</FieldLabel><TextInput value={form.year} onChange={(e)=>set('year', e.target.value)} placeholder="2015" /></label>
+          <label className="block"><FieldLabel required>Registration Council</FieldLabel><TextInput value={form.council} onChange={(e)=>set('council', e.target.value)} placeholder="Maharashtra Medical Council" /></label>
+          <div>
+            <FieldLabel>Upload Proof</FieldLabel>
+            <div className="mt-1 h-[32px] border border-gray-300 rounded-lg flex items-center justify-between px-2 text-sm">
+              <div className="text-gray-600">{form.proof || 'Upload File'}</div>
+              <button className="text-blue-600 text-xs" onClick={(e)=>{e.preventDefault(); set('proof','MRN Proof.pdf')}}>Upload</button>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  )
+}
+
+// Drawer: Practice Details
+const PracticeDrawer = ({ open, onClose, initial, onSave }) => {
+  const [closing, setClosing] = useState(false)
+  const [form, setForm] = useState(initial || { experience: '', type: '', specialization: '', areas: [] })
+  useEffect(()=>{ setForm(initial || { experience: '', type: '', specialization: '', areas: [] }) }, [initial, open])
+  if(!open && !closing) return null
+  const requestClose = ()=>{ setClosing(true); setTimeout(()=>{ setClosing(false); onClose?.() }, 220) }
+  const set = (k,v)=> setForm((f)=>({ ...f, [k]: v }))
+  const toggleArea = (a)=> setForm((f)=> ({ ...f, areas: f.areas.includes(a) ? f.areas.filter(x=>x!==a) : [...f.areas, a] }))
+  const canSave = form.experience && form.type && form.specialization
+  const areaOptions = ['Cough','Cold','Headache','Nausea','Dizziness','Muscle Pain','Sore Throat']
+  return (
+    <div className="fixed inset-0 z-50">
+      <div className={`absolute inset-0 bg-black/30 ${closing ? 'animate-[fadeOut_.2s_ease-in_forwards]' : 'animate-[fadeIn_.25s_ease-out_forwards]'}`} onClick={requestClose} />
+      <aside className={`absolute top-16 right-5 bottom-5 w-[600px] bg-white shadow-2xl border border-[#E6E6E6] rounded-xl overflow-hidden ${closing ? 'animate-[drawerOut_.22s_ease-in_forwards]' : 'animate-[drawerIn_.25s_ease-out_forwards]'}`} role="dialog" aria-modal="true">
+        <div className="px-4 py-3 border-b border-[#EFEFEF] flex items-center justify-between">
+          <h3 className="text-[16px] font-semibold text-[#424242]">Edit Practice Details</h3>
+          <div className="flex items-center gap-3"><button disabled={!canSave} onClick={()=>canSave && onSave?.(form)} className={'text-xs md:text-sm h-8 px-3 rounded-md transition ' + (!canSave ? 'bg-[#F2F2F2] text-[#9AA1A9] cursor-not-allowed' : 'bg-[#2F66F6] text-white hover:bg-[#1e4cd8]')}>Save</button><button onClick={requestClose} className="w-8 h-8 rounded-full grid place-items-center hover:bg-gray-100" aria-label="Close">✕</button></div>
+        </div>
+        <div className="p-4 overflow-y-auto  grid grid-cols-1 gap-3">
+          <label className="block"><FieldLabel required>Work Experience</FieldLabel><div className="flex items-center gap-2"><TextInput placeholder="20" value={form.experience} onChange={(e)=>set('experience', e.target.value)} className="!mt-0" /><span className="text-xs text-gray-500">Years</span></div></label>
+          <label className="block"><FieldLabel required>Medical Practice Type</FieldLabel><SelectInput value={form.type} onChange={(e)=>set('type', e.target.value)}><option value="" disabled>Select</option><option>Homeopathy</option><option>Allopathy</option><option>Ayurveda</option></SelectInput></label>
+          <label className="block"><FieldLabel required>Specialization</FieldLabel><TextInput placeholder="General Medicine (Exp: 19 years)" value={form.specialization} onChange={(e)=>set('specialization', e.target.value)} /></label>
+          <div>
+            <FieldLabel>Practice Area</FieldLabel>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {areaOptions.map((a)=> (
+                <button key={a} type="button" onClick={()=>toggleArea(a)} className={`px-2 h-7 rounded-md border text-[12px] ${form.areas.includes(a) ? 'bg-[#EAF2FF] border-[#BFD3FF] text-[#2F66F6]' : 'bg-white border-[#E6E6E6] text-[#424242] hover:bg-gray-50'}`}>{a}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  )
+}
 
 // ======== Staff Permissions (copied inline; not linked) ========
 const StaffTab = () => {
@@ -213,12 +668,14 @@ const StaffTab = () => {
   const InviteStaffDrawer = ({ open, onClose, onSend }) => {
     const [mode, setMode] = useState('individual')
     const [rows, setRows] = useState([{ id: 0, fullName: '', email: '', phone: '', position: '', role: '' }])
+    const [closing, setClosing] = useState(false)
     useEffect(() => {
-      const onEsc = (e) => e.key === 'Escape' && onClose()
+      const onEsc = (e) => e.key === 'Escape' && requestClose()
       window.addEventListener('keydown', onEsc)
       return () => window.removeEventListener('keydown', onEsc)
-    }, [onClose])
-    if (!open) return null
+    }, [])
+    if (!open && !closing) return null
+    const requestClose = () => { setClosing(true); setTimeout(()=>{ setClosing(false); onClose?.() }, 220) }
     const removeRow = (id) => setRows((r) => (r.length > 1 ? r.filter((x) => x.id !== id) : r))
     const addRow = () => setRows((r) => [...r, { id: (r[r.length - 1]?.id ?? 0) + 1, fullName: '', email: '', phone: '', position: '', role: '' }])
     const onChangeRow = (id, field, value) => setRows((r) => r.map((row) => (row.id === id ? { ...row, [field]: value } : row)))
@@ -226,16 +683,16 @@ const StaffTab = () => {
     const allValid = rows.every((x) => x.fullName && emailOk(x.email) && x.phone && x.position && x.role)
     return (
       <div className="fixed inset-0 z-50">
-        <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-        <aside className="absolute top-16 right-5 bottom-5 w-full max-w-[600px] bg-white shadow-2xl border border-[#E6E6E6] rounded-xl overflow-hidden animate-[slideIn_.3s_ease-out_forwards]" role="dialog" aria-modal="true">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#EFEFEF]">
+        <div className={`absolute inset-0 bg-black/30 ${closing ? 'animate-[fadeOut_.2s_ease-in_forwards]' : 'animate-[fadeIn_.25s_ease-out_forwards]'}`} onClick={requestClose} />
+        <aside className={`absolute top-16 right-5 bottom-5 w-[600px] bg-white shadow-2xl border border-[#E6E6E6] rounded-xl overflow-hidden ${closing ? 'animate-[drawerOut_.22s_ease-in_forwards]' : 'animate-[drawerIn_.25s_ease-out_forwards]'}`} role="dialog" aria-modal="true">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-[#EFEFEF]">
             <h3 className="text-[16px] font-semibold text-[#424242]">Invite Staff</h3>
             <div className="flex items-center gap-3">
               <button disabled={!allValid} className={'text-xs md:text-sm h-8 px-3 rounded-md transition ' + (!allValid ? 'bg-[#F2F2F2] text-[#9AA1A9] cursor-not-allowed' : 'bg-[#2F66F6] text-white hover:bg-[#1e4cd8]')} onClick={() => allValid && onSend(rows)}>Send Invite</button>
-              <button onClick={onClose} className="w-8 h-8 rounded-full grid place-items-center hover:bg-gray-100" aria-label="Close">✕</button>
+              <button onClick={requestClose} className="w-8 h-8 rounded-full grid place-items-center hover:bg-gray-100" aria-label="Close">✕</button>
             </div>
           </div>
-          <div className="p-4 flex flex-col gap-3 overflow-y-auto h-[calc(100%-56px)]">
+          <div className="p-3 flex flex-col gap-3 overflow-y-auto h-[calc(100%-48px)]">
             <InfoBanner />
             <div className="flex items-center gap-6 text-[13px] text-[#424242]">
               <label className="inline-flex items-center gap-2"><input type="radio" name="invite-mode" checked={mode==='individual'} onChange={() => setMode('individual')} />Individual Invite</label>
@@ -268,8 +725,7 @@ const StaffTab = () => {
               <button onClick={addRow} className="text-[13px] font-medium text-[#2F66F6] hover:text-[#1e4cd8]">Add More Staff Members</button>
             </div>
           </div>
-        </aside>
-        <style>{`@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0%); } }`}</style>
+  </aside>
       </div>
     )
   }
@@ -278,6 +734,7 @@ const StaffTab = () => {
     const [name, setName] = useState('')
     const [desc, setDesc] = useState('')
     const [checked, setChecked] = useState({})
+    const [closing, setClosing] = useState(false)
     const groups = [
       { key: 'patient', title: 'Patient Management', items: [
         { k: 'read_patient', label: 'Read Patient Record' },
@@ -309,7 +766,8 @@ const StaffTab = () => {
         { k: 'staff_manage', label: 'Manage Staff' },
       ]},
     ]
-    if (!open) return null
+  if (!open && !closing) return null
+  const requestClose = () => { setClosing(true); setTimeout(()=>{ setClosing(false); onClose?.() }, 220) }
     const toggle = (k) => setChecked((c) => ({ ...c, [k]: !c[k] }))
     const groupAll = (gKey, value) => {
       const up = { ...checked }
@@ -321,16 +779,16 @@ const StaffTab = () => {
     const canCreate = name.trim().length > 0 && selectedCount > 0
     return (
       <div className="fixed inset-0 z-50">
-        <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-        <aside className="absolute top-16 right-5 bottom-5 w-full max-w-[600px] bg-white shadow-2xl border border-[#E6E6E6] rounded-xl overflow-hidden animate-[slideIn_.3s_ease-out_forwards]" role="dialog" aria-modal="true">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#EFEFEF]">
+        <div className={`absolute inset-0 bg-black/30 ${closing ? 'animate-[fadeOut_.2s_ease-in_forwards]' : 'animate-[fadeIn_.25s_ease-out_forwards]'}`} onClick={requestClose} />
+        <aside className={`absolute top-16 right-5 bottom-5 w-[600px] bg-white shadow-2xl border border-[#E6E6E6] rounded-xl overflow-hidden ${closing ? 'animate-[drawerOut_.22s_ease-in_forwards]' : 'animate-[drawerIn_.25s_ease-out_forwards]'}`} role="dialog" aria-modal="true">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-[#EFEFEF]">
             <h3 className="text-[16px] font-semibold text-[#424242]">Create User Role</h3>
             <div className="flex items-center gap-3">
               <button disabled={!canCreate} className={'text-xs md:text-sm h-8 px-3 rounded-md transition ' + (!canCreate ? 'bg-[#F2F2F2] text-[#9AA1A9] cursor-not-allowed' : 'bg-[#2F66F6] text-white hover:bg-[#1e4cd8]')} onClick={() => canCreate && onCreate({ name, subtitle: 'Limited System Access', staffCount: 0, permissions: selectedCount, created: new Date().toLocaleDateString('en-GB'), icon: 'clipboard', description: desc })}>Create</button>
-              <button onClick={onClose} className="w-8 h-8 rounded-full grid place-items-center hover:bg-gray-100" aria-label="Close">✕</button>
+              <button onClick={requestClose} className="w-8 h-8 rounded-full grid place-items-center hover:bg-gray-100" aria-label="Close">✕</button>
             </div>
           </div>
-          <div className="px-3 py-2 flex flex-col gap-2 overflow-y-auto h-[calc(100%-56px)]">
+          <div className="px-3 py-2 flex flex-col gap-2 overflow-y-auto h-[calc(100%-48px)]">
             <label className="block"><span className="text-[12px] text-[#424242] font-medium">Role Name <span className="text-red-500">*</span></span><input value={name} onChange={(e)=>setName(e.target.value)} placeholder="Enter staff full name" className="w-full h-9 px-3 mt-1 rounded-md border border-[#E6E6E6] focus:border-[#BFD3FF] focus:ring-2 focus:ring-[#EAF2FF] outline-none text-sm" /></label>
             <label className="block"><span className="text-[12px] text-[#424242] font-medium">Description</span><textarea value={desc} onChange={(e)=>setDesc(e.target.value)} placeholder="Describe the role" rows={3} className="w-full px-3 py-2 mt-1 rounded-md border border-[#E6E6E6] focus:border-[#BFD3FF] focus:ring-2 focus:ring-[#EAF2FF] outline-none text-sm" /></label>
             <div><div className="text-[12px] text-[#424242] font-medium">Permissions <span className="text-red-500">*</span></div>
@@ -354,8 +812,7 @@ const StaffTab = () => {
               </div>
             </div>
           </div>
-        </aside>
-        <style>{`@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0%); } }`}</style>
+  </aside>
       </div>
     )
   }
@@ -488,7 +945,7 @@ const Doc_settings = () => {
   }
 
   // Mocked data for UI scaffolding (replace with real API later)
-  const profile = useMemo(() => ({
+  const initialProfile = useMemo(() => ({
     name: 'Dr. Milind Chauhan',
     firstName: 'Milind',
     lastName: 'Chauhan',
@@ -555,9 +1012,18 @@ const Doc_settings = () => {
       { title: 'Best Plasticene Award', org: 'Manipal hospital', date: 'May, 2017', link: 'Certificate' },
     ],
   }), [])
+  const [profile, setProfile] = useState(initialProfile)
+  const [basicOpen, setBasicOpen] = useState(false)
+  const [eduOpen, setEduOpen] = useState(false)
+  const [expOpen, setExpOpen] = useState(false)
+  const [awardOpen, setAwardOpen] = useState(false)
+  const [pubOpen, setPubOpen] = useState(false)
+  const [profOpen, setProfOpen] = useState(false)
+  const [practiceOpen, setPracticeOpen] = useState(false)
 
   return (
     <div className="px-6 pb-10">
+      <DrawerKeyframes />
       {/* Top banner + centered avatar + tabs (as in screenshot) */}
       <div className="-mx-6">
         <div className="relative">
@@ -605,7 +1071,7 @@ const Doc_settings = () => {
             <SectionCard
               title="Basic Info"
               subtitle="Visible to Patient"
-              action={<button className="text-blue-600 text-sm inline-flex items-center gap-1"><Pencil size={14}/> Edit</button>}
+              action={<button onClick={()=>setBasicOpen(true)} className="text-blue-600 text-sm inline-flex items-center gap-1"><Pencil size={14}/> Edit</button>}
             >
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3 text-[13px]">
@@ -614,7 +1080,7 @@ const Doc_settings = () => {
                   <InfoField label="Mobile Number" value={profile.phone} right={<span className="inline-flex items-center text-green-600 text-[12px]"><CheckCircle2 size={14} className="mr-1"/>Verified</span>} />
                   <InfoField label="Email" value={profile.email} right={<span className="inline-flex items-center text-green-600 text-[12px]"><CheckCircle2 size={14} className="mr-1"/>Verified</span>} />
                   <InfoField label="Gender" value={profile.gender} />
-                  <InfoField label="Gender" value={profile.languages?.join(' ')} />
+                  <InfoField label="Language" value={profile.languages?.join(' ')} />
                   <InfoField label="City" value={profile.city} />
                   <InfoField label="Website" value={profile.website} />
                 </div>
@@ -634,7 +1100,9 @@ const Doc_settings = () => {
             <SectionCard
               title="Educational Details"
               subtitle="Visible to Patient"
-              action={<button className="text-blue-600 text-sm inline-flex items-center gap-1"><Upload size={14}/> Add</button>}
+              action={<div className="flex items-center gap-2">
+                <button onClick={()=>setEduOpen(true)} className="text-blue-600 text-sm inline-flex items-center gap-1"><Upload size={14}/> Add</button>
+              </div>}
             >
               <div className="space-y-3">
                 {profile.education.map((ed, idx) => (
@@ -656,7 +1124,7 @@ const Doc_settings = () => {
               </div>
             </SectionCard>
 
-            <SectionCard title="Awards & Publications" subtitle="Visible to Patient" action={<button className="text-blue-600 text-sm inline-flex items-center gap-1"><Upload size={14}/> Add</button>}>
+            <SectionCard title="Awards & Publications" subtitle="Visible to Patient" action={<div className="flex items-center gap-2"><button onClick={()=>setAwardOpen(true)} className="text-blue-600 text-sm inline-flex items-center gap-1"><Upload size={14}/> Add Award</button><button onClick={()=>setPubOpen(true)} className="text-blue-600 text-sm inline-flex items-center gap-1"><Upload size={14}/> Add Publication</button></div>}>
               <div className="space-y-3">
                 {profile.awards.map((aw, i) => (
                   <div key={i} className="p-3 border border-gray-200 rounded-md">
@@ -666,6 +1134,21 @@ const Doc_settings = () => {
                     <a className="text-[12px] text-blue-600" href="#" onClick={(e)=>e.preventDefault()}>{aw.link} ↗</a>
                   </div>
                 ))}
+                {profile.publications?.length ? (
+                  <div className="pt-1">
+                    <div className="text-[12px] text-gray-500 mb-1">Publications</div>
+                    <div className="space-y-2">
+                      {profile.publications.map((p, idx)=>(
+                        <div key={idx} className="p-3 border border-gray-200 rounded-md">
+                          <div className="text-sm text-gray-900 font-medium">{p.title}</div>
+                          <div className="text-[12px] text-gray-600">{p.publisher}</div>
+                          <div className="text-[12px] text-gray-600">{p.date}</div>
+                          {p.url && <a className="text-[12px] text-blue-600" href={p.url} target="_blank" rel="noreferrer">Link ↗</a>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </SectionCard>
           </div>
@@ -675,10 +1158,10 @@ const Doc_settings = () => {
             <SectionCard
               title="Professional Details"
               subtitle="Visible to Patient"
-              action={<button className="text-blue-600 text-sm inline-flex items-center gap-1"><Pencil size={14}/> Edit</button>}
             >
               <div className="grid grid-cols-12 gap-2 text-[13px]">
                 <div className="col-span-12 text-[12px] text-gray-500">Medical Registration Details</div>
+                <div className="col-span-12 -mt-1 text-[12px] text-[#6B7280]">To change your MRN proof please <a className="text-[#2F66F6]" href="#" onClick={(e)=>e.preventDefault()}>Call Us</a></div>
                 <div className="col-span-12 md:col-span-6 space-y-3">
                   <InfoField label="Medical Council Registration Number" value={profile.registration.mrn} />
                   <InfoField label="Registration Year" value={profile.registration.year} />
@@ -692,7 +1175,7 @@ const Doc_settings = () => {
               </div>
             </SectionCard>
 
-            <SectionCard title="Practice Details">
+            <SectionCard title="Practice Details" action={<button onClick={()=>setPracticeOpen(true)} className="text-blue-600 text-sm inline-flex items-center gap-1"><Pencil size={14}/> Edit</button>}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <InfoField label="Work Experience" value={profile.practice.experience} />
                 <InfoField label="Medical Practice Type" value={profile.practice.type} />
@@ -708,7 +1191,7 @@ const Doc_settings = () => {
               </div>
             </SectionCard>
 
-            <SectionCard title="Experience Details" subtitle="Visible to Patient" action={<button className="text-blue-600 text-sm inline-flex items-center gap-1"><Upload size={14}/> Add</button>}>
+            <SectionCard title="Experience Details" subtitle="Visible to Patient" action={<button onClick={()=>setExpOpen(true)} className="text-blue-600 text-sm inline-flex items-center gap-1"><Upload size={14}/> Add</button>}>
               <div className="space-y-3">
                 {profile.experienceList.map((ex, idx) => (
                   <div key={idx} className="p-3 border border-gray-200 rounded-md">
@@ -925,6 +1408,70 @@ const Doc_settings = () => {
       ) : (
         <div className="mt-6 text-sm text-gray-600">This section is under construction.</div>
       )}
+
+      {/* Drawer: Edit Basic Info */}
+      <BasicInfoDrawer
+        open={basicOpen}
+        onClose={()=>setBasicOpen(false)}
+        initial={profile}
+        onSave={(data) => { setProfile((p) => ({ ...p, ...data, name: `Dr. ${data.firstName} ${data.lastName}` })); setBasicOpen(false) }}
+      />
+
+      {/* Drawer: Education */}
+      <EducationDrawer
+        open={eduOpen}
+        onClose={()=>setEduOpen(false)}
+        onSave={(ed)=>{
+          setProfile((p)=> ({ ...p, education: [{ title: ed.degree, tag: ed.gradType, college: ed.school, duration: `${ed.start} - ${ed.end}`, certificate: ed.proof || 'Degree_Certificate.pdf' }, ...(p.education||[]) ] }))
+          setEduOpen(false)
+        }}
+      />
+
+      {/* Drawer: Experience */}
+      <ExperienceDrawer
+        open={expOpen}
+        onClose={()=>setExpOpen(false)}
+        onSave={(ex)=>{
+          setProfile((p)=> ({ ...p, experienceList: [{ role: ex.role, type: ex.type, org: ex.org, duration: ex.current ? `${ex.start} – Present` : `${ex.start} – ${ex.end}`, location: ex.location || p.practice?.city || 'Akola, Maharashtra', desc: ex.desc }, ...(p.experienceList||[]) ] }))
+          setExpOpen(false)
+        }}
+      />
+
+      {/* Drawer: Award */}
+      <AwardDrawer
+        open={awardOpen}
+        onClose={()=>setAwardOpen(false)}
+        onSave={(aw)=>{
+          setProfile((p)=> ({ ...p, awards: [{ title: aw.title, org: aw.issuer, date: new Date(aw.date).toLocaleDateString('en-GB') || aw.date, link: aw.url ? 'Link' : 'Certificate' }, ...(p.awards||[]) ] }))
+          setAwardOpen(false)
+        }}
+      />
+
+      {/* Drawer: Publication */}
+      <PublicationDrawer
+        open={pubOpen}
+        onClose={()=>setPubOpen(false)}
+        onSave={(pub)=>{
+          setProfile((p)=> ({ ...p, publications: [{ title: pub.title, publisher: pub.publisher, date: new Date(pub.date).toLocaleDateString('en-GB') || pub.date, url: pub.url }, ...(p.publications||[]) ] }))
+          setPubOpen(false)
+        }}
+      />
+
+      {/* Drawer: Professional Details */}
+      <ProfessionalDrawer
+        open={profOpen}
+        onClose={()=>setProfOpen(false)}
+        initial={profile.registration}
+        onSave={(reg)=>{ setProfile((p)=> ({ ...p, registration: { ...p.registration, ...reg } })); setProfOpen(false) }}
+      />
+
+      {/* Drawer: Practice Details */}
+      <PracticeDrawer
+        open={practiceOpen}
+        onClose={()=>setPracticeOpen(false)}
+        initial={profile.practice}
+        onSave={(pr)=>{ setProfile((p)=> ({ ...p, practice: { ...p.practice, ...pr } })); setPracticeOpen(false) }}
+      />
     </div>
   )
 }
