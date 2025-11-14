@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react'
 import Button from '../Button'
-import { loginPassword, loginOtpStart, loginOtpVerify } from '../../services/authService'
+import { loginPassword, loginOtpStart, loginOtpVerify, getDoctorMe } from '../../services/authService'
 import useAuthStore from '../../store/useAuthStore'
 import { useNavigate } from 'react-router-dom'
 
@@ -40,7 +40,7 @@ const variantCopy = {
 
 export default function SignIn({ variant = 'neutral' }){
   const navigate = useNavigate()
-  const { setToken, setUser } = useAuthStore()
+  const { setToken, setUser, fetchDoctorDetails } = useAuthStore()
   const copy = variantCopy[variant] || variantCopy.neutral
   const [mode, setMode] = useState('password') // 'password' | 'mpin' | 'otp'
   const [remember, setRemember] = useState(true)
@@ -104,9 +104,10 @@ export default function SignIn({ variant = 'neutral' }){
       // Support nested response shapes: { data: { token, user } } or { data: { data: { token } } }
       const token = data?.token || data?.accessToken || data?.data?.token || data?.data?.data?.token
       const user = data?.user || data?.data?.user || data?.data?.data?.user || null
-      if (token) setToken(token)
-      if (user) setUser(user)
-      navigate('/doc', { replace: true })
+  if (token) setToken(token)
+  if (user) setUser(user)
+  await fetchDoctorDetails(getDoctorMe)
+  navigate('/doc', { replace: true })
     } catch (e) {
       const apiMsg = e?.response?.data?.message || e?.response?.data?.error || e?.message || 'OTP verification failed'
       setErrorMsg(String(apiMsg))
@@ -128,10 +129,10 @@ export default function SignIn({ variant = 'neutral' }){
       // Expecting token and optional user in response; adapt if different
       const token = data?.token || data?.accessToken || data?.data?.token
       const user = data?.user || data?.data?.user || null
-      if (token) setToken(token)
-      if (user) setUser(user)
-      // Redirect to a sensible default, e.g., dashboard or root
-      navigate('/doc', { replace: true })
+  if (token) setToken(token)
+  if (user) setUser(user)
+  await fetchDoctorDetails(getDoctorMe)
+  navigate('/doc', { replace: true })
     } catch (e) {
       const apiMsg = e?.response?.data?.message || e?.response?.data?.error || e?.message || 'Login failed'
       setErrorMsg(String(apiMsg))

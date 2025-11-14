@@ -1,3 +1,124 @@
-// FrontDesk Navbar reusing Doctor navbar UI
-import DocNavbar from '../../DoctorModule/Components/DocNavbar';
-export default DocNavbar;
+import { Search, Mail, Phone, User, HelpCircle, LogOut, ChevronRight } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { bell } from '../../../public/index.js';
+import useAuthStore from '../../store/useAuthStore';
+import AvatarCircle from '../../components/AvatarCircle';
+
+const Partition = () => (
+	<div className='w-[8.5px] h-[20px] flex gap-[10px] items-center justify-center'>
+		<div className='w-[0.5px] h-full bg-[#B8B8B8]'></div>
+	</div>
+);
+
+const FDNavbar = () => {
+	const navigate = useNavigate();
+	const searchRef = useRef(null);
+	const { user } = useAuthStore();
+	const [showProfile, setShowProfile] = useState(false);
+	const profileRef = useRef(null);
+
+	useEffect(() => {
+		const handler = (e) => {
+			if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+				e.preventDefault();
+				searchRef.current?.focus();
+			}
+		};
+		window.addEventListener('keydown', handler);
+		return () => window.removeEventListener('keydown', handler);
+	}, []);
+
+	useEffect(() => {
+		const onClick = (e) => { if (profileRef.current && !profileRef.current.contains(e.target)) setShowProfile(false); };
+		const onKey = (e) => { if (e.key === 'Escape') setShowProfile(false); };
+		document.addEventListener('mousedown', onClick);
+		window.addEventListener('keydown', onKey);
+		return () => { document.removeEventListener('mousedown', onClick); window.removeEventListener('keydown', onKey); };
+	}, []);
+
+	const displayName = user?.name || user?.firstName || 'FrontDesk';
+	const email = user?.emailId || user?.email || '—';
+	const phone = user?.phone || user?.contactNumber || '—';
+
+	return (
+		<div className='w-full h-12 border-b-[0.5px] border-[#D6D6D6] flex items-center px-4 gap-3'>
+			<div className='shrink-0'>
+				<span className='text-sm text-[#424242]'>Dashboard</span>
+			</div>
+			<div className='ml-auto'>
+				<div className='relative w-[360px] max-w-[60vw]'>
+					<Search className='absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-[#959595]' />
+					<input
+						ref={searchRef}
+						type='text'
+						placeholder='Search Patients'
+						className='w-full h-8 rounded border border-[#E3E3E3] bg-[#F9F9F9] pl-8 pr-16 text-sm text-[#424242] placeholder:text-[#959595] focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#2372EC]'
+					/>
+					<div className='absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-[#6B7280] border border-[#E5E7EB] rounded px-1 py-0.5 bg-white'>
+						Ctrl+/
+					</div>
+				</div>
+			</div>
+			<div className='flex items-center gap-2'>
+				<button
+					onClick={() => navigate('/register/patient')}
+					className='flex items-center bg-[#2372EC] px-3 h-8 rounded-[4px] gap-2 hover:bg-blue-600 transition-colors'
+				>
+					<span className='text-white text-sm font-medium'>Add New Patient</span>
+				</button>
+				<Partition />
+				<div className='w-7 h-7 p-1 relative'>
+					<div className='absolute -top-1 -right-1 flex items-center justify-center rounded-full w-[14px] h-[14px] bg-[#F04248]'>
+						<span className='font-medium text-[10px] text-white'>8</span>
+					</div>
+					<img src={bell} alt='Notifications' className='w-5 h-5' />
+				</div>
+				<Partition />
+				<div className='relative flex items-center gap-2' ref={profileRef}>
+					<span className='font-semibold text-base text-[#424242]'>{displayName?.split(' ')?.[0] || 'FrontDesk'}</span>
+					<button type='button' onClick={() => setShowProfile(v => !v)} className='cursor-pointer'>
+						<AvatarCircle name={displayName || 'FD'} size='s' color='orange' />
+					</button>
+					{showProfile && (
+						<div className='absolute top-10 right-0 w-72 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50'>
+							<div className='p-4 flex items-start gap-3'>
+								<AvatarCircle name={displayName || 'FD'} size='md' color='orange' />
+								<div className='flex flex-col'>
+									<div className='text-sm font-semibold text-gray-900'>{displayName || '—'}</div>
+									<div className='text-xs text-gray-600'>Front Desk User</div>
+								</div>
+							</div>
+							<div className='px-4 pb-3 space-y-2 text-xs'>
+								<div className='flex items-center gap-2 text-gray-700'>
+									<Mail className='w-4 h-4 text-[#597DC3]' />
+									<span className='truncate'>{email}</span>
+								</div>
+								<div className='flex items-center gap-2 text-gray-700'>
+									<Phone className='w-4 h-4 text-[#597DC3]' />
+									<span>{phone}</span>
+								</div>
+								<div className='flex items-center gap-2 text-gray-700'>
+									<User className='w-4 h-4 text-[#597DC3]' />
+									<span>Workspace</span>
+								</div>
+							</div>
+							<div className='border-t border-gray-200 divide-y text-sm'>
+								<button className='w-full flex items-center justify-between px-4 h-10 hover:bg-gray-50 text-gray-700'>
+									<span className='flex items-center gap-2 text-[13px]'><HelpCircle className='w-4 h-4 text-gray-500' /> Help Center</span>
+									<ChevronRight className='w-4 h-4 text-gray-400' />
+								</button>
+								<button className='w-full flex items-center justify-between px-4 h-10 hover:bg-gray-50 text-gray-700'>
+									<span className='flex items-center gap-2 text-[13px]'><LogOut className='w-4 h-4 text-gray-500' /> Logout</span>
+									<ChevronRight className='w-4 h-4 text-gray-400' />
+								</button>
+							</div>
+						</div>
+					)}
+				</div>
+			</div>
+		</div>
+	);
+};
+
+export default FDNavbar;

@@ -20,7 +20,7 @@ import PatientDetails from "./DoctorModule/Pages/Patients/PatientDetails";
 import Doc_settings from "./DoctorModule/Pages/Settings/Doc_settings";
 import FDLayout from "./FrontDeskModule/Components/Layout/FDLayout";
 import FDDashboard from "./FrontDeskModule/Pages/Dashboard/FDDashboard";
-import FDQueue from "./FrontDeskModule/Pages/Queue/Queue";
+import FDQueue from "./FrontDeskModule/Pages/Queue/FDQueue";
 import FDPatients from "./FrontDeskModule/Pages/Patients/Patient";
 import FDPatientDetails from "./FrontDeskModule/Pages/Patients/PatientDetails";
 import FDCalendar from "./FrontDeskModule/Pages/Calendar/Calendar";

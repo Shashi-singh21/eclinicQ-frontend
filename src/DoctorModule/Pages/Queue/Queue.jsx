@@ -1,12 +1,15 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Clock, Calendar, ChevronLeft, ChevronRight, ChevronDown, Bell, Sunrise, Sun, Sunset, Moon, X } from "lucide-react";
+// API imports removed for doctor static version
+import { Clock, Calendar, ChevronLeft, ChevronRight, ChevronDown, Sunrise, Sun, Sunset, Moon, X } from "lucide-react";
+import QueueDatePicker from '../../../components/QueueDatePicker';
 import AvatarCircle from '../../../components/AvatarCircle';
 import Button from '../../../components/Button';
 import Badge from '../../../components/Badge';
 import OverviewStatCard from '../../../components/OverviewStatCard';
 import Toggle from '../../../components/FormItems/Toggle';
 import QueueTable from './QueueTable';
+// Slot store removed for doctor static version
 
 // PreScreening Drawer redesigned to match the screenshot with dynamic values
 const PreScreeningDrawer = ({ show, patient, onClose, onSave, initialVitals }) => {
@@ -252,7 +255,8 @@ const PreScreeningDrawer = ({ show, patient, onClose, onSave, initialVitals }) =
 };
 
 // Walk-in Appointment Drawer (UI from screenshot)
-const WalkInAppointmentDrawer = ({ show, onClose, timeSlots, slotValue, setSlotValue }) => {
+// Restored activeSlotId for UI consistency (static mock in doctor view)
+const WalkInAppointmentDrawer = ({ show, onClose, timeSlots, slotValue, setSlotValue, onAppointmentBooked, activeSlotId }) => {
   const [isExisting, setIsExisting] = useState(false); // default to New Patient
   const [apptType, setApptType] = useState("New Consultation");
   const [reason, setReason] = useState("");
@@ -263,6 +267,9 @@ const WalkInAppointmentDrawer = ({ show, onClose, timeSlots, slotValue, setSlotV
   const [bloodGroup, setBloodGroup] = useState("");
   const [mobile, setMobile] = useState("");
   const [email, setEmail] = useState("");
+  const dobRef = useRef(null);
+  const [apptDate, setApptDate] = useState(() => new Date().toISOString().slice(0,10));
+  const apptDateRef = useRef(null);
 
   const suggestions = [
     'New Consultation', 'Follow-up Consultation', 'Review Visit'
@@ -270,6 +277,45 @@ const WalkInAppointmentDrawer = ({ show, onClose, timeSlots, slotValue, setSlotV
   const reasonSuggestions = ['Cough','Cold','Headache','Nausea','Dizziness','Muscle Pain','Sore Throat'];
   const genders = ['Male','Female','Other'];
   const bloodGroups = ['A+','A-','B+','B-','AB+','AB-','O+','O-'];
+
+  const [booking, setBooking] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const canBook = () => {
+    if (booking) return false;
+  if (!reason || !activeSlotId) return false; // keep original UI rule
+    if (isExisting) {
+      // For now require a dummy existing patient id input (re-using mobile field as search not implemented)
+      return mobile.trim().length > 3;
+    }
+    // New patient minimal required fields
+    return firstName && lastName && dob && gender && bloodGroup && mobile;
+  };
+
+  const handleBook = async () => {
+    if (!canBook()) return;
+    setBooking(true); setErrorMsg('');
+    try {
+      // Build a local mock appointment item (no API call in doctor static view)
+      const apptData = { id: Math.random().toString(36).slice(2) };
+      const requestItem = {
+        id: apptData.id,
+        name: isExisting ? (mobile.trim().slice(0,8)+'…') : (firstName + ' ' + lastName),
+        gender: isExisting ? '—' : gender.charAt(0).toUpperCase(),
+        age: '',
+        date: new Date().toDateString(),
+        time: '',
+        secondary: 'Cancel',
+        raw: apptData
+      };
+      onAppointmentBooked(requestItem);
+      onClose();
+    } catch (e) {
+      setErrorMsg('Booking failed');
+    } finally {
+      setBooking(false);
+    }
+  };
 
   return (
     <>
@@ -300,7 +346,13 @@ const WalkInAppointmentDrawer = ({ show, onClose, timeSlots, slotValue, setSlotV
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-[18px] font-semibold">Book Walk-In Appointment</h2>
             <div className="flex items-center gap-2">
-              <button disabled className="text-gray-400 bg-gray-100 border border-gray-200 text-sm font-medium rounded px-3 py-1.5 cursor-not-allowed">Book Appointment</button>
+              <button
+                onClick={handleBook}
+                disabled={!canBook()}
+                className={`text-sm font-medium rounded px-3 py-1.5 border ${canBook() ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' : 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'}`}
+              >
+                {booking ? 'Booking...' : 'Book Appointment'}
+              </button>
               <button className="text-gray-500 hover:text-gray-700" onClick={onClose} aria-label="Close">
                 <X className="w-5 h-5" />
               </button>
@@ -327,6 +379,8 @@ const WalkInAppointmentDrawer = ({ show, onClose, timeSlots, slotValue, setSlotV
                 <label className="block text-sm font-medium text-gray-700 mb-1">Patient <span className="text-red-500">*</span></label>
                 <input
                   type="text"
+                  value={mobile}
+                  onChange={(e)=>setMobile(e.target.value)}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   placeholder="Search Patient by name, Abha id, Patient ID or Contact Number"
                 />
@@ -349,8 +403,17 @@ const WalkInAppointmentDrawer = ({ show, onClose, timeSlots, slotValue, setSlotV
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth <span className="text-red-500">*</span></label>
                     <div className="relative">
-                      <input value={dob} onChange={(e)=>setDob(e.target.value)} type="text" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm pr-8 focus:outline-none focus:border-blue-500" placeholder="Select Date Of Birth" />
-                      <Calendar className="w-4 h-4 text-gray-500 absolute right-2 top-1/2 -translate-y-1/2" />
+                      <input
+                        ref={dobRef}
+                        value={dob}
+                        onChange={(e)=>setDob(e.target.value)}
+                        type="date"
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm pr-8 focus:outline-none focus:border-blue-500"
+                        placeholder="Select Date Of Birth"
+                      />
+                      <button type="button" onClick={() => (dobRef.current?.showPicker ? dobRef.current.showPicker() : dobRef.current?.focus())} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500">
+                        <Calendar className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                   <div>
@@ -404,7 +467,7 @@ const WalkInAppointmentDrawer = ({ show, onClose, timeSlots, slotValue, setSlotV
 
             {/* Reason for Visit */}
             <div className="mb-3">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Visit</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Visit <span className="text-red-500">*</span></label>
               <div className="relative">
                 <input
                   value={reason}
@@ -428,8 +491,16 @@ const WalkInAppointmentDrawer = ({ show, onClose, timeSlots, slotValue, setSlotV
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Appointment Date <span className="text-red-500">*</span></label>
                 <div className="relative">
-                  <input type="text" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm pr-8" defaultValue="Today, 03/04/2025" />
-                  <Calendar className="w-4 h-4 text-gray-500 absolute right-2 top-1/2 -translate-y-1/2" />
+                  <input
+                    ref={apptDateRef}
+                    type="date"
+                    value={apptDate}
+                    onChange={(e)=>setApptDate(e.target.value)}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm pr-8 focus:outline-none focus:border-blue-500"
+                  />
+                  <button type="button" onClick={() => (apptDateRef.current?.showPicker ? apptDateRef.current.showPicker() : apptDateRef.current?.focus())} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500">
+                    <Calendar className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
               <div>
@@ -447,6 +518,9 @@ const WalkInAppointmentDrawer = ({ show, onClose, timeSlots, slotValue, setSlotV
                       <option key={t.key} value={t.key}>{t.label} ({t.time})</option>
                     ))}
                   </select>
+                  {!activeSlotId && (
+                    <div className="mt-2 text-xs text-amber-600">Select a slot from the page header to enable booking.</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -456,7 +530,8 @@ const WalkInAppointmentDrawer = ({ show, onClose, timeSlots, slotValue, setSlotV
           <div className="pt-3 mt-2 border-t border-gray-200">
             <div className="flex justify-end gap-3">
               <button className="px-4 py-2 rounded border border-gray-300 text-sm text-gray-700 hover:bg-gray-50" onClick={onClose}>Cancel</button>
-              <button className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">Book Appointment</button>
+              {errorMsg && <div className="mr-auto text-xs text-red-600 px-2 py-1">{errorMsg}</div>}
+              <button disabled={!canBook()} onClick={handleBook} className={`px-4 py-2 rounded text-sm ${canBook() ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}>{booking ? 'Booking...' : 'Book Appointment'}</button>
             </div>
           </div>
         </div>
@@ -468,13 +543,13 @@ const WalkInAppointmentDrawer = ({ show, onClose, timeSlots, slotValue, setSlotV
 import { appointement } from "../../../../public/index.js";
 const Queue = () => {
   const [activeFilter, setActiveFilter] = useState("Checked In");
-  const [selectedTimeSlot] = useState("Morning (10:00 am - 12:30 pm)");
-  const [slotValue, setSlotValue] = useState("morning");
+  // Slot dropdown state (static options for doctor view)
   const [slotOpen, setSlotOpen] = useState(false);
+  const [slotValue, setSlotValue] = useState('morning');
   const slotAnchorRef = useRef(null);
   const slotMenuRef = useRef(null);
-  const [slotPos, setSlotPos] = useState({ top: 0, left: 0, width: 320 });
-  const [currentDate] = useState("Mon, 03/04/2025");
+  const [slotPos, setSlotPos] = useState({ top:0,left:0,width:320 });
+  const [currentDate, setCurrentDate] = useState(new Date('2025-04-03'));
   const [sessionStarted, setSessionStarted] = useState(false);
   const [queuePaused, setQueuePaused] = useState(false);
   // removed: startCheckups toggle; only one toggle remains (Start Session)
@@ -487,64 +562,63 @@ const Queue = () => {
   // Sample queue data matching the design
   const [queueData, setQueueData] = useState([
     // Updated DOB to match screenshot (age 39Y with DOB 12/05/1985)
-    { token: 1,  patientName: "Rahul Sharma",       gender: "M", age: "12/05/1985 (39Y)", appointmentType: "Review Visit",          expectedTime: "10:30 AM", bookingType: "Online", reasonForVisit: "Fever & Weakness",      status: "Check-In" },
-    { token: 2,  patientName: "Priya Mehta",        gender: "F", age: "08/09/1962 (61Y)", appointmentType: "Follow-up Consultation", expectedTime: "11:00 AM", bookingType: "Online", reasonForVisit: "Annual Checkup",        status: "Check-In" },
-    { token: 3,  patientName: "Arjun Verma",        gender: "M", age: "23/11/1987 (36Y)", appointmentType: "New Consultation",       expectedTime: "11:45 AM", bookingType: "Online", reasonForVisit: "Back Pain",             status: "Check-In" },
-    { token: 4,  patientName: "Sneha Deshpande",    gender: "F", age: "14/07/1998 (26Y)", appointmentType: "New Consultation",       expectedTime: "12:30 PM", bookingType: "Walk-In", reasonForVisit: "Skin Allergy",          status: "Check-In" },
-    { token: 5,  patientName: "Kunal Joshi",        gender: "M", age: "05/02/1976 (48Y)", appointmentType: "Second Opinion",         expectedTime: "1:30 PM",  bookingType: "Walk-In", reasonForVisit: "High BP",                status: "Check-In" },
-    { token: 6,  patientName: "Neha Iyer",          gender: "F", age: "30/10/1995 (28Y)", appointmentType: "New Consultation",       expectedTime: "2:00 PM",  bookingType: "Online", reasonForVisit: "Migraine",               status: "Check-In" },
-    { token: 7,  patientName: "Vikas Gupta",        gender: "M", age: "19/04/1983 (41Y)", appointmentType: "Second Opinion",         expectedTime: "2:30 PM",  bookingType: "Walk-In", reasonForVisit: "Diabetes Check",        status: "Check-In" },
-    { token: 8,  patientName: "Radhika Nair",       gender: "F", age: "06/01/1991 (33Y)", appointmentType: "Review Visit",          expectedTime: "3:15 PM",  bookingType: "Online", reasonForVisit: "Pregnancy Consultation", status: "Check-In" },
-    { token: 9,  patientName: "Ankit Saxena",       gender: "M", age: "11/06/1989 (35Y)", appointmentType: "Review Visit",          expectedTime: "4:15 PM",  bookingType: "Online", reasonForVisit: "Heartburn & Acidity",   status: "Check-In" },
-    { token: 10, patientName: "Pooja Kulkarni",     gender: "F", age: "15/08/1993 (30Y)", appointmentType: "Second Opinion",         expectedTime: "4:45 PM",  bookingType: "Online", reasonForVisit: "Thyroid Checkup",        status: "Check-In" },
-    { token: 11, patientName: "Manish Choudhary",   gender: "M", age: "12/12/1986 (37Y)", appointmentType: "Follow-up Consultation", expectedTime: "5:45 PM",  bookingType: "Walk-In", reasonForVisit: "Anxiety & Stress",      status: "Check-In" },
-    { token: 12, patientName: "Kavita Rao",         gender: "F", age: "20/03/1980 (44Y)", appointmentType: "New Consultation",       expectedTime: "6:15 PM",  bookingType: "Walk-In", reasonForVisit: "Menopause Symptoms",    status: "Check-In" },
-    { token: 13, patientName: "Rohan Agarwal",      gender: "M", age: "07/05/1994 (30Y)", appointmentType: "Follow-up Consultation", expectedTime: "10:15 AM", bookingType: "Online", reasonForVisit: "Asthma",                 status: "Check-In" },
-    { token: 14, patientName: "Deepika Singh",      gender: "F", age: "09/11/1987 (36Y)", appointmentType: "Review Visit",          expectedTime: "11:00 AM", bookingType: "Walk-In", reasonForVisit: "PCOD Treatment",         status: "Check-In" },
-    { token: 15, patientName: "Anirudh Patel",      gender: "M", age: "15/07/1982 (42Y)", appointmentType: "Review Visit",          expectedTime: "12:15 PM", bookingType: "Online", reasonForVisit: "Knee Pain",              status: "Check-In" },
-    { token: 16, patientName: "Swati Mishra",       gender: "F", age: "03/09/1990 (33Y)", appointmentType: "Second Opinion",         expectedTime: "12:45 PM", bookingType: "Online", reasonForVisit: "Eye Checkup",             status: "Check-In" },
+  { token: 1,  patientName: "Rahul Sharma",       gender: "M", age: "12/05/1985 (39Y)", appointmentType: "Review Visit",          expectedTime: "10:30 AM", bookingType: "Online", reasonForVisit: "Fever & Weakness",      status: "Waiting" },
+  { token: 2,  patientName: "Priya Mehta",        gender: "F", age: "08/09/1962 (61Y)", appointmentType: "Follow-up Consultation", expectedTime: "11:00 AM", bookingType: "Online", reasonForVisit: "Annual Checkup",        status: "Waiting" },
+  { token: 3,  patientName: "Arjun Verma",        gender: "M", age: "23/11/1987 (36Y)", appointmentType: "New Consultation",       expectedTime: "11:45 AM", bookingType: "Online", reasonForVisit: "Back Pain",             status: "Waiting" },
+  { token: 4,  patientName: "Sneha Deshpande",    gender: "F", age: "14/07/1998 (26Y)", appointmentType: "New Consultation",       expectedTime: "12:30 PM", bookingType: "Walk-In", reasonForVisit: "Skin Allergy",          status: "Waiting" },
+  { token: 5,  patientName: "Kunal Joshi",        gender: "M", age: "05/02/1976 (48Y)", appointmentType: "Second Opinion",         expectedTime: "1:30 PM",  bookingType: "Walk-In", reasonForVisit: "High BP",                status: "Waiting" },
+  { token: 6,  patientName: "Neha Iyer",          gender: "F", age: "30/10/1995 (28Y)", appointmentType: "New Consultation",       expectedTime: "2:00 PM",  bookingType: "Online", reasonForVisit: "Migraine",               status: "Waiting" },
+  { token: 7,  patientName: "Vikas Gupta",        gender: "M", age: "19/04/1983 (41Y)", appointmentType: "Second Opinion",         expectedTime: "2:30 PM",  bookingType: "Walk-In", reasonForVisit: "Diabetes Check",        status: "Waiting" },
+  { token: 8,  patientName: "Radhika Nair",       gender: "F", age: "06/01/1991 (33Y)", appointmentType: "Review Visit",          expectedTime: "3:15 PM",  bookingType: "Online", reasonForVisit: "Pregnancy Consultation", status: "Waiting" },
+  { token: 9,  patientName: "Ankit Saxena",       gender: "M", age: "11/06/1989 (35Y)", appointmentType: "Review Visit",          expectedTime: "4:15 PM",  bookingType: "Online", reasonForVisit: "Heartburn & Acidity",   status: "Waiting" },
+  { token: 10, patientName: "Pooja Kulkarni",     gender: "F", age: "15/08/1993 (30Y)", appointmentType: "Second Opinion",         expectedTime: "4:45 PM",  bookingType: "Online", reasonForVisit: "Thyroid Checkup",        status: "Waiting" },
+  { token: 11, patientName: "Manish Choudhary",   gender: "M", age: "12/12/1986 (37Y)", appointmentType: "Follow-up Consultation", expectedTime: "5:45 PM",  bookingType: "Walk-In", reasonForVisit: "Anxiety & Stress",      status: "Waiting" },
+  { token: 12, patientName: "Kavita Rao",         gender: "F", age: "20/03/1980 (44Y)", appointmentType: "New Consultation",       expectedTime: "6:15 PM",  bookingType: "Walk-In", reasonForVisit: "Menopause Symptoms",    status: "Waiting" },
+  { token: 13, patientName: "Rohan Agarwal",      gender: "M", age: "07/05/1994 (30Y)", appointmentType: "Follow-up Consultation", expectedTime: "10:15 AM", bookingType: "Online", reasonForVisit: "Asthma",                 status: "Waiting" },
+  { token: 14, patientName: "Deepika Singh",      gender: "F", age: "09/11/1987 (36Y)", appointmentType: "Review Visit",          expectedTime: "11:00 AM", bookingType: "Walk-In", reasonForVisit: "PCOD Treatment",         status: "Waiting" },
+  { token: 15, patientName: "Anirudh Patel",      gender: "M", age: "15/07/1982 (42Y)", appointmentType: "Review Visit",          expectedTime: "12:15 PM", bookingType: "Online", reasonForVisit: "Knee Pain",              status: "Waiting" },
+  { token: 16, patientName: "Swati Mishra",       gender: "F", age: "03/09/1990 (33Y)", appointmentType: "Second Opinion",         expectedTime: "12:45 PM", bookingType: "Online", reasonForVisit: "Eye Checkup",             status: "Waiting" },
   ]);
 
-  // Appointment requests data for sidebar
-  const appointmentRequests = [
-    { name: "Alok Verma",      gender: "M", age: "12/05/1985 (39Y)", date: "Mon, 12 June 2024",     time: "Morning, 10:00 am - 12:30 pm", secondary: "Reschedule" },
-    { name: "Bhavna Mehta",    gender: "F", age: "03/15/1980 (44Y)", date: "Tuesday, 13 June 2024", time: "Afternoon, 1:00 pm - 3:30 pm", secondary: "Reschedule" },
-    { name: "Chirag Modi",     gender: "M", age: "08/07/1990 (33Y)", date: "Wednesday, 14 June 2024", time: "Evening, 5:00 pm - 6:30 pm", secondary: "Reschedule" },
-    { name: "Deepa Malhotra",  gender: "F", age: "11/25/1975 (48Y)", date: "Thursday, 15 June 2024",  time: "Morning, 9:00 am - 11:00 am", secondary: "Cancel" },
-    { name: "Eshan Mehra",     gender: "M", age: "05/30/1988 (36Y)", date: "Friday, 16 June 2024",   time: "", secondary: "Reschedule" },
-  ];
+  // Appointment requests fetched from API
+  // Static appointment requests for doctor view (no API)
+  const [appointmentRequests, setAppointmentRequests] = useState([
+    { id: 'r1', name: 'Req Patient 1', gender: '—', age: '', date: new Date().toDateString(), time: '', secondary: 'Cancel' },
+    { id: 'r2', name: 'Req Patient 2', gender: '—', age: '', date: new Date().toDateString(), time: '', secondary: 'Cancel' },
+  ]);
+  const apptLoading = false;
+  const apptError = '';
 
-  const filters = ["Checked In", "Engaged", "No show", "Admitted", "All"];
+  const filters = ["Waiting", "Engaged", "No show", "Admitted", "All"];
+  // Load slots for current doctor/date/hospital
+  // Static slot data for doctor view (UI only)
+  // Slot selection logic removed
 
   // Time slot options
   const timeSlots = [
-    { key: 'morning', label: 'Morning', time: '10:00am-12:00pm', Icon: Sunrise },
+    { key: 'morning', label: 'Morning', time: '10:00am-12:30pm', Icon: Sunrise },
     { key: 'afternoon', label: 'Afternoon', time: '2:00pm-4:00pm', Icon: Sun },
     { key: 'evening', label: 'Evening', time: '6:00pm-8:00pm', Icon: Sunset },
     { key: 'night', label: 'Night', time: '8:30pm-10:30pm', Icon: Moon },
   ];
 
   // Close dropdown on outside click or Esc
-  useEffect(() => {
-    const onClick = (e) => {
-      const a = slotAnchorRef.current;
-      const m = slotMenuRef.current;
-      if (a && a.contains(e.target)) return; // click on button/anchor
-      if (m && m.contains(e.target)) return; // click inside menu
-      setSlotOpen(false);
-    };
-    const onKey = (e) => { if (e.key === 'Escape') setSlotOpen(false); };
-    window.addEventListener('mousedown', onClick);
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('mousedown', onClick);
-      window.removeEventListener('keydown', onKey);
-    };
-  }, []);
+    // Dropdown outside click / esc
+    useEffect(()=>{
+      const onClick=(e)=>{
+        if(slotAnchorRef.current && slotAnchorRef.current.contains(e.target)) return;
+        if(slotMenuRef.current && slotMenuRef.current.contains(e.target)) return;
+        setSlotOpen(false);
+      };
+      const onKey=(e)=>{ if(e.key==='Escape') setSlotOpen(false); };
+      window.addEventListener('mousedown', onClick);
+      window.addEventListener('keydown', onKey);
+      return ()=>{ window.removeEventListener('mousedown', onClick); window.removeEventListener('keydown', onKey); };
+    },[]);
 
   const getFilterCount = (filter) => {
     if (filter === "All") return queueData.length;
-    if (filter === "Checked In") return queueData.filter((p) => p.status === "Check-In").length;
+    if (filter === "Waiting") return queueData.filter((p) => p.status === "Waiting").length;
     if (filter === "Engaged") return 0;
     if (filter === "No show") return 0;
     if (filter === "Admitted") return 0;
@@ -579,8 +653,8 @@ const Queue = () => {
       setPatientStartedAt(null);
       setElapsed(0);
     } else {
-      // start session at first check-in patient
-      const firstIdx = Math.max(0, queueData.findIndex((p) => p.status === 'Check-In'));
+  // start session at first waiting patient
+  const firstIdx = Math.max(0, queueData.findIndex((p) => p.status === 'Waiting'));
       setCurrentIndex(firstIdx === -1 ? 0 : firstIdx);
       setSessionStarted(true);
       setQueuePaused(false);
@@ -686,79 +760,64 @@ const Queue = () => {
     <div className="h-screen overflow-hidden bg-gray-50">
       {/* Fixed Header Section */}
       <div className="sticky top-0 z-10 bg-white border-b-[0.5px] border-gray-200 px-4 py-2">
-        <div className="flex items-center justify-between">
-          {/* Time Selector */}
-          <div className="flex items-center space-x-4">
-            <div className="relative" ref={slotAnchorRef}>
-              <button
-                type="button"
-                className="flex items-center bg-white rounded-md border border-gray-200 shadow-sm px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
-                onClick={(e) => {
-                  setSlotOpen((v) => !v);
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const width = 320;
-                  const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
-                  const top = Math.min(rect.bottom + 8, window.innerHeight - 8 - 4); // ensure within viewport vertically
-                  setSlotPos({ top, left, width });
-                }}
-              >
-                <span className="font-medium mr-1">
-                  {timeSlots.find((t) => t.key === slotValue)?.label || 'Morning'}
-                </span>
-                <span className="text-gray-500">
-                  ({timeSlots.find((t) => t.key === slotValue)?.time || '10:00am-12:00pm'})
-                </span>
-                <ChevronDown className="ml-2 h-4 w-4 text-gray-500" />
-              </button>
-
-              {slotOpen && createPortal(
-                <div
-                  ref={slotMenuRef}
-                  className="fixed z-[9999]"
-                  style={{ top: slotPos.top, left: slotPos.left, width: slotPos.width }}
-                >
-                  <div className="bg-white rounded-xl border border-gray-200 shadow-xl">
-                    <ul className="py-1">
-                      {timeSlots.map(({ key, label, time, Icon }, idx) => (
-                        <li key={key}>
-                          <button
-                            type="button"
-                            onClick={() => { setSlotValue(key); setSlotOpen(false); }}
-                            className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-blue-50 ${slotValue === key ? 'bg-blue-50' : ''}`}
-                          >
-                            <span className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 border border-blue-200 text-blue-600">
-                              <Icon className="w-4 h-4" />
-                            </span>
-                            <span className="flex-1">
-                              <span className="block text-[14px] font-semibold text-gray-900">{label}</span>
-                              <span className="block text-[13px] text-gray-600">({time})</span>
-                            </span>
-                          </button>
-                          {idx < timeSlots.length - 1 && <div className="h-px bg-gray-200 mx-4" />}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>,
-                document.body
-              )}
-            </div>
+        <div className="flex items-center">
+          {/* Time Slot Dropdown (left) */}
+          <div className="relative mr-6" ref={slotAnchorRef}>
+            <button
+              type="button"
+              className="flex items-center bg-white rounded-md border border-gray-200 shadow-sm px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+              onClick={(e)=>{
+                setSlotOpen(v=>!v);
+                const rect = e.currentTarget.getBoundingClientRect();
+                const width = 320;
+                const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+                const top = Math.min(rect.bottom + 8, window.innerHeight - 8 - 4);
+                setSlotPos({top,left,width});
+              }}
+            >
+              <span className="font-medium mr-1">{timeSlots.find(t=>t.key===slotValue)?.label || 'Morning'}</span>
+              <span className="text-gray-500">({timeSlots.find(t=>t.key===slotValue)?.time || '10:00am-12:30pm'})</span>
+              <ChevronDown className="ml-2 h-4 w-4 text-gray-500" />
+            </button>
+            {slotOpen && createPortal(
+              <div ref={slotMenuRef} className="fixed z-[9999]" style={{top:slotPos.top,left:slotPos.left,width:slotPos.width}}>
+                <div className="bg-white rounded-xl border border-gray-200 shadow-xl">
+                  <ul className="py-1">
+                    {timeSlots.map(({key,label,time,Icon},idx)=>(
+                      <li key={key}>
+                        <button
+                          type="button"
+                          onClick={()=>{ setSlotValue(key); setSlotOpen(false); }}
+                          className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-blue-50 ${slotValue===key?'bg-blue-50':''}`}
+                        >
+                          <span className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 border border-blue-200 text-blue-600">
+                            <Icon className="w-4 h-4" />
+                          </span>
+                          <span className="flex-1">
+                            <span className="block text-[14px] font-semibold text-gray-900">{label}</span>
+                            <span className="block text-[13px] text-gray-600">({time})</span>
+                          </span>
+                        </button>
+                        {idx < timeSlots.length - 1 && <div className="h-px bg-gray-200 mx-4" />}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>,
+              document.body
+            )}
           </div>
 
-          {/* Date Navigation */}
-          <div className="flex items-center space-x-4">
-            <ChevronLeft className="h-5 w-5 text-gray-400 cursor-pointer hover:text-gray-600" />
-            <div className="flex items-center space-x-2">
-              <span className="text-blue-600 font-medium">Today</span>
-              <span className="text-gray-700 font-medium">{currentDate}</span>
-            </div>
-            <ChevronRight className="h-5 w-5 text-gray-400 cursor-pointer hover:text-gray-600" />
+          {/* Center grow area for date picker */}
+          <div className="flex-1 flex justify-center">
+            <QueueDatePicker date={currentDate} onChange={setCurrentDate} />
           </div>
-
-          {/* Walk-in Appointment Badge */}
-          <Badge size="large" type="solid" color="blue" hover className="cursor-pointer select-none" onClick={() => setShowWalkIn(true)}>
-            Walk-in Appointment
-          </Badge>
+          {/* Walk-in Appointment Badge (right) */}
+          <div className="ml-auto">
+            <Badge size="large" type="solid" color="blue" hover className="cursor-pointer select-none" onClick={() => setShowWalkIn(true)}>
+              Walk-in Appointment
+            </Badge>
+          </div>
         </div>
       </div>
 
@@ -918,7 +977,14 @@ const Queue = () => {
               </div>
 
               <div className="divide-y divide-gray-200">
-                {appointmentRequests.map((request, index) => (
+                {/* Slot appointments loading removed */}
+                {apptLoading && (
+                  <div className="p-3 text-xs text-gray-500">Loading pending appointments…</div>
+                )}
+                {apptError && !apptLoading && (
+                  <div className="p-3 text-xs text-red-600">{apptError}</div>
+                )}
+                {!apptLoading && !apptError && appointmentRequests.map((request, index) => (
                   <div key={index} className="">
                     <div className="flex items-start gap-4 p-3">
                       
@@ -975,14 +1041,11 @@ const Queue = () => {
         <WalkInAppointmentDrawer
           show={showWalkIn}
           onClose={() => setShowWalkIn(false)}
-          timeSlots={[
-            { key: 'morning', label: 'Morning', time: '10:00am-12:00pm' },
-            { key: 'afternoon', label: 'Afternoon', time: '2:00pm-4:00pm' },
-            { key: 'evening', label: 'Evening', time: '6:00pm-8:00pm' },
-            { key: 'night', label: 'Night', time: '8:30pm-10:30pm' },
-          ]}
-          slotValue={slotValue}
-          setSlotValue={setSlotValue}
+          timeSlots={[]}
+          slotValue={null}
+          setSlotValue={()=>{}}
+          activeSlotId={true}
+          onAppointmentBooked={(item) => setAppointmentRequests((prev)=>[item, ...prev])}
         />
         </div>
         

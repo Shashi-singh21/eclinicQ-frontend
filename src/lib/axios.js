@@ -1,13 +1,20 @@
 import axios from "axios";
 import useAuthStore from "../store/useAuthStore";
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || "/api";
+// Normalize base URL to always include '/api' segment
+const raw = (import.meta.env.VITE_API_BASE_URL || '').trim();
+let baseURL;
+if (!raw) {
+  baseURL = '/api';
+} else {
+  const noTrail = raw.replace(/\/$/, '');
+  // If already ends with /api or contains /api at the end, don't duplicate
+  baseURL = /\/api\/?$/.test(noTrail) ? noTrail : `${noTrail}/api`;
+}
+
 const axiosInstance = axios.create({
-  // Prefer env override, else use relative '/api' for proxy/same-origin
   baseURL,
-  headers: {
-    Accept: 'application/json',
-  }
+  headers: { Accept: 'application/json' }
 });
 
 // Attach token to every request if available

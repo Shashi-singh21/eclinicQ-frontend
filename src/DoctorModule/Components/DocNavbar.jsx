@@ -1,7 +1,10 @@
 import { Search } from 'lucide-react'
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { bell } from '../../../public/index.js'
+import useAuthStore from '../../store/useAuthStore'
+import AvatarCircle from '../../components/AvatarCircle'
+import { Mail, Phone, IdCard, User, Edit, HelpCircle, LogOut, ChevronRight } from 'lucide-react'
 
 const Partition = () => {
   return (
@@ -15,6 +18,9 @@ const Partition = () => {
 const DocNavbar = () => {
   const navigate = useNavigate();
   const searchRef = useRef(null);
+  const { doctorDetails, doctorLoading } = useAuthStore();
+  const [showProfile, setShowProfile] = useState(false);
+  const profileRef = useRef(null);
 
   // Focus search when pressing Ctrl+/
   useEffect(() => {
@@ -27,6 +33,15 @@ const DocNavbar = () => {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
+
+  // Close on outside click / Escape
+  useEffect(()=>{
+    const onClick = (e)=>{ if(profileRef.current && !profileRef.current.contains(e.target)) setShowProfile(false) };
+    const onKey = (e)=>{ if(e.key==='Escape') setShowProfile(false) };
+    document.addEventListener('mousedown', onClick);
+    window.addEventListener('keydown', onKey);
+    return ()=>{ document.removeEventListener('mousedown', onClick); window.removeEventListener('keydown', onKey); };
+  },[]);
 
   return (
     <div className='w-full h-12 border-b-[0.5px] border-[#D6D6D6] flex items-center px-4 gap-3'>
@@ -71,11 +86,55 @@ const DocNavbar = () => {
 
         <Partition />
 
-        <div className='flex items-center gap-2'>
-          <span className='font-semibold text-base text-[#424242]'>Milind Chauhan</span>
-          <div className='flex justify-center rounded-full border-[0.5px] border-[#D6D6D6] bg-[#F9F9F9] w-8 h-8 items-center'>
-            <span className='text-sm font-normal text-[#424242]'>MC</span>
-          </div>
+        <div className='relative flex items-center gap-2' ref={profileRef}>
+          <span className='font-semibold text-base text-[#424242]'>{doctorDetails?.name?.split(' ')?.[0] || 'Doctor'}</span>
+          <button type='button' onClick={()=>setShowProfile(v=>!v)} className='cursor-pointer'>
+            <AvatarCircle name={doctorDetails?.name || 'D'} size='s' color='orange' />
+          </button>
+          {showProfile && (
+            <div className='absolute top-10 right-0 w-72 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50'>
+              <div className='p-4 flex items-start gap-3'>
+                <AvatarCircle name={doctorDetails?.name || 'D'} size='md' color='orange' />
+                <div className='flex flex-col'>
+                  <div className='text-sm font-semibold text-gray-900'>{doctorDetails?.name || '—'}</div>
+                  <div className='text-xs text-gray-600'>{doctorDetails?.specializations?.[0] || 'Specialist'}</div>
+                </div>
+              </div>
+              <div className='px-4 pb-3 space-y-2 text-xs'>
+                <div className='flex items-center gap-2 text-gray-700'>
+                  <Mail className='w-4 h-4 text-[#597DC3]' />
+                  <span className='truncate'>{doctorDetails?.emailId || '—'}</span>
+                </div>
+                <div className='flex items-center gap-2 text-gray-700'>
+                  <Phone className='w-4 h-4 text-[#597DC3]' />
+                  <span>{doctorDetails?.contactNumber || '—'}</span>
+                </div>
+                <div className='flex items-center gap-2 text-gray-700'>
+                  <IdCard className='w-4 h-4 text-[#597DC3]' />
+                  <span>{doctorDetails?.doctorCode || doctorDetails?.userId?.slice(0,8)+'…' || '—'}</span>
+                </div>
+                <div className='flex items-center gap-2 text-gray-700'>
+                  <User className='w-4 h-4 text-[#597DC3]' />
+                  <span>{doctorDetails?.associatedWorkplaces?.clinic?.name || doctorDetails?.associatedWorkplaces?.hospitals?.[0]?.name || '—'}</span>
+                </div>
+              </div>
+              <div className='border-t border-gray-200 divide-y text-sm'>
+                <button className='w-full flex items-center justify-between px-4 h-10 hover:bg-gray-50 text-gray-700'>
+                  <span className='flex items-center gap-2 text-[13px]'><Edit className='w-4 h-4 text-gray-500' /> Edit Profile</span>
+                  <ChevronRight className='w-4 h-4 text-gray-400' />
+                </button>
+                <button className='w-full flex items-center justify-between px-4 h-10 hover:bg-gray-50 text-gray-700'>
+                  <span className='flex items-center gap-2 text-[13px]'><HelpCircle className='w-4 h-4 text-gray-500' /> Help Center</span>
+                  <ChevronRight className='w-4 h-4 text-gray-400' />
+                </button>
+                <button className='w-full flex items-center justify-between px-4 h-10 hover:bg-gray-50 text-gray-700'>
+                  <span className='flex items-center gap-2 text-[13px]'><LogOut className='w-4 h-4 text-gray-500' /> Logout</span>
+                  <ChevronRight className='w-4 h-4 text-gray-400' />
+                </button>
+              </div>
+              {doctorLoading && <div className='absolute inset-0 bg-white/60 flex items-center justify-center text-xs text-gray-500'>Loading…</div>}
+            </div>
+          )}
         </div>
       </div>
   </div>
