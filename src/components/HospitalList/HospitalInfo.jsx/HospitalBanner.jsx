@@ -45,14 +45,14 @@ const HospitalBanner = ({
   const { name, status, address, type, established, website, bannerImage, logoImage, stats } = hospitalData
 
   const statCards = [
-    { label: "No. of Patient Managed", value: stats.patientsManaged },
-    { label: "No. of Appointments Booked", value: stats.appointmentsBooked },
+  { label: "Patients Served", value: stats.patientsManaged },
+  { label: "Total Appointments Booked", value: stats.appointmentsBooked },
+    { label: "Total Beds", value: stats.totalBeds || '—' },
+    { label: "Total ICU Beds", value: stats.totalICUBeds || '—' },
+    { label: "Total Doctors", value: stats.totalDoctors || '—' },
+    { label: "Total Specializations", value: stats.totalSpecializations || '—' },
+    { label: "Total Surgeries", value: stats.totalSurgeries || '—' },
     { label: "Active Package", value: stats.activePackage, valueColor: "text-green-600" },
-    { label: "eClinic QID", value: stats.eClinicQID },
-    { label: "Active Package", value: stats.activePackage, valueColor: "text-green-600" },
-    { label: "eClinic QID", value: stats.eClinicQID },
-    { label: "Active Package", value: stats.activePackage, valueColor: "text-green-600" },
-    { label: "eClinic QID", value: stats.eClinicQID }
   ]
 
   return (
@@ -64,10 +64,23 @@ const HospitalBanner = ({
           className='h-[140px] w-full object-cover' 
           alt={`${name} banner`} 
         />
-        <img 
-          src={logoImage} 
-          alt={`${name} logo`} 
-          className='absolute rounded-full w-[60px] h-[60px] bottom-2 border-[2px] border-[#2372EC] right-1/2 transform translate-x-1/2'/>
+        {/* Circular logo with verified tick overlay */}
+        <div className='absolute z-10 bottom-2 left-1/2 -translate-x-1/2 w-[60px] h-[60px]'>
+          <div className='relative w-full h-full'>
+            <img 
+              src={logoImage}
+              alt={`${name} logo`}
+              loading="lazy"
+              crossOrigin="anonymous"
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/images/hospital_logo.png';
+              }}
+              className='rounded-full w-full h-full border-[2px] border-[#2372EC] bg-white object-cover'/>
+            <img src='/tick.png' alt='Verified' className='absolute -top-1 -right-1 w-[18px] h-[18px]' />
+          </div>
+        </div>
       </div>
       
       {/* Content Section */}
@@ -77,8 +90,8 @@ const HospitalBanner = ({
           {/* Name and Status */}
           <div className='flex gap-3 items-center'>
             <span className='font-semibold text-xl text-[#424242]'>{name}</span>
-            <div className='rounded-md min-w-[22px] py-[1px] px-[6px] bg-[#F2FFF3]'>
-              <span className='text-sm text-[#3EAF3F]'>{status}</span>
+            <div className={`rounded-md min-w-[22px] py-[1px] px-[6px] ${String(status).toLowerCase()==='inactive' ? 'bg-[#FFF8F2]' : 'bg-[#F2FFF3]'}`}>
+              <span className={`text-sm ${String(status).toLowerCase()==='inactive' ? 'text-[#F59E0B]' : 'text-[#3EAF3F]'}`}>{status}</span>
             </div>
           </div>
 
@@ -96,16 +109,18 @@ const HospitalBanner = ({
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="flex justify-between">
-          {statCards.map((card, index) => (
-            <StatCard 
-              key={index}
-              label={card.label}
-              value={card.value}
-              valueColor={card.valueColor}
-            />
-          ))}
+        {/* Stats Grid (no kebab in UI) */}
+        <div className="flex items-start ">
+          <div className="flex gap-3 flex-wrap">
+            {statCards.map((card, index) => (
+              <StatCard 
+                key={index}
+                label={card.label}
+                value={card.value}
+                valueColor={card.valueColor}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>

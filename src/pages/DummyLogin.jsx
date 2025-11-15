@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import axios from '../lib/axios'
+import useAuthStore from '../store/useAuthStore'
 
 const DummyLogin = () => {
   const [email, setEmail] = useState('')
@@ -6,7 +8,10 @@ const DummyLogin = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
 
-  const handleSubmit = (event) => {
+  const setToken = useAuthStore((s) => s.setToken)
+  const setUser = useAuthStore((s) => s.setUser)
+
+  const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')
 
@@ -22,8 +27,27 @@ const DummyLogin = () => {
       return
     }
 
-    console.log('Logging in with:', { email, password })
-    alert('Logged in (dummy). Check console for submitted values.')
+    try {
+      // Adjust endpoint/shape to your backend's login
+      const res = await axios.post('/superAdmin/login', { emailId: email, password })
+      const data = res?.data
+      // Try common token paths
+      const token = data?.token || data?.accessToken || data?.data?.token
+      const user = data?.user || data?.data?.user || null
+      if (!token) {
+        throw new Error('No token in response')
+      }
+      setToken(token)
+      if (user) setUser(user)
+  // Redirect to absolute dashboard URL on current origin
+  window.location.replace(`${window.location.origin}/dashboard`)
+    } catch (e) {
+      const raw = e?.response?.data?.message ?? e?.message ?? 'Login failed';
+      const msg = typeof raw === 'string' ? raw : (raw?.message || raw?.error || JSON.stringify(raw));
+      setError(msg);
+      // Helpful for debugging complex server errors without breaking UI
+      console.error('Login failed:', e);
+    }
   }
 
   return (
@@ -63,7 +87,9 @@ const DummyLogin = () => {
           </label>
 
           {error && (
-            <div style={{ color: '#dc2626', fontSize: '14px' }}>{error}</div>
+            <div style={{ color: '#dc2626', fontSize: '14px' }}>
+              {typeof error === 'string' ? error : JSON.stringify(error)}
+            </div>
           )}
 
           <button

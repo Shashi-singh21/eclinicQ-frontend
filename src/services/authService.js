@@ -1,0 +1,196 @@
+import axiosInstance from "../lib/axios";
+
+export const registerUser = async (formData) => {
+  try {
+    const response = await axiosInstance.post("/auth/register", formData);
+    return response.data; 
+  } catch (error) {
+    console.error("Registration failed:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// PASSWORD login
+export const loginPassword = async ({ userName, password }) => {
+  try {
+    const response = await axiosInstance.post("/auth/login", {
+      userName,
+      method: "PASSWORD",
+      password,
+    });
+    return response.data;
+  } catch (error) {
+    const payload = error?.response?.data || { message: error.message };
+    console.error("Login failed:", payload);
+    throw error;
+  }
+};
+
+// OTP login - step 1: request OTP
+export const loginOtpStart = async ({ userName }) => {
+  try {
+    const response = await axiosInstance.post("/auth/login", {
+      userName,
+      method: "OTP",
+    });
+    return response.data;
+  } catch (error) {
+    const payload = error?.response?.data || { message: error.message };
+    console.error("OTP request failed:", payload);
+    throw error;
+  }
+};
+
+// OTP login - step 2: verify OTP using challengeId from step 1 response
+export const loginOtpVerify = async ({ challengeId, userName, otp }) => {
+  try {
+    const response = await axiosInstance.post("/auth/verify-otp", {
+      challengeId,
+      userName,
+      otp,
+    });
+    return response.data;
+  } catch (error) {
+    const payload = error?.response?.data || { message: error.message };
+    console.error("OTP verify failed:", payload);
+    throw error;
+  }
+};
+
+// Appointments
+export const getPendingAppointmentsForClinic = async ({ clinicId }) => {
+  try {
+    const url = "/appointments/pending-appointments-clinic";
+    const response = await axiosInstance.post(url, { clinicId });
+    return response.data;
+  } catch (error) {
+    const status = error?.response?.status;
+    // Fallback: some deployments expose a GET variant
+    if (status === 404) {
+      try {
+        // Try POST with trailing slash
+        const postSlash = await axiosInstance.post("/appointments/pending-appointments-clinic/", { clinicId });
+        return postSlash.data;
+      } catch (e2) {
+        try {
+          // Try GET without slash
+          const getNoSlash = await axiosInstance.get("/appointments/pending-appointments-clinic", { params: { clinicId } });
+          return getNoSlash.data;
+        } catch (e3) {
+          try {
+            // Try GET with trailing slash
+            const getSlash = await axiosInstance.get("/appointments/pending-appointments-clinic/", { params: { clinicId } });
+            return getSlash.data;
+          } catch (e4) {
+            console.error("Pending appointments fallbacks failed:", e4?.response?.data || e4.message);
+            throw e4;
+          }
+        }
+      }
+    }
+    console.error("Pending appointments fetch failed:", error?.response?.data || error.message);
+    throw error;
+  }
+};
+
+// Slots: find slots for patient context
+export const findPatientSlots = async ({ doctorId, date, clinicId, hospitalId }) => {
+  const payload = { doctorId, date, ...(clinicId ? { clinicId } : {}), ...(hospitalId ? { hospitalId } : {}) };
+  if (import.meta.env.VITE_DEBUG_SLOTS) {
+    console.debug('[slots] POST /slots/patient/find-slots payload:', payload);
+  }
+  const response = await axiosInstance.post('/slots/patient/find-slots', payload);
+  return response.data;
+};
+
+// Appointments for a slot
+export const getAppointmentsForSlot = async (slotId) => {
+  try {
+    const response = await axiosInstance.get(`/appointments/slot/${encodeURIComponent(slotId)}`);
+    return response.data;
+  } catch (error) {
+    if (error?.response?.status === 404) {
+      try {
+        const response = await axiosInstance.get(`/appointments/slot/${encodeURIComponent(slotId)}/`);
+        return response.data;
+      } catch (e2) {
+        console.error("Get appointments for slot fallback failed:", e2?.response?.data || e2.message);
+        throw e2;
+      }
+    }
+    console.error("Get appointments for slot failed:", error?.response?.data || error.message);
+    throw error;
+  }
+};
+
+// Approve a pending appointment (moves it to In Waiting for the day)
+export const approveAppointment = async (appointmentId) => {
+  if (!appointmentId) throw new Error('appointmentId is required');
+  try {
+  // API requires PUT; send empty object as body
+  const response = await axiosInstance.put(`/appointments/approve/${encodeURIComponent(appointmentId)}`, {});
+    return response.data; // { success, data: { ...updatedAppointment } }
+  } catch (error) {
+    console.error('Approve appointment failed:', error?.response?.data || error.message);
+    throw error;
+  }
+};
+
+// Reject a pending appointment
+export const rejectAppointment = async (appointmentId) => {
+  if (!appointmentId) throw new Error('appointmentId is required');
+  try {
+    const response = await axiosInstance.put(`/appointments/reject/${encodeURIComponent(appointmentId)}`, {});
+    return response.data;
+  } catch (error) {
+    console.error('Reject appointment failed:', error?.response?.data || error.message);
+    throw error;
+  }
+};
+
+// Check-in an appointment
+export const checkInAppointment = async (appointmentId) => {
+  if (!appointmentId) throw new Error('appointmentId is required');
+  try {
+    const response = await axiosInstance.put(`/appointments/check-in/${encodeURIComponent(appointmentId)}`, {});
+    return response.data;
+  } catch (error) {
+    console.error('Check-in failed:', error?.response?.data || error.message);
+    throw error;
+  }
+};
+
+// Mark appointment as No-Show
+export const markNoShowAppointment = async (appointmentId) => {
+  if (!appointmentId) throw new Error('appointmentId is required');
+  try {
+    const response = await axiosInstance.put(`/appointments/no-show/${encodeURIComponent(appointmentId)}`, {});
+    return response.data;
+  } catch (error) {
+    console.error('Mark no-show failed:', error?.response?.data || error.message);
+    throw error;
+  }
+};
+
+// Walk-in appointment booking
+// payload shape differs by method: EXISTING vs NEW_USER
+export const bookWalkInAppointment = async (payload) => {
+  try {
+    const response = await axiosInstance.post('/appointments/walk-in', payload);
+    return response.data; // expecting { success, data: {...} }
+  } catch (error) {
+    console.error('Walk-in booking failed:', error?.response?.data || error.message);
+    throw error;
+  }
+};
+
+// Doctor profile fetch (requires Authorization header auto-injected by axiosInstance interceptor)
+export const getDoctorMe = async () => {
+  try {
+    const response = await axiosInstance.get('/doctors/me');
+    return response.data; // expecting { success, data: { ...doctorFields } }
+  } catch (error) {
+    console.error('Fetch doctor details failed:', error?.response?.data || error.message);
+    throw error;
+  }
+};

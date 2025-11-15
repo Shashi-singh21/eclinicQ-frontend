@@ -1,12 +1,24 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useRegistration } from "../../context/RegistrationContext";
-import SidebarSteps from "../Sidebar/SidebarSteps";
+import { createHospital } from '../../services/hospitalService';
+import useHospitalRegistrationStore from '../../store/useHospitalRegistrationStore';
+import { useRegistration } from "../../SuperAdmin/context/RegistrationContext";
+import SidebarSteps from "../../SuperAdmin/components/RegistrationSidebar/SidebarSteps";
 import RegistrationFooter from "../RegistrationFooter";
 import RegistrationFlow from "../RegistrationFlow";
-import React from "react";
+import React, { useRef, useState } from "react";
+import Step1 from '../../SuperAdmin/pages/Dashboard/Doctor_registration/Step1';
+// Import stores directly to avoid runtime require (ESM only)
+import useDoctorRegistrationStore from '../../store/useDoctorRegistrationStore';
+import useDoctorStep1Store from '../../store/useDoctorStep1Store';
+import useHospitalDoctorDetailsStore from '../../store/useHospitalDoctorDetailsStore';
 
 const Layout_registration_new = () => {
   const { currentStep, nextStep, prevStep, registrationType, setRegistrationType, formData, updateFormData, setCurrentStep } = useRegistration();
+  // const doctorRegisterStore = useDoctorRegisterStore();
+  const [footerLoading, setFooterLoading] = useState(false);
+  // Ref for Step1 form
+  const step1Ref = useRef();
+  const hos1Ref = useRef();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -21,8 +33,135 @@ const Layout_registration_new = () => {
     }
   }, [location.pathname, setRegistrationType, setCurrentStep]);
 
-  const handleNext = () => {
+  // Map formData to API schema for store
+  const mapToApiSchema = () => {
+    return {
+      specialization: formData.specialization,
+      experienceYears: formData.experience,
+      medicalCouncilName: formData.councilName,
+      medicalCouncilRegYear: formData.regYear,
+      medicalCouncilRegNo: formData.councilNumber,
+      medicalDegreeType: formData.graduation,
+      medicalDegreeUniversityName: formData.graduationCollege,
+      medicalDegreeYearOfCompletion: formData.graduationYear,
+      pgMedicalDegreeType: formData.pgDegree,
+      pgMedicalDegreeUniversityName: formData.pgCollege,
+      pgMedicalDegreeYearOfCompletion: formData.pgYear,
+      hasClinic: !!formData.clinicName,
+      clinicData: {
+        name: formData.clinicName,
+        email: formData.clinicContactEmail,
+        phone: formData.clinicContactNumber,
+        proof: formData.uploadEstablishmentProof,
+        latitude: formData.mapLocation?.lat || '',
+        longitude: formData.mapLocation?.lng || '',
+        blockNo: formData.blockNo,
+        areaStreet: formData.roadAreaStreet,
+        landmark: formData.landmark,
+        city: formData.city,
+        state: formData.state,
+        pincode: formData.pincode,
+        image: formData.uploadHospitalImage,
+        panCard: formData.panCard || ''
+      },
+      documents: formData.documents || [],
+    };
+  };
+
+  // Build Hospital payload from context formData (prunes UI-only wizard fields)
+  const buildHospitalPayloadFromFormData = () => {
+    // Address
+    const address = {
+      blockNo: formData.blockNumber || '',
+      landmark: formData.landmark || '',
+      street: formData.roadAreaStreet || ''
+    };
+
+    // Documents
+    const documents = [];
+    if (formData.gstin) documents.push({ no: formData.gstin, type: 'GST', url: formData.gstinFile || '' });
+    if (formData.stateHealthReg) documents.push({ no: formData.stateHealthReg, type: 'State Health Reg No', url: formData.stateHealthRegFile || '' });
+    if (formData.panCard) documents.push({ no: formData.panCard, type: 'Pan Card', url: formData.panCardFile || '' });
+    if (formData.cinNumber) documents.push({ no: formData.cinNumber, type: 'CIN', url: formData.cinFile || '' });
+    if (formData.rohiniId) documents.push({ no: formData.rohiniId, type: 'Rohini ID', url: formData.rohiniFile || '' });
+    if (formData.nabhAccreditation) documents.push({ no: formData.nabhAccreditation, type: 'NABH', url: formData.nabhFile || '' });
+
+    // Operating Hours
+    const days = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+    const operatingHours = days.map(day => ({
+      dayOfWeek: day,
+      isAvailable: (formData.operatingHours || []).includes(day.charAt(0).toUpperCase() + day.slice(1)),
+      is24Hours: formData[`${day}24Hours`] || false,
+      timeRanges: [
+        { startTime: formData[`${day}StartTime`] || "09:00", endTime: formData[`${day}EndTime`] || "18:00" }
+      ]
+    }));
+
+    // Compose payload with exact API shape
+    const payload = {
+      name: formData.hospitalName,
+      type: formData.hospitalType,
+      emailId: formData.hospitalEmail,
+      phone: formData.hospitalContact,
+      address,
+      city: formData.city,
+      state: formData.state,
+      pincode: formData.pincode,
+      url: formData.website,
+      logo: formData.logoKey || '',
+      image: formData.hospitalImageKey || '',
+      latitude: formData.latitude || 0,
+      longitude: formData.longitude || 0,
+      medicalSpecialties: formData.medicalSpecialties || [],
+      hospitalServices: formData.hospitalServices || [],
+      establishmentYear: formData.establishedYear,
+      noOfBeds: formData.numberOfBeds,
+      accreditation: formData.accreditations || [],
+      adminId: formData.adminId || '',
+      documents,
+      operatingHours
+    };
+
+    // Prune empty values
+    const prune = (obj) => {
+      if (Array.isArray(obj)) {
+        return obj
+          .map((v) => (typeof v === 'object' && v !== null ? prune(v) : v))
+          .filter((v) => v !== undefined && v !== null && v !== '');
+      }
+      if (typeof obj === 'object' && obj !== null) {
+        const out = {};
+        Object.entries(obj).forEach(([k, v]) => {
+          if (v === undefined || v === null || v === '') return;
+          const nv = typeof v === 'object' ? prune(v) : v;
+          if (
+            nv === undefined ||
+            nv === null ||
+            (Array.isArray(nv) && nv.length === 0) ||
+            (typeof nv === 'object' && !Array.isArray(nv) && Object.keys(nv).length === 0)
+          )
+            return;
+          out[k] = nv;
+        });
+        return out;
+      }
+      return obj;
+    };
+
+    return prune(payload);
+  };
+
+  const store = useHospitalRegistrationStore();
+  const handleNext = async () => {
     if (registrationType === 'doctor') {
+      // Step 1: trigger form submit via ref, only move if valid
+      if (currentStep === 1 && step1Ref.current && step1Ref.current.submit) {
+        const result = await step1Ref.current.submit();
+        if (result) {
+          nextStep();
+        }
+        return;
+      }
       // Handle Step 4 sub-steps
       if (currentStep === 4) {
         const currentSubStep = formData.step4SubStep || 1;
@@ -40,15 +179,41 @@ const Layout_registration_new = () => {
           }
         }
       } else if (currentStep === 5) {
-        // Move to Step 6 (success page)
-        nextStep();
+        // On Step 5, submit all data to API, then go to Step 6 ONLY on OK
+        setFooterLoading(true);
+        try {
+          // Use the centralized doctor registration store submit
+          const ok = await useDoctorRegistrationStore.getState().submit();
+          if (ok === true) {
+            nextStep();
+          } else {
+            alert('Submission failed. Please fix errors and try again.');
+          }
+        } catch (err) {
+          alert(err?.message || 'Submission failed');
+        } finally {
+          setFooterLoading(false);
+        }
       } else if (currentStep === 6) {
         // Navigate to doctor profile/dashboard
         navigate('/doctor');
       } else if (currentStep < 5) {
         nextStep();
       }
-    } else if (registrationType === 'hospital') {
+  } else if (registrationType === 'hospital') {
+      // Step 1: trigger form submit via ref, only move if valid
+      if (currentStep === 1 && hos1Ref.current && hos1Ref.current.submit) {
+        const result = await hos1Ref.current.submit();
+        if (result) {
+          // Check if user is a doctor to determine next step
+          if (formData.isDoctor === 'yes') {
+            nextStep();
+          } else {
+            nextStep();
+          }
+        }
+        return;
+      }
       // Handle Step 1 for hospital (Account Creation) - conditional navigation
       if (currentStep === 1) {
         // Check if user is a doctor to determine next step
@@ -120,29 +285,84 @@ const Layout_registration_new = () => {
           nextStep();
         }
       }
-      // Handle Step 5 sub-steps for hospital (Review & Create) - only when user is a doctor
-      else if (currentStep === 5) {
-        // This only applies when user is a doctor (isDoctor === 'yes')
-        const currentSubStep = formData.hosStep5SubStep || 1;
-        
-        if (currentSubStep === 1) {
-          // Move to sub-step 2 (Terms and Agreement)
-          updateFormData({ hosStep5SubStep: 2 });
-        } else if (currentSubStep === 2) {
-          // Check if terms are accepted before moving to next step
-          if (formData.hosTermsAccepted && formData.hosPrivacyAccepted) {
-            nextStep();
-          } else {
-            // Show alert that terms must be accepted
-            alert('Please accept the Terms & Conditions and Data Privacy Agreement to continue.');
+      // Handle Step 5 for hospital (Review & Create)
+  else if (currentStep === 5) {
+        // Only for hospital registration (isDoctor === 'no')
+        if (formData.isDoctor === 'no') {
+          const currentSubStep = formData.hosStep5SubStep || 1;
+          if (currentSubStep === 1) {
+            // Move to sub-step 2 (Terms and Agreement)
+            updateFormData({ hosStep5SubStep: 2 });
+          } else if (currentSubStep === 2) {
+            // Check if terms are accepted before moving to next step
+            if (formData.hosTermsAccepted && formData.hosPrivacyAccepted) {
+              setFooterLoading(true);
+              try {
+                // Prefer store payload to capture Hos_3 values
+                const ok = await store.submit();
+                if (ok) {
+                  nextStep();
+                } else {
+                  alert('Submission failed. Please review and try again.');
+                }
+              } catch (err) {
+                alert(err?.message || 'Submission failed');
+              } finally {
+                setFooterLoading(false);
+              }
+            } else {
+              // Show alert that terms must be accepted
+              alert('Please accept the Terms & Conditions and Data Privacy Agreement to continue.');
+            }
+          }
+        } else {
+          // This only applies when user is a doctor (isDoctor === 'yes')
+          const currentSubStep = formData.hosStep5SubStep || 1;
+          if (currentSubStep === 1) {
+            // Move to sub-step 2 (Terms and Agreement)
+            updateFormData({ hosStep5SubStep: 2 });
+          } else if (currentSubStep === 2) {
+            // Check if terms are accepted before moving to next step
+            if (formData.hosTermsAccepted && formData.hosPrivacyAccepted) {
+              nextStep();
+            } else {
+              // Show alert that terms must be accepted
+              alert('Please accept the Terms & Conditions and Data Privacy Agreement to continue.');
+            }
           }
         }
       } else if (currentStep === 6) {
-        // Move to Step 7 (success page)
-        nextStep();
+        // Final success screen for non-doctor owners: go straight to Hospitals dashboard
+        if (String(formData.isDoctor || 'no') === 'no') {
+          navigate('/hospitals');
+          return;
+        }
+        // On Step 6 (Hos_6), if user is a doctor, first post doctor details, then proceed
+        setFooterLoading(true);
+        try {
+          if (formData.isDoctor === 'yes') {
+            const ok = await useHospitalDoctorDetailsStore.getState().submit();
+            if (!ok) {
+              throw new Error('Doctor details submission failed');
+            }
+          }
+          // Only submit hospital here when isDoctor is 'yes'.
+          let hosOk = true;
+          if (formData.isDoctor === 'yes') {
+            hosOk = await store.submit();
+            if (!hosOk) {
+              throw new Error('Hospital creation failed');
+            }
+          }
+          nextStep();
+        } catch (err) {
+          alert(err?.message || 'Submission failed');
+        } finally {
+          setFooterLoading(false);
+        }
       } else if (currentStep === 7) {
         // Navigate to hospital profile/dashboard
-        navigate('/hospital');
+  navigate('/hospitals');
       } else if (currentStep < 7) {
         nextStep();
       }
@@ -375,8 +595,16 @@ const Layout_registration_new = () => {
       {/* Main + Footer - Fixed height container */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Content - Scrollable */}
+
         <main className="flex-1 overflow-y-auto">
-          <RegistrationFlow type={registrationType} />
+          {/* Render Step1 with ref for doctor step 1, Hos_1 with ref for hospital step 1, else use RegistrationFlow */}
+          {registrationType === 'doctor' && currentStep === 1 ? (
+            <Step1 ref={step1Ref} />
+          ) : registrationType === 'hospital' && currentStep === 1 ? (
+            <RegistrationFlow type={registrationType} ref={hos1Ref} />
+          ) : (
+            <RegistrationFlow type={registrationType} />
+          )}
         </main>
 
         {/* Footer - Fixed */}
@@ -387,6 +615,11 @@ const Layout_registration_new = () => {
           currentStep={currentStep}
           maxSteps={maxSteps}
           nextLabel={nextLabel}
+          disablePrev={
+            (registrationType === 'doctor' && (currentStep === 1 || currentStep === 2 || currentStep === 6)) ||
+            (registrationType === 'hospital' && currentStep === 2 && ((formData.hosStep3SubStep || 1) === 1))
+          }
+          loading={footerLoading}
         />
       </div>
     </div>

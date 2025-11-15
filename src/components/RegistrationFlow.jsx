@@ -1,24 +1,25 @@
 import React from 'react';
-import { useRegistration } from '../context/RegistrationContext';
+import { useRegistration } from '../SuperAdmin/context/RegistrationContext';
 
 // Doctor Registration Steps
-import Step1 from '../pages/Doctor_registration/Step1';
-import Step2 from '../pages/Doctor_registration/Step2';
-import Step3 from '../pages/Doctor_registration/Step3';
-import Step4 from '../pages/Doctor_registration/Step4';
-import Step5 from '../pages/Doctor_registration/Step5';
-import Step6 from '../pages/Doctor_registration/Step6';
+import Step1 from '../SuperAdmin/pages/Dashboard/Doctor_registration/Step1';
+import Step2 from '../SuperAdmin/pages/Dashboard/Doctor_registration/Step2';
+import Step3 from '../SuperAdmin/pages/Dashboard/Doctor_registration/Step3';
+import Step4 from '../SuperAdmin/pages/Dashboard/Doctor_registration/Step4';
+import Step5 from '../SuperAdmin/pages/Dashboard/Doctor_registration/Step5';
+import Step6 from '../SuperAdmin/pages/Dashboard/Doctor_registration/Step6';
 
 // Hospital Registration Steps
-import Hos_1 from '../pages/Hospital_registration/Hos_1';
-import Hos_2 from '../pages/Hospital_registration/Hos_2';
-import Hos_3 from '../pages/Hospital_registration/Hos_3';
-import Hos_4 from '../pages/Hospital_registration/Hos_4';
-import Hos_5 from '../pages/Hospital_registration/Hos_5';
-import Hos_6 from '../pages/Hospital_registration/Hos_6';
-import Hos_7 from '../pages/Hospital_registration/Hos_7';
+import Hos_1 from '../SuperAdmin/pages/Dashboard/Hospital_registration/Hos_1';
+import Hos_2 from '../SuperAdmin/pages/Dashboard/Hospital_registration/Hos_2';
+import Hos_3 from '../SuperAdmin/pages/Dashboard/Hospital_registration/Hos_3';
+import Hos_4 from '../SuperAdmin/pages/Dashboard/Hospital_registration/Hos_4';
+import Hos_5 from '../SuperAdmin/pages/Dashboard/Hospital_registration/Hos_5';
+import Hos_6 from '../SuperAdmin/pages/Dashboard/Hospital_registration/Hos_6';
+import Hos_7 from '../SuperAdmin/pages/Dashboard/Hospital_registration/Hos_7';
 
-const RegistrationFlow = ({ type }) => {
+
+const RegistrationFlow = React.forwardRef(({ type }, ref) => {
   const { currentStep, formData } = useRegistration();
 
   // Render the appropriate step component based on registration type and current step
@@ -43,10 +44,9 @@ const RegistrationFlow = ({ type }) => {
     } else if (type === 'hospital') {
       // Handle conditional step rendering based on isDoctor selection
       if (formData.isDoctor === 'no') {
-        // User is not a doctor, skip step 2 (Doctor Registration)
         switch (currentStep) {
           case 1:
-            return <Hos_1 />;
+            return <Hos_1 ref={ref} />;
           case 2:
             return <Hos_3 />; // Hospital Details
           case 3:
@@ -58,13 +58,12 @@ const RegistrationFlow = ({ type }) => {
           case 6:
             return <Hos_7 />; // Registration Complete
           default:
-            return <Hos_1 />;
+            return <Hos_1 ref={ref} />;
         }
       } else {
-        // User is a doctor, show all steps including Doctor Registration
         switch (currentStep) {
           case 1:
-            return <Hos_1 />;
+            return <Hos_1 ref={ref} />;
           case 2:
             return <Hos_2 />;
           case 3:
@@ -78,7 +77,7 @@ const RegistrationFlow = ({ type }) => {
           case 7:
             return <Hos_7 />;
           default:
-            return <Hos_1 />;
+            return <Hos_1 ref={ref} />;
         }
       }
     }
@@ -87,6 +86,6 @@ const RegistrationFlow = ({ type }) => {
   };
 
   return renderStepComponent();
-};
+});
 
 export default RegistrationFlow;
