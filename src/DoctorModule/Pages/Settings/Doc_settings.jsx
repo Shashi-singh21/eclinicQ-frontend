@@ -281,9 +281,18 @@ const EducationDrawer = ({ open, onClose, initial, onSave, mode = 'add' }) => {
     }
   }, [initial, open, mode])
   
-  useEffect(() => { const onEsc = (e)=> e.key==='Escape' && requestClose(); window.addEventListener('keydown', onEsc); return ()=>window.removeEventListener('keydown', onEsc) }, [])
+  const requestClose = React.useCallback(() => { 
+    setClosing(true); 
+    setTimeout(()=>{ setClosing(false); onClose?.() }, 220) 
+  }, [onClose])
+  
+  useEffect(() => { 
+    const onEsc = (e)=> e.key==='Escape' && requestClose(); 
+    window.addEventListener('keydown', onEsc); 
+    return ()=>window.removeEventListener('keydown', onEsc) 
+  }, [requestClose])
+  
   if (!open && !closing) return null
-  const requestClose = () => { setClosing(true); setTimeout(()=>{ setClosing(false); onClose?.() }, 220) }
   const set = (k,v)=> setData((d)=>({ ...d, [k]: v }))
   const canSave = data.school && data.gradType && data.degree && data.start && data.end
 
@@ -776,13 +785,19 @@ const StaffTab = () => {
     const [mode, setMode] = useState('individual')
     const [rows, setRows] = useState([{ id: 0, fullName: '', email: '', phone: '', position: '', role: '' }])
     const [closing, setClosing] = useState(false)
+    
+    const requestClose = React.useCallback(() => { 
+      setClosing(true); 
+      setTimeout(()=>{ setClosing(false); onClose?.() }, 220) 
+    }, [onClose])
+    
     useEffect(() => {
       const onEsc = (e) => e.key === 'Escape' && requestClose()
       window.addEventListener('keydown', onEsc)
       return () => window.removeEventListener('keydown', onEsc)
-    }, [])
+    }, [requestClose])
+    
     if (!open && !closing) return null
-    const requestClose = () => { setClosing(true); setTimeout(()=>{ setClosing(false); onClose?.() }, 220) }
     const removeRow = (id) => setRows((r) => (r.length > 1 ? r.filter((x) => x.id !== id) : r))
     const addRow = () => setRows((r) => [...r, { id: (r[r.length - 1]?.id ?? 0) + 1, fullName: '', email: '', phone: '', position: '', role: '' }])
     const onChangeRow = (id, field, value) => setRows((r) => r.map((row) => (row.id === id ? { ...row, [field]: value } : row)))
@@ -1058,13 +1073,11 @@ const Doc_settings = () => {
     medicalRegistration,
     practiceDetails,
     fetchProfessionalDetails,
-    updateMedicalRegistration,
     updatePracticeDetails,
   } = usePracticeStore();
 
   // Clinic store
   const {
-    hasClinic,
     clinic,
     fetchClinicInfo,
     updateClinicInfo,
