@@ -1,7 +1,7 @@
 // Front Desk Queue: full API-integrated version copied from original before doctor static simplification
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { getPendingAppointmentsForClinic, bookWalkInAppointment, approveAppointment, rejectAppointment, checkInAppointment, markNoShowAppointment, startSlotEta, startPatientSessionEta, endPatientSessionEta } from '../../../services/authService';
+import { getPendingAppointmentsForClinic, bookWalkInAppointment, approveAppointment, rejectAppointment, checkInAppointment, markNoShowAppointment, startSlotEta, startPatientSessionEta, endPatientSessionEta, findPatientSlots } from '../../../services/authService';
 import { Clock, Calendar, ChevronDown, Sunrise, Sun, Sunset, Moon, X } from 'lucide-react';
 import QueueDatePicker from '../../../components/QueueDatePicker';
 import AvatarCircle from '../../../components/AvatarCircle';
@@ -92,7 +92,7 @@ const PreScreeningDrawer = ({ show, patient, onClose, onSave, initialVitals }) =
 	</>);
 };
 
-const WalkInAppointmentDrawer = ({ show, onClose, timeSlots, slotValue, setSlotValue, activeSlotId, onBookedRefresh, groupedSlots, onSelectSlot }) => {
+const WalkInAppointmentDrawer = ({ show, onClose, onBookedRefresh, doctorId, clinicId, hospitalId }) => {
 	const [isExisting, setIsExisting] = useState(false);
 	const [apptType, setApptType] = useState('New Consultation');
 	const [reason, setReason] = useState('');
@@ -112,9 +112,60 @@ const WalkInAppointmentDrawer = ({ show, onClose, timeSlots, slotValue, setSlotV
 	const bloodGroups = ['A+','A-','B+','B-','AB+','AB-','O+','O-'];
 	const [booking,setBooking] = useState(false);
 	const [errorMsg,setErrorMsg] = useState('');
+
+	// Local slots state for the selected appointment date
+	const [localSlots, setLocalSlots] = useState([]);
+	const [grouped, setGrouped] = useState({ morning:[], afternoon:[], evening:[], night:[] });
+	const [timeBuckets, setTimeBuckets] = useState([]); // [{key,label,time,Icon}]
+	const [bucketKey, setBucketKey] = useState('morning');
+	const [selectedSlotId, setSelectedSlotId] = useState(null);
+	const [loadingSlots, setLoadingSlots] = useState(false);
+	const [slotsError, setSlotsError] = useState('');
+
+	// Load slots whenever drawer opens or date changes
+	useEffect(()=>{
+		let ignore=false;
+		const load = async ()=>{
+			if (!show) return;
+			// Require doctor and at least one workplace identifier
+			if (!doctorId || (!clinicId && !hospitalId)) return;
+			// Clear current selection while loading to avoid stale state
+			setSelectedSlotId(null);
+			setGrouped({ morning:[], afternoon:[], evening:[], night:[] });
+			setTimeBuckets([]);
+			setLoadingSlots(true); setSlotsError('');
+			try {
+				const resp = await findPatientSlots({ doctorId, date: apptDate, clinicId, hospitalId });
+				const arr = Array.isArray(resp) ? resp : (resp?.data || resp?.slots || []);
+				if (ignore) return;
+				setLocalSlots(arr);
+				// Group into day parts
+				const grp = (arr || []).reduce((acc, s)=>{ const part = classifyISTDayPart(s.startTime); if (!acc[part]) acc[part]=[]; acc[part].push(s); return acc; }, { morning:[], afternoon:[], evening:[], night:[] });
+				setGrouped(grp);
+				// Build time buckets
+				const tb=[];
+				if (grp.morning.length){ const f=grp.morning[0], l=grp.morning[grp.morning.length-1]; tb.push({ key:'morning', label:'Morning', time: buildISTRangeLabel(f.startTime,l.endTime), Icon:Sunrise }); }
+				if (grp.afternoon.length){ const f=grp.afternoon[0], l=grp.afternoon[grp.afternoon.length-1]; tb.push({ key:'afternoon', label:'Afternoon', time: buildISTRangeLabel(f.startTime,l.endTime), Icon:Sun }); }
+				if (grp.evening.length){ const f=grp.evening[0], l=grp.evening[grp.evening.length-1]; tb.push({ key:'evening', label:'Evening', time: buildISTRangeLabel(f.startTime,l.endTime), Icon:Sunset }); }
+				if (grp.night.length){ const f=grp.night[0], l=grp.night[grp.night.length-1]; tb.push({ key:'night', label:'Night', time: buildISTRangeLabel(f.startTime,l.endTime), Icon:Moon }); }
+				setTimeBuckets(tb);
+				// Choose default bucket and slot
+				const firstNonEmpty = tb[0]?.key || 'morning';
+				setBucketKey(firstNonEmpty);
+				const firstSlot = (grp[firstNonEmpty]||[])[0] || null;
+				setSelectedSlotId(firstSlot ? (firstSlot.id || firstSlot.slotId || firstSlot._id) : null);
+			} catch (e) {
+				if (!ignore) setSlotsError(e?.response?.data?.message || e.message || 'Failed to load slots');
+			} finally {
+				if (!ignore) setLoadingSlots(false);
+			}
+		};
+		load();
+		return ()=>{ ignore=true; };
+	}, [show, apptDate, doctorId, clinicId, hospitalId]);
 	const canBook = () => {
 		if (booking) return false;
-		if (!reason || !activeSlotId) return false;
+		if (!reason || !selectedSlotId) return false;
 		if (isExisting) return mobile.trim().length > 3;
 		return firstName && lastName && dob && gender && bloodGroup && mobile;
 	};
@@ -124,9 +175,9 @@ const WalkInAppointmentDrawer = ({ show, onClose, timeSlots, slotValue, setSlotV
 		try {
 			let payload;
 			if (isExisting) {
-				payload = { method:'EXISTING', patientId: mobile.trim(), reason: reason.trim(), slotId: activeSlotId, bookingType: apptType?.toLowerCase().includes('follow')?'FOLLOW_UP':'NEW' };
+				payload = { method:'EXISTING', patientId: mobile.trim(), reason: reason.trim(), slotId: selectedSlotId, bookingType: apptType?.toLowerCase().includes('follow')?'FOLLOW_UP':'NEW' };
 			} else {
-				payload = { method:'NEW_USER', firstName:firstName.trim(), lastName:lastName.trim(), phone:mobile.trim(), emailId: email.trim()||undefined, dob:dob.trim(), gender:gender.toLowerCase(), bloodGroup, reason:reason.trim(), slotId:activeSlotId, bookingType: apptType?.toUpperCase().includes('REVIEW')?'FOLLOW_UP':'NEW' };
+				payload = { method:'NEW_USER', firstName:firstName.trim(), lastName:lastName.trim(), phone:mobile.trim(), emailId: email.trim()||undefined, dob:dob.trim(), gender:gender.toLowerCase(), bloodGroup, reason:reason.trim(), slotId:selectedSlotId, bookingType: apptType?.toUpperCase().includes('REVIEW')?'FOLLOW_UP':'NEW' };
 			}
 			// Call real API
 			await bookWalkInAppointment(payload);
@@ -181,17 +232,17 @@ const WalkInAppointmentDrawer = ({ show, onClose, timeSlots, slotValue, setSlotV
 					<div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
 						<div><label className='block text-sm font-medium text-gray-700 mb-1'>Appointment Date <span className='text-red-500'>*</span></label><div className='relative'><input ref={apptDateRef} type='date' value={apptDate} onChange={e=>setApptDate(e.target.value)} className='w-full rounded-md border border-gray-300 px-3 py-2 text-sm pr-8 focus:outline-none focus:border-blue-500' /><button type='button' onClick={()=> (apptDateRef.current?.showPicker ? apptDateRef.current.showPicker() : apptDateRef.current?.focus())} className='absolute right-2 top-1/2 -translate-y-1/2 text-gray-500'><Calendar className='w-4 h-4' /></button></div></div>
 						<div>
-							{(() => { // compute dynamic tokens for current selected slot
-								const all = [...(groupedSlots?.morning||[]), ...(groupedSlots?.afternoon||[]), ...(groupedSlots?.evening||[]), ...(groupedSlots?.night||[])];
+							{(() => { // compute dynamic tokens for current selected slot (local)
+								const all = [...(grouped?.morning||[]), ...(grouped?.afternoon||[]), ...(grouped?.evening||[]), ...(grouped?.night||[])];
 								let current = null;
-								if (activeSlotId) {
-									current = all.find(s => (s.id||s.slotId||s._id) === activeSlotId) || null;
+								if (selectedSlotId) {
+									current = all.find(s => (s.id||s.slotId||s._id) === selectedSlotId) || null;
 								} else {
-									const g = (groupedSlots?.[slotValue] || []); current = g[0] || null;
+									const g = (grouped?.[bucketKey] || []); current = g[0] || null;
 								}
 								const avail = current?.availableTokens ?? current?.tokensAvailable ?? current?.remainingTokens ?? current?.available ?? current?.tokensLeft;
 								const total = current?.totalTokens ?? current?.capacity ?? current?.maxTokens;
-								const label = (avail ?? '') !== '' ? `${avail}${total!=null?` of ${total}`:''} Tokens available` : 'Tokens info unavailable';
+								const label = (avail ?? '') !== '' ? `${avail}${total!=null?` of ${total}`:''} Tokens available` : (loadingSlots ? 'Loading slots…' : (slotsError ? 'Slots unavailable' : 'Tokens info unavailable'));
 								return (
 									<>
 										<div className='flex items-center justify-between'>
@@ -201,8 +252,10 @@ const WalkInAppointmentDrawer = ({ show, onClose, timeSlots, slotValue, setSlotV
 									</>
 								);
 							})()}
-							<select className='w-full rounded-md border border-gray-300 px-3 py-2 text-sm' value={slotValue} onChange={e=> { const key=e.target.value; setSlotValue(key); const group=(groupedSlots?.[key]||[]); if(group.length){ const first=group[0]; const id= first.id||first.slotId||first._id; if(id && onSelectSlot){ onSelectSlot(id); } } }}>{timeSlots.map(t=> <option key={t.key} value={t.key}>{t.label} ({t.time})</option>)}</select>
-							{!activeSlotId && <div className='mt-2 text-xs text-amber-600'>Select a slot to enable booking.</div>}
+							<select className='w-full rounded-md border border-gray-300 px-3 py-2 text-sm' value={bucketKey} onChange={e=> { const key=e.target.value; setBucketKey(key); const group=(grouped?.[key]||[]); if(group.length){ const first=group[0]; const id= first.id||first.slotId||first._id; setSelectedSlotId(id||null); } else { setSelectedSlotId(null); } }}>
+								{timeBuckets.map(t=> <option key={t.key} value={t.key}>{t.label} ({t.time})</option>)}
+							</select>
+							{!selectedSlotId && <div className='mt-2 text-xs text-amber-600'>{loadingSlots ? 'Loading slots for date…' : 'Select a slot to enable booking.'}</div>}
 						</div>
 					</div>
 				</div>
@@ -666,7 +719,7 @@ export default function FDQueue() {
 						</div>
 					</div>
 						{/* PreScreeningDrawer disabled for now per requirement */}
-						<WalkInAppointmentDrawer show={showWalkIn} onClose={()=> setShowWalkIn(false)} timeSlots={timeSlots} slotValue={slotValue} setSlotValue={setSlotValue} activeSlotId={selectedSlotId} onBookedRefresh={()=> { if(selectedSlotId){ loadAppointmentsForSelectedSlot(); } }} groupedSlots={groupedSlots} onSelectSlot={selectSlot} />
+						<WalkInAppointmentDrawer show={showWalkIn} onClose={()=> setShowWalkIn(false)} onBookedRefresh={()=> { if(selectedSlotId){ loadAppointmentsForSelectedSlot(); } }} doctorId={doctorId} clinicId={clinicId} hospitalId={hospitalId} />
 				</div>
 			</div>
 		</div>
