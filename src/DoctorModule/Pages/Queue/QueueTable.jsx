@@ -38,7 +38,7 @@ const rows = [
   { token: 24, name: 'Ojasvi Rao', gender: 'F', dob: '14/02/1993', age: 32, apptType: 'Second Opinion', exptTime: '5:00 PM', bookingType: 'Online', reason: 'PCOD' },
 ];
 
-const QueueTable = ({ onCheckIn, checkedInToken, checkedInTokens, items, removingToken, incomingToken, onRevokeCheckIn, onMarkNoShow, allowSampleFallback = true, prescreeningEnabled = true, hideCheckIn = false }) => {
+const QueueTable = ({ onCheckIn, checkedInToken, checkedInTokens, checkingInTokens, items, removingToken, incomingToken, onRevokeCheckIn, onMarkNoShow, allowSampleFallback = true, prescreeningEnabled = true, hideCheckIn = false }) => {
   const [menuRow, setMenuRow] = useState(null);
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
   useEffect(() => {
@@ -139,16 +139,17 @@ const QueueTable = ({ onCheckIn, checkedInToken, checkedInTokens, items, removin
                   style={{ boxShadow: '0 4px 24px 0 rgba(37, 99, 235, 0.15)' }}
                   onClick={() => onCheckIn(row)}
                 >
-                  Add Pre-screening
+                  {checkingInTokens && checkingInTokens.has?.(row.token) ? 'Checking in…' : 'Add Pre-screening'}
                 </Button>
               ) : (
                 <Button
                   size="large"
                   variant="secondary"
                   className="h-9 py-0 px-4 text-sm w-full flex-1 whitespace-nowrap"
+                  disabled={!!(checkingInTokens && checkingInTokens.has?.(row.token))}
                   onClick={() => onCheckIn(row)}
                 >
-                  Check-In
+                  {checkingInTokens && checkingInTokens.has?.(row.token) ? 'Checking in…' : 'Check-In'}
                 </Button>
               )
             ) : (
@@ -156,9 +157,10 @@ const QueueTable = ({ onCheckIn, checkedInToken, checkedInTokens, items, removin
                 size="large"
                 variant="secondary"
                 className="h-9 py-0 px-4 text-sm w-full flex-1 whitespace-nowrap"
+                disabled={!!(checkingInTokens && checkingInTokens.has?.(row.token))}
                 onClick={() => onCheckIn(row)}
               >
-                Check-In
+                {checkingInTokens && checkingInTokens.has?.(row.token) ? 'Checking in…' : 'Check-In'}
               </Button>
             )
           )}

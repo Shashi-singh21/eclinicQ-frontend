@@ -69,7 +69,20 @@ const WalkInAppointmentDrawer = ({ show, onClose, doctorId, clinicId, hospitalId
       if(isExisting){
         payload={ method:'EXISTING', bookingMode:'WALK_IN', patientId: mobile.trim(), reason: reason.trim(), slotId: selectedSlotId, bookingType: apptType?.toLowerCase().includes('follow')?'FOLLOW_UP':'NEW', doctorId, clinicId, hospitalId, date: apptDate };
       } else {
-        payload={ method:'NEW_USER', bookingMode:'WALK_IN', firstName:firstName.trim(), lastName:lastName.trim(), phone:mobile.trim(), emailId: email.trim()||undefined, dob:dob.trim(), gender:(gender||'').toUpperCase(), bloodGroup: apiBloodGroup, reason:reason.trim(), slotId:selectedSlotId, bookingType: apptType?.toUpperCase().includes('REVIEW')?'FOLLOW_UP':'NEW', doctorId, clinicId, hospitalId, date: apptDate };
+        // NEW_USER payload per API format
+        payload={
+          method:'NEW_USER',
+          firstName:firstName.trim(),
+          lastName:lastName.trim(),
+          phone:mobile.trim(),
+          emailId: (email||'').trim() || undefined,
+          dob:dob.trim(),
+          gender:(gender||'').toUpperCase(),
+          bloodGroup: apiBloodGroup,
+          reason:reason.trim(),
+          slotId:selectedSlotId,
+          bookingType: apptType?.toUpperCase().includes('REVIEW')?'FOLLOW_UP':'NEW',
+        };
       }
       try { console.debug('[Hospital] walk-in booking payload:', payload); } catch{}
       await bookWalkInAppointment(payload); onBookedRefresh?.(); onClose();

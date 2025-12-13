@@ -12,7 +12,7 @@ import Toggle from '../../../components/FormItems/Toggle';
 import QueueTable from './QueueTable';
 import useAuthStore from '../../../store/useAuthStore';
 import useSlotStore from '../../../store/useSlotStore';
-import { getDoctorMe, startSlotEta, endSlotEta, getSlotEtaStatus, startPatientSessionEta, endPatientSessionEta, pauseSlotEta, resumeSlotEta } from '../../../services/authService';
+import { getDoctorMe, startSlotEta, endSlotEta, getSlotEtaStatus, startPatientSessionEta, endPatientSessionEta, pauseSlotEta, resumeSlotEta, markNoShowAppointment } from '../../../services/authService';
 import { appointement } from '../../../../public/index.js';
 
 // Walk-in Appointment Drawer (full version replicated from Front Desk)
@@ -70,9 +70,25 @@ const WalkInAppointmentDrawer = ({ show, onClose, doctorId, clinicId, hospitalId
       const apiBloodGroup = mapBloodGroup(bloodGroup);
       let payload;
       if(isExisting){
+        // Existing patient flow remains as-is (backend contract may differ)
         payload={ method:'EXISTING', bookingMode:'WALK_IN', patientId: mobile.trim(), reason: reason.trim(), slotId: selectedSlotId, bookingType: apptType?.toLowerCase().includes('follow')?'FOLLOW_UP':'NEW', doctorId, clinicId, hospitalId, date: apptDate };
       } else {
-        payload={ method:'NEW_USER', bookingMode:'WALK_IN', firstName:firstName.trim(), lastName:lastName.trim(), phone:mobile.trim(), emailId: email.trim()||undefined, dob:dob.trim(), gender:(gender||'').toUpperCase(), bloodGroup: apiBloodGroup, reason:reason.trim(), slotId:selectedSlotId, bookingType: apptType?.toUpperCase().includes('REVIEW')?'FOLLOW_UP':'NEW', doctorId, clinicId, hospitalId, date: apptDate };
+        // Modify payload to match required API format for walk-in NEW_USER
+        // Expected:
+        // { method, firstName, lastName, phone, emailId, dob, gender, bloodGroup, reason, slotId, bookingType }
+        payload={
+          method: 'NEW_USER',
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          phone: mobile.trim(),
+          emailId: (email || '').trim() || undefined,
+          dob: dob.trim(),
+          gender: (gender || '').toUpperCase(),
+          bloodGroup: apiBloodGroup,
+          reason: reason.trim(),
+          slotId: selectedSlotId,
+          bookingType: apptType?.toUpperCase().includes('REVIEW') ? 'FOLLOW_UP' : 'NEW',
+        };
       }
       try { console.debug('[Doctor] walk-in booking payload:', payload); } catch{}
       await bookWalkInAppointment(payload); onBookedRefresh?.(); onClose();
@@ -306,9 +322,15 @@ const Queue = () => {
     let base;
     if (activeFilter === 'Admitted') {
       base = admitted;
-    } else if (sessionStarted) {
-      base = engaged.length ? engaged : checked;
+    } else if (activeFilter === 'Engaged') {
+      base = engaged;
+    } else if (activeFilter === 'No Show') {
+      base = categories.noShow || [];
+    } else if (activeFilter === 'All') {
+      // Compose All excluding inWaiting
+      base = [...engaged, ...checked, ...admitted, ...(categories.noShow || [])];
     } else {
+      // Default Checked In
       base = checked;
     }
     const mapped = base.map(mapAppt).filter(Boolean);
@@ -349,7 +371,8 @@ const Queue = () => {
   },[selectedSlotId, sessionStarted]);
 
   // Poll appointments every 15s
-  useEffect(()=>{ if(!selectedSlotId) return; const id=setInterval(()=>{ loadAppointmentsForSelectedSlot(); },15000); return ()=> clearInterval(id); },[selectedSlotId, loadAppointmentsForSelectedSlot]);
+  // Poll appointments for selected slot every 45s (aligned with FD) to avoid excessive API calls
+  useEffect(()=>{ if(!selectedSlotId) return; const id=setInterval(()=>{ loadAppointmentsForSelectedSlot(); },45000); return ()=> clearInterval(id); },[selectedSlotId, loadAppointmentsForSelectedSlot]);
 
   // Auto-start first patient session when slot session active.
   // Guard conditions ensure: slot session started, timer not already running, there is at least one checked-in patient (queueData.length > 0), and a slot is selected.
@@ -412,22 +435,64 @@ const Queue = () => {
 
   const completeCurrentPatient = async () => { const active=activePatient; if(!active || !selectedSlotId) return; try { await endPatientSessionEta(selectedSlotId, active.token); } catch(e){ console.error('End patient ETA failed', e?.response?.data || e.message); } try { await loadAppointmentsForSelectedSlot(); } catch{} setRunStartAt(null); setBaseElapsed(0); setElapsed(0); wasRunningOnPauseRef.current=false; setCurrentIndex(0); };
 
+  // Doctor actions: Mark No-Show from actions menu, then refresh the slot appointments
+  const handleMarkNoShow = async (row) => {
+    try {
+      let id = row?.id;
+      if (!id) {
+        const found = queueData.find(p => p.token === row?.token);
+        id = found?.id;
+      }
+      if (!id) return;
+      await markNoShowAppointment(id);
+      if (selectedSlotId) { await loadAppointmentsForSelectedSlot(); }
+    } catch (e) {
+      console.error('No-show failed', e?.response?.data || e.message);
+    }
+  };
+
   // Pause handling
   useEffect(()=>{ if(!queuePaused || !pauseEndsAt) return; const tick=()=>{ setPauseRemaining(Math.max(0, Math.floor((pauseEndsAt-Date.now())/1000))); }; tick(); pauseTickerRef.current=setInterval(tick,1000); return ()=>{ if(pauseTickerRef.current){ clearInterval(pauseTickerRef.current); pauseTickerRef.current=null; } }; },[queuePaused, pauseEndsAt]);
   const resumeQueue = async () => { if(!selectedSlotId) return; setResumeError(''); setResumeSubmitting(true); try { await resumeSlotEta(selectedSlotId); if(autoResumeTimerRef.current){ clearTimeout(autoResumeTimerRef.current); autoResumeTimerRef.current=null; } if(pauseTickerRef.current){ clearInterval(pauseTickerRef.current); pauseTickerRef.current=null; } setPauseEndsAt(null); setPauseRemaining(0); if(wasRunningOnPauseRef.current) setRunStartAt(Date.now()); setQueuePaused(false); } catch(e){ setResumeError(e?.response?.data?.message || e.message || 'Failed to resume'); } finally { setResumeSubmitting(false); } };
 
   const filters = ['Checked In','Engaged','No Show','Admitted','All'];
   const getFilterCount = (filter) => {
-    if (filter === 'All') return queueData.length;
-    if (filter === 'Checked In') return queueData.filter(appt => appt.status === 'Checked In').length;
-    if (filter === 'Engaged') return queueData.filter(appt => appt.status === 'Engaged').length;
-    if (filter === 'No Show') return queueData.filter(appt => appt.status === 'No Show').length;
-    if (filter === 'Admitted') return queueData.filter(appt => appt.status === 'Admitted').length;
-    return 0;
+    const categories = slotAppointments?.appointments || {};
+    const checkedIn = Array.isArray(categories.checkedIn) ? categories.checkedIn.length : 0;
+    const engaged = Array.isArray(categories.engaged) ? categories.engaged.length : 0;
+    const noShow = Array.isArray(categories.noShow) ? categories.noShow.length : 0;
+    const admitted = Array.isArray(categories.admitted) ? categories.admitted.length : 0;
+  const all = checkedIn + engaged + noShow + admitted; // exclude inWaiting from All
+    switch (filter) {
+      case 'Checked In': return checkedIn;
+      case 'Engaged': return engaged;
+      case 'No Show': return noShow;
+      case 'Admitted': return admitted;
+      case 'All': return all;
+      default: return 0;
+    }
   };
 
   // Slot dropdown UI from slots
   const [slotOpen, setSlotOpen] = useState(false); const slotAnchorRef=useRef(null); const slotMenuRef=useRef(null); const [slotPos,setSlotPos]=useState({top:0,left:0,width:360});
+  // Group slots into day parts similar to FD
+  const groupedSlots = useMemo(()=>{
+    const groups = { morning:[], afternoon:[], evening:[], night:[] };
+    (slots||[]).forEach(s=>{
+      const part = classifyISTDayPart(s.startTime || s.slotStartTime || s.start || s.timeStart);
+      if (groups[part]) groups[part].push(s);
+    });
+    return groups;
+  }, [slots]);
+  const timeSlots = useMemo(()=>{
+    const arr = [];
+    if (groupedSlots.morning.length){ const f=groupedSlots.morning[0], l=groupedSlots.morning[groupedSlots.morning.length-1]; arr.push({ key:'morning', label:'Morning', time: buildISTRangeLabel(f.startTime||f.slotStartTime, l.endTime||l.slotEndTime), Icon:Sunrise }); }
+    if (groupedSlots.afternoon.length){ const f=groupedSlots.afternoon[0], l=groupedSlots.afternoon[groupedSlots.afternoon.length-1]; arr.push({ key:'afternoon', label:'Afternoon', time: buildISTRangeLabel(f.startTime||f.slotStartTime, l.endTime||l.slotEndTime), Icon:Sun }); }
+    if (groupedSlots.evening.length){ const f=groupedSlots.evening[0], l=groupedSlots.evening[groupedSlots.evening.length-1]; arr.push({ key:'evening', label:'Evening', time: buildISTRangeLabel(f.startTime||f.slotStartTime, l.endTime||l.slotEndTime), Icon:Sunset }); }
+    if (groupedSlots.night.length){ const f=groupedSlots.night[0], l=groupedSlots.night[groupedSlots.night.length-1]; arr.push({ key:'night', label:'Night', time: buildISTRangeLabel(f.startTime||f.slotStartTime, l.endTime||l.slotEndTime), Icon:Moon }); }
+    return arr;
+  }, [groupedSlots]);
+  const [slotValue, setSlotValue] = useState('morning');
   const [showWalkIn, setShowWalkIn] = useState(false);
   useEffect(()=>{ const onClick=e=>{ if(slotAnchorRef.current?.contains(e.target) || slotMenuRef.current?.contains(e.target)) return; setSlotOpen(false); }; const onKey=e=>{ if(e.key==='Escape') setSlotOpen(false); }; window.addEventListener('mousedown',onClick); window.addEventListener('keydown',onKey); return ()=>{ window.removeEventListener('mousedown',onClick); window.removeEventListener('keydown',onKey); }; },[]);
 
@@ -437,32 +502,24 @@ const Queue = () => {
       <div className='sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-2 flex items-center'>
         <div className='relative mr-6' ref={slotAnchorRef}>
           <button type='button' className='flex items-center bg-white rounded-md border border-gray-200 shadow-sm px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50' onClick={e=>{ setSlotOpen(v=>!v); const r=e.currentTarget.getBoundingClientRect(); const width=360; const left=Math.max(8, Math.min(r.left, window.innerWidth-width-8)); const top=Math.min(r.bottom+8, window.innerHeight-8-4); setSlotPos({top,left,width}); }}>
-            <span className='font-medium mr-1'>{slots.find(s=> s.id===selectedSlotId)?.slotLabel || 'Select Slot'}</span>
-            <span className='text-gray-500'>{slots.find(s=> s.id===selectedSlotId)?.timeRangeLabel || ''}</span>
+            <span className='font-medium mr-1'>{timeSlots.find(t=> t.key===slotValue)?.label || 'Morning'}</span>
+            <span className='text-gray-500'>({timeSlots.find(t=> t.key===slotValue)?.time || ''})</span>
             <ChevronDown className='ml-2 h-4 w-4 text-gray-500'/>
           </button>
           {slotOpen && createPortal(
             <div ref={slotMenuRef} className='fixed z-[9999]' style={{top:slotPos.top,left:slotPos.left,width:slotPos.width}}>
-              <div className='bg-white rounded-xl border border-gray-200 shadow-xl max-h-[60vh] overflow-y-auto'>
+              <div className='bg-white rounded-xl border border-gray-200 shadow-xl'>
                 <ul className='py-1'>
-                  {slotsLoading && <li className='px-4 py-3 text-sm text-gray-500'>Loading slots…</li>}
-                  {!slotsLoading && !slots.length && <li className='px-4 py-3 text-sm text-gray-500'>No slots</li>}
-                  {slots.map((s,idx)=>(
-                    <li key={s.id}>
-                      <button type='button' onClick={()=>{ selectSlot(s.id); setSlotOpen(false); }} className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-blue-50 ${selectedSlotId===s.id?'bg-blue-50':''}`}> 
-                        <span className='flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 border border-blue-200 text-blue-600'>
-                          {idx%4===0 && <Sunrise className='w-4 h-4'/>}
-                          {idx%4===1 && <Sun className='w-4 h-4'/>}
-                          {idx%4===2 && <Sunset className='w-4 h-4'/>}
-                          {idx%4===3 && <Moon className='w-4 h-4'/>}
-                        </span>
+                  {timeSlots.map(({ key,label,time,Icon }, idx)=>(
+                    <li key={key}>
+                      <button type='button' onClick={()=>{ setSlotValue(key); const group = groupedSlots[key] || []; if (group.length) { const first = group[0]; const id = first.id || first.slotId || first._id || null; if (id) selectSlot(id); } setSlotOpen(false); }} className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-blue-50 ${slotValue===key?'bg-blue-50':''}`}>
+                        <span className='flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 border border-blue-200 text-blue-600'><Icon className='w-4 h-4' /></span>
                         <span className='flex-1'>
-                          <span className='block text-[14px] font-semibold text-gray-900'>{s.slotLabel}</span>
-                          <span className='block text-[13px] text-gray-600'>{s.timeRangeLabel || ''}</span>
+                          <span className='block text-[14px] font-semibold text-gray-900'>{label}</span>
+                          <span className='block text-[13px] text-gray-600'>({time})</span>
                         </span>
-                        <span className='text-xs text-gray-500'>{s.totalTokenCount ?? ''}</span>
                       </button>
-                      {idx < slots.length-1 && <div className='h-px bg-gray-200 mx-4'/>}
+                      {idx < timeSlots.length-1 && <div className='h-px bg-gray-200 mx-4' />}
                     </li>
                   ))}
                 </ul>
@@ -509,12 +566,23 @@ const Queue = () => {
         <div className='p-2 flex flex-col flex-1 min-h-0'>
           <div className='flex flex-col gap-2'>
             <h3 className='text-[#424242] font-medium'>Overview</h3>
-            <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4'>
-              <OverviewStatCard title='All Appointments' value={queueData.length} />
-              <OverviewStatCard title='Checked In' value={queueData.length} />
-              <OverviewStatCard title='Engaged' value={runStartAt? 1:0} />
-              <OverviewStatCard title='No Show/Cancelled' value={0} />
-            </div>
+            {(() => {
+              const categories = slotAppointments?.appointments || {};
+              const checkedInCount = Array.isArray(categories.checkedIn) ? categories.checkedIn.length : 0;
+              const engagedCount = Array.isArray(categories.engaged) ? categories.engaged.length : 0;
+              const admittedCount = Array.isArray(categories.admitted) ? categories.admitted.length : 0;
+              const noShowCount = Array.isArray(categories.noShow) ? categories.noShow.length : 0;
+              // All should exclude inWaiting in doctor queue
+              const allCount = checkedInCount + engagedCount + admittedCount + noShowCount;
+              return (
+                <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4'>
+                  <OverviewStatCard title='All Appointments' value={allCount} />
+                  <OverviewStatCard title='Checked In' value={checkedInCount} />
+                  <OverviewStatCard title='Engaged' value={engagedCount} />
+                  <OverviewStatCard title='No Show/Cancelled' value={noShowCount} />
+                </div>
+              );
+            })()}
           </div>
 
           {sessionStarted && activePatient && (
@@ -583,7 +651,7 @@ const Queue = () => {
           <div className='w-full flex flex-col gap-3 flex-1 min-h-0 overflow-hidden'>
             <div className='flex-1 min-w-0 min-h-0 overflow-hidden flex flex-col'>
               {queueData.length ? (
-                <QueueTable hideCheckIn={true} prescreeningEnabled={false} allowSampleFallback={false} items={queueData} removingToken={null} incomingToken={null} checkedInToken={null} checkedInTokens={new Set()} onCheckIn={()=>{}} onRevokeCheckIn={()=>{}} onMarkNoShow={()=>{}} />
+                <QueueTable hideCheckIn={true} prescreeningEnabled={false} allowSampleFallback={false} items={queueData} removingToken={null} incomingToken={null} checkedInToken={null} checkedInTokens={new Set()} onCheckIn={()=>{}} onRevokeCheckIn={()=>{}} onMarkNoShow={handleMarkNoShow} />
               ) : (
                 <div className='flex-1 flex items-center justify-center p-6'>
                   <div className='text-center'>

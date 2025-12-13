@@ -196,23 +196,19 @@ const WalkInAppointmentDrawer = ({ show, onClose, onBookedRefresh, doctorId, cli
 						date: apptDate,
 					};
 			} else {
+					// NEW_USER walk-in payload per API spec
 					payload = {
-						method:'NEW_USER',
-						bookingMode:'WALK_IN',
-						firstName:firstName.trim(),
-						lastName:lastName.trim(),
-						phone:mobile.trim(),
-						emailId: email.trim()||undefined,
-						dob:dob.trim(),
+						method: 'NEW_USER',
+						firstName: firstName.trim(),
+						lastName: lastName.trim(),
+						phone: mobile.trim(),
+						emailId: (email || '').trim() || undefined,
+						dob: dob.trim(),
 						gender: (gender || '').toUpperCase(),
 						bloodGroup: apiBloodGroup,
-						reason:reason.trim(),
-						slotId:selectedSlotId,
-						bookingType: apptType?.toUpperCase().includes('REVIEW')?'FOLLOW_UP':'NEW',
-						doctorId,
-						clinicId,
-						hospitalId,
-						date: apptDate,
+						reason: reason.trim(),
+						slotId: selectedSlotId,
+						bookingType: apptType?.toUpperCase().includes('REVIEW') ? 'FOLLOW_UP' : 'NEW',
 					};
 			}
 				// Log for debugging
@@ -426,6 +422,18 @@ export default function FDQueue() {
 		loadSlots({ doctorId, date: dateIso, clinicId, hospitalId });
 	},[doctorId, clinicId, hospitalId, loadSlots]);
 	useEffect(()=>{ if(selectedSlotId){ loadAppointmentsForSelectedSlot(); } },[selectedSlotId]);
+	// Poll appointments for selected slot every 45s to keep queue fresh
+	useEffect(()=>{
+		if(!selectedSlotId) return;
+		let ignore=false;
+		const tick = async()=>{
+			if(ignore) return;
+			try { await loadAppointmentsForSelectedSlot(); } catch {}
+		};
+		const id = setInterval(tick, 45000);
+		// initial fetch is already done by selectedSlotId effect
+		return ()=>{ ignore=true; clearInterval(id); };
+	}, [selectedSlotId, loadAppointmentsForSelectedSlot]);
 	// Auto-sync sessionStarted based on slot ETA status
 		useEffect(()=>{
 			let ignore=false;
@@ -734,6 +742,8 @@ export default function FDQueue() {
 	};
 	const [checkedInTokens, setCheckedInTokens] = useState(new Set());
 	const [checkedInToken, setCheckedInToken] = useState(null);
+	// Track tokens currently being checked-in to show loading state on the button
+	const [checkingInTokens, setCheckingInTokens] = useState(new Set());
 	const [showPreScreen, setShowPreScreen] = useState(false); // kept for future, but not used now
 	const [rightDivPatient, setRightDivPatient] = useState(null);
 	const [preScreenData, setPreScreenData] = useState({});
@@ -747,12 +757,17 @@ export default function FDQueue() {
 				id = found?.id;
 			}
 			if (!id) return;
+			// Mark this token as loading and pre-checked visually
+			setCheckingInTokens(prev => new Set(prev).add(row.token));
 			setCheckedInTokens(prev=> new Set(prev).add(row.token));
 			setCheckedInToken(row.token);
 			await checkInAppointment(id);
 			if (selectedSlotId) { await loadAppointmentsForSelectedSlot(); }
 		} catch (e) {
 			console.error('Check-in API failed', e?.response?.data || e.message);
+		} finally {
+			// Clear loading state for this token
+			setCheckingInTokens(prev => { const n = new Set(prev); n.delete(row?.token); return n; });
 		}
 	};
 	const handlePreScreenClose = () => { /* disabled current flow */ };
@@ -927,7 +942,7 @@ export default function FDQueue() {
 					</div>
 					<div className='w-full flex flex-col lg:flex-row gap-3 flex-1 min-h-0 overflow-hidden'>
 						<div className='flex-1 min-w-0 min-h-0 overflow-hidden flex flex-col'>
-							<QueueTable prescreeningEnabled={false} allowSampleFallback={false} hideCheckIn={activeFilter!=='In Waiting'} onCheckIn={handleCheckIn} checkedInToken={checkedInToken} checkedInTokens={checkedInTokens} items={queueData} removingToken={removingToken} incomingToken={incomingToken} onRevokeCheckIn={token=>{ setCheckedInTokens(prev=>{ const n=new Set(prev); n.delete(token); return n; }); if(checkedInToken===token) setCheckedInToken(null); }} onMarkNoShow={async (row)=> { try { let id=row?.id; if(!id){ const found=queueData.find(p=>p.token===row?.token); id=found?.id; }
+							<QueueTable prescreeningEnabled={false} allowSampleFallback={false} hideCheckIn={activeFilter!=='In Waiting'} onCheckIn={handleCheckIn} checkedInToken={checkedInToken} checkedInTokens={checkedInTokens} checkingInTokens={checkingInTokens} items={queueData} removingToken={removingToken} incomingToken={incomingToken} onRevokeCheckIn={token=>{ setCheckedInTokens(prev=>{ const n=new Set(prev); n.delete(token); return n; }); if(checkedInToken===token) setCheckedInToken(null); }} onMarkNoShow={async (row)=> { try { let id=row?.id; if(!id){ const found=queueData.find(p=>p.token===row?.token); id=found?.id; }
 	            if (!id) return; await markNoShowAppointment(id); if (selectedSlotId) { await loadAppointmentsForSelectedSlot(); } } catch(e) { console.error('No-show failed', e?.response?.data || e.message); } }} />
 						</div>
 						<div className='shrink-0 w-[400px] bg-white rounded-[12px] border-[0.5px] border-[#D6D6D6] h-full overflow-y-auto'>
