@@ -1,17 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Download, ChevronLeft, ChevronRight, UserPlus, Check } from 'lucide-react'
+import { Download, ChevronDown, ChevronRight , ChevronLeft, UserPlus, Check } from 'lucide-react'
 import Overview_cards from '../../../components/Dashboard/Overview_cards'
 import BookAppointmentDrawer from '../../../components/Appointment/BookAppointmentDrawer.jsx'
+import { walkInBlue , appointementWhite} from '../../../../public/index.js'
+
 
 const PeriodTabs = ({ value, onChange }) => {
   const tabs = ['Daily', 'Weekly', 'Monthly', 'Yearly']
   return (
-  <div className="flex items-center gap-2 text-xs sm:text-sm">
+  <div className="flex rounded-md items-center gap-2 bg-blue-primary50 p-[4px] text-sm ">
       {tabs.map((t) => (
         <button
           key={t}
           onClick={() => onChange(t)}
-      className={`px-2.5 sm:px-3 py-1 rounded-md transition-colors ${
+          className={`px-[8px]  py-1 rounded-[4px] transition-colors ${
             value === t
         ? 'bg-[#2372EC] text-white'
         : 'bg-transparent text-[#626060] hover:bg-gray-50'
@@ -66,51 +68,45 @@ const DocDashboard = () => {
   }, [isMonthOpen])
 
   return (
-  <div className="p-4">
-      {/* Header and top metrics */}
-      <div className="mb-4 sm:mb-6">
+  <div className="p-4 flex flex-col  gap-4">
         {/* Welcome + Walk-In */}
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <p className="text-sm text-[#626060]">Welcome, Dr. Millin Chavan. Here's an overview of your practice.</p>
-          <div className="flex items-center gap-2">
-            <div className="hidden sm:block w-px h-6 bg-[#E5F0FF]" />
-            <button onClick={()=> setBookOpen(true)} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm border-[#BFD6FF] bg-[#F3F8FF] text-[#2372EC] hover:bg-[#E9F2FF]">
-              <UserPlus className="w-4 h-4" />
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-md text-secondary-grey300">Welcome, Dr. Millin Chavan. Here's an overview of your practice.</p>
+          <div className="flex items-center ">
+            <button onClick={()=> setBookOpen(true)} className="inline-flex items-center gap-2 h-[32px] min-w-[32px] p-2 rounded-md border text-sm border-[#BFD6FF] bg-[#F3F8FF] text-[#2372EC] hover:bg-[#E9F2FF]">
+              <img src={walkInBlue} alt="" className='h-4' />
               <span>Walk-In Appointment</span>
             </button>
           </div>
         </div>
 
         {/* Top metrics: Total Patients + Total Appointments Booked */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div className="bg-white border border-gray-200 rounded-xl p-5 flex items-center justify-between">
-            <div>
-              <div className="text-[13px] text-[#626060]">Total Patients</div>
-              <div className="text-[28px] leading-8 font-semibold text-[#1F2937]">12,043</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
+          <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
+            <div className='flex flex-col gap-1'>
+              <div className="text-[16px] font-medium text-secondary-grey400">Total Patients</div>
+              <span className="text-[26px] font-bold text-secondary-grey400">12,043</span>
             </div>
             {/* right icon badge */}
-            <div className="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-gray-500">
-                <path stroke="currentColor" strokeWidth="1.5" d="M8 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8 0a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM3.5 20.5c0-3.037 2.463-5.5 5.5-5.5s5.5 2.463 5.5 5.5v.5H3.5v-.5Zm9.5-5.5c2.485 0 4.5 2.015 4.5 4.5v.5H13v-.5c0-2.485 2.015-4.5 4.5-4.5Z"/>
-              </svg>
+            <div className="w-12 h-12 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center">
+              <img src={appointementWhite} alt="" className='w-5 h-5' />
             </div>
           </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-5 flex items-center justify-between">
-            <div>
-              <div className="text-[13px] text-[#626060]">Total Appointments Booked</div>
-              <div className="text-[28px] leading-8 font-semibold text-[#1F2937]">15,000</div>
+
+          <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
+            <div className='flex flex-col gap-1'>
+              <div className="text-[16px] font-medium text-secondary-grey400">Total Appointments Booked</div>
+              <span className="text-[26px] font-bold text-secondary-grey400">12,043</span>
             </div>
             {/* right icon badge */}
-            <div className="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-gray-500">
-                <path stroke="currentColor" strokeWidth="1.5" d="M8 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8 0a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM3.5 20.5c0-3.037 2.463-5.5 5.5-5.5s5.5 2.463 5.5 5.5v.5H3.5v-.5Zm9.5-5.5c2.485 0 4.5 2.015 4.5 4.5v.5H13v-.5c0-2.485 2.015-4.5 4.5-4.5Z"/>
-              </svg>
+            <div className="w-12 h-12 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center">
+              <img src={appointementWhite} alt="" className='w-5 h-5' />
             </div>
           </div>
         </div>
 
         {/* Period tabs and selectors */}
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between">
           <PeriodTabs value={period} onChange={setPeriod} />
           <div className="flex items-center gap-3 relative">
             {/* Month dropdown trigger */}
@@ -122,9 +118,20 @@ const DocDashboard = () => {
               aria-haspopup="listbox"
               aria-expanded={isMonthOpen}
             >
-              <span className="text-[#6B7280]">{selectedMonth}</span>
-              <ChevronRight className={`w-4 h-4 text-gray-500 transition-transform ${isMonthOpen ? 'rotate-90' : ''}`} />
+              <span className="text-secondary-grey400  font-medium">{selectedMonth}</span>
+              <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isMonthOpen ? 'rotate-180' : ''}`} />
             </button>
+
+            <button
+              type="button"
+              className={`inline-flex items-center gap-1 px-2 h-8 rounded-md border border-gray-200 bg-white text-sm text-[#424242]`}
+            >
+              <ChevronLeft className={`w-4 h-4 text-gray-500 transition-transform `} />
+              <span className="text-secondary-grey400  font-medium" >2025</span>
+              <ChevronRight className={`w-4 h-4 text-gray-500 transition-transform `} />
+            </button>
+
+
             {/* Month dropdown */}
             {isMonthOpen && (
               <div
@@ -150,7 +157,7 @@ const DocDashboard = () => {
             )}
           </div>
         </div>
-      </div>
+    
 
       {/* Overview cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">

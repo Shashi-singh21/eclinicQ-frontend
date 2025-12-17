@@ -10,13 +10,13 @@ export default function Doctor_layout() {
         <DocSidebar className="w-64" />
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex flex-col flex-1 ml-[210px]">
+      {/* Main Content Area - Constrained to viewport minus sidebar */}
+      <div className="flex flex-col flex-1 ml-[210px] max-w-[calc(100vw-210px)] overflow-x-hidden">
         {/* Fixed Navbar */}
         <div className="fixed top-0 right-0 left-[210px] z-30 bg-white">
           <DocNavbar className="w-full" />
         </div>
-        
+
         {/* Scrollable Content */}
         <div className="flex-1 pt-12 overflow-auto">
           <Outlet />

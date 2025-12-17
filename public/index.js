@@ -44,6 +44,31 @@ import settingUnselect from './icons/Sidebar/MainSidebar/setting_unselect.png';
 // Navbar icons
 import bell from './icons/Navbar/bell.png';
 import appointement from './Doctor_module/appointement.png';
+// Doctor module navbar avatar icons
+import blueCall from './Doctor_module/navbar/avatar/blue_call.png';
+import blueId from './Doctor_module/navbar/avatar/blue_id.png';
+import blueMail from './Doctor_module/navbar/avatar/blue_mail.png';
+import whiteLogout from './Doctor_module/navbar/avatar/white_logout.png';
+import whiteOutOfOffice from './Doctor_module/navbar/avatar/white_outofoffice.png';
+import whiteProfile from './Doctor_module/navbar/avatar/white_profile.png';
+import whiteProfileLink from './Doctor_module/navbar/avatar/white_profilelink.png';
+import whiteSubscription from './Doctor_module/navbar/avatar/white_subscription.png';
+import collapse_white from './Doctor_module/navbar/header/collapse_white.png';
+import vertical from './Doctor_module/vertical.png';
+// Doctor module dashboard icons
+import admitWhite from './Doctor_module/dashboard/admit_white.png';
+import appointementWhite from './Doctor_module/dashboard/appointement_white.png';
+import avgTimeWhite from './Doctor_module/dashboard/avg_time_white.png';
+import downloadWhite from './Doctor_module/dashboard/download_white.png';
+import engageWhite from './Doctor_module/dashboard/engage_white.png';
+import newPatientWhite from './Doctor_module/dashboard/new_patient_white.png';
+import tokenWhite from './Doctor_module/dashboard/token_white.png';
+import waitingWhite from './Doctor_module/dashboard/waiting_white.png';
+import walkInBlue from './Doctor_module/dashboard/walk-in_blue.png';
+import table_white from './Doctor_module/patient/table_white.png'
+import action_calendar from './Doctor_module/patient/action_calendar.png'
+import action_dot from './Doctor_module/patient/action_dot.png'
+import action_heart from './Doctor_module/patient/action_heart.png'
 
 // Doctor info icons
 import blueBag from './doctor_info/bluebag.png';
@@ -94,7 +119,31 @@ export {
   settingUnselect
   ,
   // Navbar icons
-  bell
+  bell,
+  blueCall,
+  blueId,
+  blueMail,
+  whiteLogout,
+  whiteOutOfOffice,
+  whiteProfile,
+  whiteProfileLink,
+  whiteSubscription,
+  collapse_white,
+  vertical,
+  // Doctor module dashboard icons
+  admitWhite,
+  appointementWhite,
+  avgTimeWhite,
+  downloadWhite,
+  engageWhite,
+  newPatientWhite,
+  tokenWhite,
+  waitingWhite,
+  walkInBlue,
+  table_white,
+  action_calendar,
+  action_dot,
+  action_heart,
 };
 
 

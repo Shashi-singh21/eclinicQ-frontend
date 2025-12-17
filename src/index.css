@@ -34,3 +34,15 @@ html, body {
 .row-enter { animation: rowEnter 320ms ease-out; }
 .active-card-exit { animation: cardExit 300ms ease-in forwards; }
 .active-card-enter { animation: cardEnter 320ms ease-out; }
+
+
+/* Chrome, Edge, Safari */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  cursor: pointer; /* keeps it clickable if you want */
+}
+
+/* Optional: remove extra native padding in some browsers */
+input[type="date"] {
+  -webkit-appearance: none;
+}

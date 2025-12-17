@@ -1,11 +1,14 @@
 import React, { useMemo } from "react";
+import TableHeader from "../components/TableHeader";
 import { MoreVertical, Calendar, Heart } from "lucide-react";
+import { action_calendar, action_dot, action_heart } from "../../public";
 
 // Default column definition array to generalize headers and cell rendering
 const defaultColumns = [
 	{
 		key: "patient",
-		header: "Patient",
+	header: <TableHeader label="Patient" />, // icon shown by default
+	icon: true,
 		width: 280, // used to help min table width
 		sticky: "left",
 		render: (row) => (
@@ -22,33 +25,34 @@ const defaultColumns = [
 			</div>
 		),
 	},
-	{ key: "patientId", header: "Patient ID" },
-	{ key: "phone", header: "Contact" },
-	{ key: "email", header: "Email" },
-	{ key: "bloodGroup", header: "Blood Group" },
-	{ key: "height", header: "Height" },
-	{ key: "weight", header: "Weight" },
-	{ key: "bp", header: "BP" },
-	{ key: "sugar", header: "Sugar" },
+	{ key: "patientId", header: <TableHeader label="Patient ID" /> , icon: true},
+	{ key: "phone", header: <TableHeader label="Contact" />, icon: true },
+	{ key: "email", header: <TableHeader label="Email" />, icon: true },
+	{ key: "bloodGroup", header: <TableHeader label="Blood Group" />, icon: true },
+	{ key: "height", header: <TableHeader label="Height" />, icon: true },
+	{ key: "weight", header: <TableHeader label="Weight" />, icon: true },
+	{ key: "bp", header: <TableHeader label="BP" />, icon: true },
+	{ key: "sugar", header: <TableHeader label="Sugar" />, icon: true },
 	{
 		key: "location",
-		header: "Location",
+		header: <TableHeader label="Location" />, icon: true,
 		render: (row) => (
 			<span className="rounded bg-gray-100 px-2 py-1 text-xs">
 				{row.location}
 			</span>
 		),
 	},
-	{ key: "lastVisit", header: "Last Visit" },
-	{ key: "reason", header: "Reason", cellClass: "max-w-[260px] truncate" },
+	{ key: "lastVisit", header: <TableHeader label="Last Visit" />, icon: true },
+	{ key: "reason", header: <TableHeader label="Reason" />, cellClass: "max-w-[260px] truncate", icon: true },
 	{
 		key: "actions",
-		header: "Actions",
+		header: <TableHeader label="Actions" showIcon={false} />, // no icon for actions
+		icon: false,
 		sticky: "right",
 		align: "center",
 		render: () => (
 			<div className="flex justify-center gap-3 text-gray-500">
-				<Calendar className="h-4 w-4 cursor-pointer" />
+				<img src={action_calendar} alt="" />
 				<Heart className="h-4 w-4 cursor-pointer" />
 				<MoreVertical className="h-4 w-4 cursor-pointer" />
 			</div>
@@ -57,15 +61,15 @@ const defaultColumns = [
 ];
 
 // Demo default data
-const defaultData = Array.from({ length: 20 }).map((_, i) => ({
+const defaultData = Array.from({ length: 30 }).map((_, i) => ({
 	name: `Patient ${i + 1}`,
 	gender: i % 2 === 0 ? "M" : "F",
 	dob: "03/14/1990",
 	age: 33,
 	patientId: `P${650000 + i}`,
-	phone: "+91 9876543210",
+	phone: `+91 987654321${i % 10}`,
 	email: `patient${i + 1}@example.com`,
-	location: "Akola, MH",
+	location: ["Akola, MH", "Delhi, DL", "Mumbai, MH", "Chennai, TN", "Kolkata, WB"][i % 5],
 	lastVisit: "02/02/2025 | 12:30 PM",
 	reason: "Routine check-up for overall health",
 	bloodGroup: "O+",
@@ -90,12 +94,25 @@ export default function SampleTable({
     columns = defaultColumns,
     data = defaultData,
     page = 1,
-    pageSize = 10,
+    pageSize = 30, // Updated to show 30 rows per page
     total = 200,
     onPageChange,
     stickyLeftWidth = 280,
     stickyRightWidth = 120,
 }) {
+	// For backward compatibility, if a consumer passes `header` as plain string
+	// and also sets `icon: false`, we respect it by wrapping on the fly.
+	const renderHeaderContent = (col) => {
+		const headerContent = col.header;
+		// If caller already used <TableHeader />, just render it.
+		if (headerContent && headerContent.type === TableHeader) return headerContent;
+		// If it's primitive and they want icon (default true), wrap with TableHeader
+		const wantsIcon = col.icon !== false; // default true
+		if (typeof headerContent === "string" || typeof headerContent === "number") {
+			return <TableHeader label={headerContent} showIcon={wantsIcon} />;
+		}
+		return headerContent;
+	};
     // compute a reasonable min width from column hints
     const minWidth = useMemo(
         () => columns.reduce((acc, c) => acc + (c.width || 160), 0),
@@ -119,9 +136,9 @@ export default function SampleTable({
     };
 
 	return (
-		<div className="relative h-[90vh] z-10 rounded-xl border-[0.5px] border-secondary-grey100 bg-white overflow-hidden">
+		<div className="relative h-[90vh] z-10 rounded-xl border-[0.5px] border-secondary-grey100 bg-white">
 			{/* Scroll Area */}
-			<div className="h-full overflow-auto pb-16">
+			<div className="h-full overflow-auto">
 				<table
 					className={`w-full border-collapse text-sm table-auto`}
 					style={{ minWidth }}
@@ -131,10 +148,10 @@ export default function SampleTable({
 						<tr>
 							{columns.map((col) => {
 								// Base header cell style; prevent wrapping for cleaner column alignment
-								const base = "px-4 py-3 text-left relative bg-white whitespace-nowrap";
+								const base = "px-3 py-1 text-left text-sm font-medium relative bg-white whitespace-nowrap";
 								const stickyLeft = col.sticky === "left" ? " sticky left-0 z-50" : "";
-								const stickyRight = col.sticky === "right" ? " sticky right-0 z-50 text-center" : "";
-								const align = col.align === "center" ? " text-center" : "";
+								const stickyRight = col.sticky === "right" ? " sticky right-0 z-50" : "";
+								const align = col.align === "center" ? " " : "";
 								// width: constrain sticky columns; allow optional widths for non-sticky
 								const widthStyle =
 									col.sticky === "left"
@@ -142,7 +159,7 @@ export default function SampleTable({
 										: col.sticky === "right"
 										? { minWidth: STICKY_RIGHT_WIDTH, width: STICKY_RIGHT_WIDTH }
 										: col.width
-										? { minWidth: col.width }
+										? { minWidth: col.width, width: col.width }
 										: undefined;
 								const showRightDivider =
 									col.sticky === "left" || (!col.sticky && col.key !== lastColKey);
@@ -153,8 +170,8 @@ export default function SampleTable({
 										className={`${base}${stickyLeft}${stickyRight}${align}`}
 										style={widthStyle}
 									>
-										{col.header}
-										{/* Overlay dividers (above bg) with slight offset to align across header/body */}
+										{renderHeaderContent(col)}
+										
 										{showRightDivider && (
 											<span
 												className="pointer-events-none absolute right-0 w-px bg-secondary-grey100"
@@ -179,10 +196,10 @@ export default function SampleTable({
 							<tr key={i} className="border-t hover:bg-gray-50">
 								{columns.map((col) => {
 									// Prevent wrapping; keep sticky widths only on sticky columns
-									const base = "px-4 py-3 bg-white relative whitespace-nowrap";
+									const base = "px-3 h-[54px] bg-white text-sm text-secondary-grey300 font-base relative whitespace-nowrap text-left"; 
 									const stickyLeft = col.sticky === "left" ? " sticky left-0 z-30" : ""; // below header (z-50)
 									const stickyRight = col.sticky === "right" ? " sticky right-0 z-30" : "";
-									const align = col.align === "center" ? " text-center" : "";
+									const align = col.align === "center" ? " " : "";
 									const cellClass = col.cellClass ? ` ${col.cellClass}` : "";
 									const content = col.render ? col.render(row) : row[col.key];
 									const widthStyle =
@@ -191,7 +208,7 @@ export default function SampleTable({
 											: col.sticky === "right"
 											? { minWidth: STICKY_RIGHT_WIDTH, width: STICKY_RIGHT_WIDTH }
 											: col.width
-											? { minWidth: col.width }
+											? { minWidth: col.width, width: col.width }
 											: undefined;
 									const showRightDivider = col.sticky === "left";
 									const showLeftDivider = col.sticky === "right";
@@ -225,8 +242,8 @@ export default function SampleTable({
 				</table>
 			</div>
 
-			{/* Pagination placed after table content (not sticky) */}
-			<div className="flex items-center justify-between border-t bg-white px-4 py-2 text-sm">
+			{/* Fixed Pagination at the bottom of the viewport */}
+			<div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between border-t bg-white px-4 py-2 text-sm shadow-[0_-2px_6px_rgba(0,0,0,0.04)]">
 				<span>
 					{start}–{end} of {total}
 				</span>
