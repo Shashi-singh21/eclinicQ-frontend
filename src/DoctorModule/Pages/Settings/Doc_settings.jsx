@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { CheckCircle2, Pencil, Phone, Mail, MapPin, Upload, FileText, Trash2, ChevronDown, UserPlus, Eye, ShieldPlus, ClipboardList, Crown } from 'lucide-react'
 import AvatarCircle from '../../../components/AvatarCircle'
 import Badge from '../../../components/Badge'
-import { hospital } from '../../../../public/index.js'
+import { cap, hospital } from '../../../../public/index.js'
 import Input from '../../../components/FormItems/Input'
 import Toggle from '../../../components/FormItems/Toggle'
 import TimeInput from '../../../components/FormItems/TimeInput'
@@ -20,6 +20,7 @@ import useAuthStore from '../../../store/useAuthStore';
 import axiosClient from '../../../lib/axios';
 import { fetchClinicStaff } from '../../../services/staffService';
 import { registerStaff } from '../../../services/staff/registerStaffService';
+
 
 
 
@@ -1246,7 +1247,7 @@ const StaffTab = () => {
   }, [])
 
   return (
-    <div className=' py-2 flex flex-col gap-3'>
+    <div className=' p-4 flex flex-col gap-3'>
       <div className='flex items-center justify-between'>
         <div className='flex gap-2'>
           <TabBtn label='Staff' active={tab==='staff'} onClick={() => setTab('staff')} />
@@ -1664,7 +1665,7 @@ const Doc_settings = () => {
                   {education.map((ed, idx) => (
                     <ProfileItemCard
                       key={ed.id || idx}
-                      icon={<span className="text-xl">🎓</span>}
+                      icon={cap}
                       title={`${ed.degree}${ed.fieldOfStudy ? ` in ${ed.fieldOfStudy}` : ""}`}
                       badge={ed.graduationType}
                       subtitle={ed.instituteName}
@@ -1690,7 +1691,7 @@ const Doc_settings = () => {
                           className="text-gray-400 hover:text-blue-600"
                           title="Edit"
                         >
-                          ✎
+                          
                         </button>
                       }
                     />
@@ -2135,249 +2136,130 @@ const Doc_settings = () => {
           </div>
         </div>
       ) : activeTab === 'clinical' ? (
-        <div className="mt-4 grid grid-cols-12 gap-4">
-          {/* Clinic Info (Left) */}
-          <div className="col-span-12 xl:col-span-6">
-            <SectionCard 
-              title="Clinic Info" 
-              subtitle="Visible to Patient"
-              action={
-                <button 
-                  onClick={() => setClinicEditMode(!clinicEditMode)}
-                  className="text-gray-400 hover:text-blue-600 transition"
-                  title={clinicEditMode ? "Cancel" : "Edit"}
-                >
-                  {clinicEditMode ? '✕' : <Pencil size={18} />}
-                </button>
-              }
-            >
-              <div className="space-y-3">
-                <Input 
-                  label="Clinic Name" 
-                  compulsory 
-                  placeholder="Clinic Name" 
-                  value={clinicForm.name}
-                  onChange={(e) => setClinicForm({...clinicForm, name: e.target.value})}
-                  disabled={!clinicEditMode}
-                />
+        <div className="p-4 grid grid-cols-12 gap-4">
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {/* Mobile */}
-                  <div>
-                    <Input 
-                      label="Mobile Number" 
-                      placeholder="91753 67487" 
-                      value={clinicForm.phone}
-                      onChange={(e) => setClinicForm({...clinicForm, phone: e.target.value})}
-                      disabled={!clinicEditMode}
-                    />
-                    <div className="mt-1 text-[12px] text-green-600 inline-flex items-center gap-1">
-                      <CheckCircle2 size={14}/> Verified
-                    </div>
-                  </div>
-                  {/* Email */}
-                  <div>
-                    <Input 
-                      label="Email" 
-                      compulsory 
-                      placeholder="email@example.com" 
-                      value={clinicForm.email}
-                      onChange={(e) => setClinicForm({...clinicForm, email: e.target.value})}
-                      disabled={!clinicEditMode}
-                    />
-                    <div className="mt-1 text-[12px] text-green-600 inline-flex items-center gap-1">
-                      <CheckCircle2 size={14}/> Verified
-                    </div>
-                  </div>
-                </div>
+  {/* LEFT: Clinic Info */}
+  <div className="col-span-12 xl:col-span-6">
+    <SectionCard
+  title="Clinic Info"
+  subtitle="Visible to Patient"
+  Icon={Pencil}
+>
+  <div className="space-y-4 text-sm">
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Input 
-                    label="Establishment Date" 
-                    compulsory 
-                    type="date" 
-                    value={clinicForm.establishmentDate}
-                    onChange={(e) => setClinicForm({...clinicForm, establishmentDate: e.target.value})}
-                    disabled={!clinicEditMode}
-                  />
-                  <div>
-                    <label className="text-sm text-gray-700">Establishment Proof</label>
-                    <div className="mt-1 h-[32px] border border-gray-300 rounded-lg flex items-center justify-between px-2 text-sm">
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-gray-100">📄</span>
-                        {clinic?.proof ? 'Establishment.pdf' : 'No file'}
-                      </div>
-                      <button className="text-blue-600 text-xs">Change</button>
-                    </div>
-                  </div>
-                </div>
+    {/* Clinic Name */}
+    <InfoField
+      label="Clinic Name"
+      value="Chauhan Clinic"
+      full
+      divider
+    />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
-                  <div>
-                    <label className="text-sm text-gray-700">Number of Beds</label>
-                    <div className="mt-1 flex items-center gap-2">
-                      <input 
-                        className="h-8 w-full border border-gray-300 rounded-lg px-2 text-sm" 
-                        placeholder="Enter Number of Beds" 
-                        value={clinicForm.noOfBeds}
-                        onChange={(e) => setClinicForm({...clinicForm, noOfBeds: e.target.value})}
-                        disabled={!clinicEditMode}
-                      />
-                      <span className="text-xs text-gray-500">Beds</span>
-                    </div>
-                  </div>
-                </div>
+    {/* Mobile + Email */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <InfoField
+        label="Mobile Number"
+        value="91753 67487"
+        right={<span className="inline-flex items-center text-green-600 border border-green-400 py-0.5 px-1 rounded-md text-[12px]"><CheckCircle2 size={14} className="mr-1"/>Verified</span>}
+      />
 
-                {/* About Clinic */}
-                <div>
-                  <div className="text-sm text-gray-700 mb-1">About Clinic</div>
-                  <div className="border border-gray-200 rounded-md">
-                    <div className="px-2 py-1 border-b border-gray-200 text-gray-600 text-sm flex items-center gap-2">
-                      {/* Simple toolbar mimic */}
-                      <button className="hover:text-gray-900">✎</button>
-                      <button className="hover:text-gray-900 font-bold">B</button>
-                      <button className="hover:text-gray-900 italic">I</button>
-                      <button className="hover:text-gray-900 underline">U</button>
-                      <button className="hover:text-gray-900">•</button>
-                    </div>
-                    <textarea 
-                      className="w-full min-h-[140px] p-3 text-sm outline-none" 
-                      value={clinicForm.about}
-                      onChange={(e) => setClinicForm({...clinicForm, about: e.target.value})}
-                      disabled={!clinicEditMode}
-                    />
-                    <div className="px-3 pb-2 text-[12px] text-gray-500 text-right">
-                      {clinicForm.about.length}/1600
-                    </div>
-                  </div>
-                </div>
+      <InfoField
+        label="Email"
+        value="milindchachun@gmail.com"
+        right={<span className="inline-flex items-center text-green-600 border border-green-400 py-0.5 px-1 rounded-md text-[12px]"><CheckCircle2 size={14} className="mr-1"/>Verified</span>}
+      />
+    </div>
 
-                {/* Clinic Photos */}
-                <div>
-                  <div className="text-sm text-gray-700 mb-2">Clinic Photos</div>
-                  <div className="flex flex-wrap gap-3 items-center">
-                    {clinic?.clinicPhotos && clinic.clinicPhotos.length > 0 ? (
-                      clinic.clinicPhotos.map((photo, i) => (
-                        <div key={i} className="w-28 h-20 bg-gray-100 rounded-md border border-gray-200 overflow-hidden">
-                          <img src={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5173'}/${photo}`} alt={`Clinic ${i + 1}`} className="w-full h-full object-cover" />
-                        </div>
-                      ))
-                    ) : (
-                      [1,2,3,4].map((i) => (
-                        <div key={i} className="w-28 h-20 bg-gray-100 rounded-md border border-gray-200" />
-                      ))
-                    )}
-                    <label className="w-40 h-20 border border-dashed border-gray-300 rounded-md grid place-items-center text-blue-600 text-sm cursor-pointer">
-                      <input type="file" className="hidden" />
-                      Upload File
-                    </label>
-                  </div>
-                  <div className="text-[12px] text-gray-500 mt-1">Support Size upto 2MB in .png, .jpg, .svg, .webp</div>
-                </div>
-              </div>
-            </SectionCard>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {/* Establishment Date */}
+    <InfoField
+      label="Establishment Date"
+      value="10/09/2005"
+    />
+
+    
+  </div>
+
+  
+
+    {/* About */}
+    <div>
+      <div className="text-[13px] text-gray-500 mb-1">About</div>
+      <p className="text-sm text-gray-700 leading-relaxed">
+        Dr. Milind Chauhan practices Gynaecologist and Obstetrician in Andheri East, Mumbai
+        and has 13 years of experience in this field. He has completed his DNB -
+        Obstetric and Gynecology and MBBS. Dr. Milind Chauhan has gained the confidence
+        of patients and is a popular Gynaecologist and Obstetrician expert in Mumbai
+        who performs treatment and procedures for various health issues related to
+        Gynaecologist and Obstetrician.
+      </p>
+    </div>
+
+    {/* Clinic Photos */}
+    <div>
+      <div className="text-[13px] text-gray-500 mb-2">Clinic Photos</div>
+
+      <div className="flex gap-3 flex-wrap">
+        {[1,2,3,4].map((i) => (
+          <div
+            key={i}
+            className="w-[120px] h-[120px] rounded-md overflow-hidden border bg-gray-100"
+          >
+            <img
+              src={`/dummy/clinic-${i}.jpg`}
+              className="w-full h-full object-cover"
+            />
           </div>
+        ))}
+      </div>
 
-          {/* Clinic Address (Right) */}
-          <div className="col-span-12 xl:col-span-6">
-            <SectionCard title="Clinic Address" subtitle="Visible to Patient">
-              <div className="space-y-3">
-                <label className="text-sm text-gray-700">Map Location</label>
-                <div className="h-[220px]">
-                  <MapLocation 
-                    heightClass="h-full" 
-                    addButtonLabel="Add Location" 
-                    initialPosition={
-                      clinic?.latitude && clinic?.longitude 
-                        ? [parseFloat(clinic.latitude), parseFloat(clinic.longitude)]
-                        : null
-                    }
-                  />
-                </div>
+      <div className="mt-2 text-[11px] text-gray-400">
+        Support Size upto 2MB in .png, .jpg, .svg, .webp
+      </div>
+    </div>
 
-                {/* Address fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Input 
-                    label="Block no./Shop no./House no." 
-                    compulsory 
-                    placeholder="Shop No 2" 
-                    value={clinicForm.blockNo}
-                    onChange={(e) => setClinicForm({...clinicForm, blockNo: e.target.value})}
-                    disabled={!clinicEditMode}
-                  />
-                  <Input 
-                    label="Road/Area/Street" 
-                    compulsory 
-                    placeholder="Jawahar Nagar, Gokul Colony" 
-                    value={clinicForm.areaStreet}
-                    onChange={(e) => setClinicForm({...clinicForm, areaStreet: e.target.value})}
-                    disabled={!clinicEditMode}
-                  />
-                  <Input 
-                    label="Landmark" 
-                    compulsory 
-                    placeholder="Near Chowk" 
-                    value={clinicForm.landmark}
-                    onChange={(e) => setClinicForm({...clinicForm, landmark: e.target.value})}
-                    disabled={!clinicEditMode}
-                  />
-                  <Input 
-                    label="Pincode" 
-                    compulsory 
-                    placeholder="444001" 
-                    value={clinicForm.pincode}
-                    onChange={(e) => setClinicForm({...clinicForm, pincode: e.target.value})}
-                    disabled={!clinicEditMode}
-                  />
-                  <Input 
-                    label="City" 
-                    compulsory 
-                    placeholder="Akola" 
-                    value={clinicForm.city}
-                    onChange={(e) => setClinicForm({...clinicForm, city: e.target.value})}
-                    disabled={!clinicEditMode}
-                  />
-                  <div>
-                    <label className="text-sm text-gray-700">State</label>
-                    <select 
-                      className="mt-1 h-8 w-full border border-gray-300 rounded-lg px-2 text-sm"
-                      value={clinicForm.state}
-                      onChange={(e) => setClinicForm({...clinicForm, state: e.target.value})}
-                      disabled={!clinicEditMode}
-                    >
-                      <option>Maharashtra</option>
-                      <option>Karnataka</option>
-                      <option>Gujarat</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </SectionCard>
+  </div>
+</SectionCard>
 
-            {/* Right column action bar to mirror screenshot spacing */}
-            {clinicEditMode && (
-              <div className="flex justify-end mt-4">
-                <button 
-                  onClick={async () => {
-                    try {
-                      await updateClinicInfo(clinicForm);
-                      setClinicEditMode(false);
-                    } catch (error) {
-                      console.error('Error updating clinic info:', error);
-                    }
-                  }}
-                  className="px-4 h-9 rounded bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
-                >
-                  Save
-                </button>
-              </div>
-            )}
-          </div>
+  </div>
+
+  {/* RIGHT: Address */}
+  <div className="col-span-12 xl:col-span-6">
+    <SectionCard title="Clinic Address" subtitle="Visible to Patient"  Icon={Pencil}>
+
+      <div className="mb-3">
+        <div className="text-[13px] text-gray-500 mb-1">Map Location</div>
+        <div className="h-[220px] rounded overflow-hidden border">
+          <MapLocation
+            heightClass="h-full"
+            initialPosition={[
+              parseFloat(clinic?.latitude),
+              parseFloat(clinic?.longitude),
+            ]}
+            readOnly
+          />
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+
+        <InfoField label="Block no./Shop no./House no." value={clinic?.blockNo} />
+        <InfoField label="Road/Area/Street" value={clinic?.areaStreet} />
+        <InfoField label="Landmark" value={clinic?.landmark} />
+        <InfoField label="Pincode" value={clinic?.pincode} />
+        <InfoField label="City" value={clinic?.city} />
+        <InfoField label="State" value={clinic?.state} />
+
+      </div>
+
+    </SectionCard>
+  </div>
+</div>
+
       ) : activeTab === 'staff' ? (
         <StaffTab />
       ) : (
-        <div className="mt-6 flex justify-left">
+        <div className="p-4 flex justify-left">
           <div className="bg-white rounded-lg p-4 shadow-sm w-full max-w-md">
             <h2 className="text-base font-semibold text-gray-900 mb-2">Change Password</h2>
             <form className="space-y-3">

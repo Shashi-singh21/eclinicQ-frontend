@@ -69,11 +69,12 @@ import table_white from './Doctor_module/patient/table_white.png'
 import action_calendar from './Doctor_module/patient/action_calendar.png'
 import action_dot from './Doctor_module/patient/action_dot.png'
 import action_heart from './Doctor_module/patient/action_heart.png'
-
+import cap from './Doctor_module/settings/cap.png'
 // Doctor info icons
 import blueBag from './doctor_info/bluebag.png';
 import docIcon from './doctor_info/doc.png';
 import whiteBag from './doctor_info/whitebag.png';
+
 
 export {
   // Root PNGs
@@ -144,6 +145,7 @@ export {
   action_calendar,
   action_dot,
   action_heart,
+  cap,
 };
 
 
