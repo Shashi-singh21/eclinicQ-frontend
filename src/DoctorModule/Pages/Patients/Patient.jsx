@@ -95,9 +95,12 @@ export default function Patient() {
 
   return (
     <>
-    <div className="h-screen w-screen overflow-x-hidden flex flex-col ">
-  <PatientHeader counts={counts} selected={selected} onChange={setSelected} addLabel="Add New Patient" addPath={() => setAddOpen(true)} />
-    
+    <div className="">
+
+      <div className=''>
+          <PatientHeader counts={counts} selected={selected} onChange={setSelected} addLabel="Add New Patient" addPath={() => setAddOpen(true)} />
+      </div>
+
       {loading ? (
         <div className="flex items-center justify-center py-16">
           <div className="flex items-center gap-3">
@@ -106,6 +109,7 @@ export default function Patient() {
           </div>
         </div>
       ) : (
+        <div className=''>
         <SampleTable
           columns={columns}
           data={pageRows}
@@ -116,8 +120,12 @@ export default function Patient() {
           stickyLeftWidth={280}
           stickyRightWidth={140}
         />
+        </div>
       )}
-      <AddPatientDrawer open={addOpen} onClose={() => setAddOpen(false)} onSave={(data)=>{ /* TODO: hook API */ setAddOpen(false); }} />
+
+
+
+      <AddPatientDrawer open={addOpen} onClose={() => setAddOpen(false)} onSave={(data)=>{ setAddOpen(false); }} />
       
     </div>
     </>

@@ -119,7 +119,7 @@ export default function SampleTable({
     };
 
 	return (
-		<div className="relative h-[90vh] rounded-xl border-[0.5px] border-secondary-grey100 bg-white overflow-hidden">
+		<div className="relative h-[90vh] z-10 rounded-xl border-[0.5px] border-secondary-grey100 bg-white overflow-hidden">
 			{/* Scroll Area */}
 			<div className="h-full overflow-auto pb-16">
 				<table
