@@ -46,6 +46,7 @@ const InfoField = ({ label, value, right }) => (
   </div>
 )
 
+
 const SectionCard = ({ title, subtitle, subo, Icon, onIconClick, children }) => (
   <div className="px-4 py-3 flex flex-col gap-3 bg-white rounded-lg border border-gray-200">
     <div className="flex items-center justify-between">
@@ -101,7 +102,11 @@ const ProfileItemCard = ({
       
       {/* Icon */}
       <div className="w-[64px] h-[64px] rounded-full border border-secondary-grey50 bg-gray-100 flex items-center justify-center text-gray-600 shrink-0">
-        {icon}
+        {typeof icon === 'string' ? (
+          <img src={icon} alt="" className="w-6 h-6 object-contain" />
+        ) : (
+          icon
+        )}
       </div>
 
       {/* Content */}
@@ -1953,7 +1958,23 @@ const Doc_settings = () => {
       </div>
 
       <label className="inline-flex items-center gap-2 text-sm font-normal  text-gray-700 shrink-0">
-        <input type="checkbox"  />
+        <input
+          type="checkbox"
+          checked={Boolean(consultationDetails?.consultationFees?.[0]?.autoApprove)}
+          onChange={(e) => {
+            const v = e.target.checked;
+            setConsultationDetails((d) => ({
+              ...d,
+              consultationFees: [
+                {
+                  ...(d?.consultationFees?.[0] || {}),
+                  autoApprove: v,
+                },
+              ],
+            }));
+            setConsultationDirty(true);
+          }}
+        />
         <span>Auto Approve Requested Appointment</span>
       </label>
     </div>
@@ -1973,15 +1994,17 @@ const Doc_settings = () => {
     <input
       className="flex-1 text-xs border border-gray-300 rounded-l px-2 bg-white focus:outline-none"
       placeholder="Value"
-      value={consultationDetails?.slotTemplates?.avgDurationMinutes ?? ""}
+      value={consultationDetails?.consultationFees?.[0]?.avgDurationMinutes ?? ""}
       onChange={(e) => {
         const v = Number(e.target.value) || 0;
         setConsultationDetails((d) => ({
           ...d,
-          slotTemplates: {
-            ...(d?.slotTemplates || {}),
-            avgDurationMinutes: v,
-          },
+          consultationFees: [
+            {
+              ...(d?.consultationFees?.[0] || {}),
+              avgDurationMinutes: v,
+            },
+          ],
         }));
         setConsultationDirty(true);
       }}
