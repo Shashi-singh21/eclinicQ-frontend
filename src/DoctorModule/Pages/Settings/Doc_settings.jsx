@@ -47,45 +47,59 @@ const InfoField = ({ label, value, right }) => (
 )
 
 
-const SectionCard = ({ title, subtitle, subo, Icon, onIconClick, children }) => (
+const SectionCard = ({
+  title,
+  subtitle,
+  subo,
+  Icon,
+  onIconClick,
+  headerRight,
+  children,
+}) => (
   <div className="px-4 py-3 flex flex-col gap-3 bg-white rounded-lg border border-gray-200">
     <div className="flex items-center justify-between">
-      <div className='flex flex-col'>
-      <div className="flex items-center gap-1 text-sm">
-        <div className="font-medium text-[14px] text-gray-900">
-          {title}
+      
+      {/* LEFT */}
+      <div className="flex flex-col">
+        <div className="flex items-center gap-1 text-sm">
+          <div className="font-medium text-[14px] text-gray-900">
+            {title}
+          </div>
+
+          {subtitle && (
+            <div className="px-1 py-[2px] bg-secondary-grey50 rounded-md text-[12px] text-gray-500">
+              {subtitle}
+            </div>
+          )}
         </div>
 
-        {subtitle && (
-          <div className="px-1 py-[2px] bg-secondary-grey50 rounded-md text-[12px] text-gray-500">
-            {subtitle}
-          </div>
-        )}
-  
-        </div>
-        
         {subo && (
           <div className="flex gap-1 text-[12px] text-secondary-grey200">
             <span>{subo}</span>
-            <span className='text-blue-primary250'>Call Us</span>
+            <span className="text-blue-primary250">Call Us</span>
           </div>
         )}
       </div>
-      
 
-      {Icon && (
-        <button
-          onClick={onIconClick}
-          className="p-1 text-gray-500 hover:text-gray-700"
-        >
-          <Icon className="w-4 h-4" />
-        </button>
-      )}
+      {/* RIGHT */}
+      <div className="flex items-center gap-3 shrink-0">
+        {headerRight}
+
+        {Icon && (
+          <button
+            onClick={onIconClick}
+            className="p-1 text-gray-500 hover:text-gray-700"
+          >
+            <Icon className="w-4 h-4" />
+          </button>
+        )}
+      </div>
     </div>
 
     <div>{children}</div>
   </div>
 );
+
 
 const ProfileItemCard = ({
   icon,
@@ -1951,12 +1965,34 @@ const Doc_settings = () => {
 
 
           <SectionCard
-  title={
-    <div className="flex gap-[900px] justify-between w-full">
-      <div className="text-sm ">
-        Set Your Consultation Hours
-      </div>
+  title="Set your consultation hours"
+  headerRight={
+    <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+      <input
+        type="checkbox"
+        checked={Boolean(
+          consultationDetails?.consultationFees?.[0]?.autoApprove
+        )}
+        onChange={(e) => {
+          const v = e.target.checked;
+          setConsultationDetails((d) => ({
+            ...d,
+            consultationFees: [
+              {
+                ...(d?.consultationFees?.[0] || {}),
+                autoApprove: v,
+              },
+            ],
+          }));
+          setConsultationDirty(true);
+        }}
+      />
+      <span>Auto Approve Requested Appointment</span>
+    </label>
+  }
+>
 
+  {/* <div className="">
       <label className="inline-flex items-center gap-2 text-sm font-normal  text-gray-700 shrink-0">
         <input
           type="checkbox"
@@ -1977,9 +2013,7 @@ const Doc_settings = () => {
         />
         <span>Auto Approve Requested Appointment</span>
       </label>
-    </div>
-  }
->
+      </div> */}
 
 
 
@@ -2256,8 +2290,8 @@ const Doc_settings = () => {
           <MapLocation
             heightClass="h-full"
             initialPosition={[
-              parseFloat(clinic?.latitude),
-              parseFloat(clinic?.longitude),
+              parseFloat(clinic?.latitude) || 19.07,
+              parseFloat(clinic?.longitude) || 72.87,
             ]}
             readOnly
           />
