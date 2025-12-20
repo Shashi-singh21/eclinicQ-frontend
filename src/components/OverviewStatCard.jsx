@@ -1,5 +1,6 @@
 import React from 'react'
 import { Calendar } from 'lucide-react'
+import {scheduleCalender} from '../../public/index.js'
 
 const OverviewStatCard = ({
   title,
@@ -8,7 +9,7 @@ const OverviewStatCard = ({
   icon,
   className = '',
 }) => {
-  const RightIcon = icon ?? <Calendar className="w-5 h-5" />
+  const RightIcon = icon ?? <img src={scheduleCalender} className="w-12 h-12"  />
 
   const formattedValue =
     typeof value === 'number' ? new Intl.NumberFormat().format(value) : value
@@ -22,7 +23,7 @@ const OverviewStatCard = ({
             {subtitle && <div className="mt-2 text-xs text-gray-500">{subtitle}</div>}
         </div>
       </div>
-      <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 ring-1 ring-gray-200">
+      <div className="w-16 h-16 rounded-full flex items-center justify-center text-gray-400">
         {RightIcon}
       </div>
     </div>

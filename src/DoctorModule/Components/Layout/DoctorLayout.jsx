@@ -18,7 +18,7 @@ export default function Doctor_layout() {
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 pt-12 overflow-auto">
+        <div className="flex-1 pt-12 overflow-auto no-scrollbar">
           <Outlet />
         </div>
       </div>

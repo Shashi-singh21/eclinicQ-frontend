@@ -96,7 +96,9 @@ import whiteBag from './doctor_info/whitebag.png';
 import morningQueue from "/public/Doctor_module/queue/morningQueuee.svg";
 import eveningQueue from './Doctor_module/queue/eveningQueue.svg';
 import nightQueue from './Doctor_module/queue/nightQueue.svg';
-import afternoonQueue from './Doctor_module/queue/afternoonQueue.svg';  
+import afternoonQueue from './Doctor_module/queue/afternoonQueue.svg'; 
+import scheduleCalender from './schedule-calender.svg'; 
+import calendarMinimalistic from './Calendar-Minimalistic.svg';
 
 export {
   // Root PNGs
@@ -190,6 +192,9 @@ export {
   eveningQueue,
   nightQueue,
   afternoonQueue,
+
+  scheduleCalender,
+  calendarMinimalistic,
 };
 
 

@@ -2,9 +2,8 @@ import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 
 export default function TablePagination() {
   return (
-    <div className="flex items-center justify-center border rounded-lg bg-white py-1">
+    <div className="flex items-center justify-center border rounded-b-lg bg-white py-1">
       <div className="flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-sm text-gray-600">
-
         {/* Left Arrow */}
         <button className="flex h-7 w-7 items-center justify-center rounded hover:bg-gray-100">
           <ChevronLeft size={16} />
@@ -45,7 +44,6 @@ export default function TablePagination() {
         <button className="rounded border border-gray-300 bg-white px-3 py-1 text-sm text-gray-500">
           Go to Page
         </button>
-
       </div>
     </div>
   );
