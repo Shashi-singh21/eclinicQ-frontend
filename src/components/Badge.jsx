@@ -60,7 +60,7 @@ const sizeTokens = {
   s: 'h-6 px-2 text-xs rounded-md',
   l: 'h-8 px-3 text-sm rounded-lg',
   small: 'h-6 px-2 text-xs rounded-md', // legacy alias
-  large: 'h-8 px-3 text-sm rounded-lg', // legacy alias
+  large: 'h-8 px-3 text-sm rounded-md', // legacy alias
 };
 
 /**

@@ -44,11 +44,59 @@ import settingUnselect from './icons/Sidebar/MainSidebar/setting_unselect.png';
 // Navbar icons
 import bell from './icons/Navbar/bell.png';
 import appointement from './Doctor_module/appointement.png';
+// Doctor module navbar avatar icons
+import blueCall from './Doctor_module/navbar/avatar/blue_call.png';
+import blueId from './Doctor_module/navbar/avatar/blue_id.png';
+import blueMail from './Doctor_module/navbar/avatar/blue_mail.png';
+import whiteLogout from './Doctor_module/navbar/avatar/white_logout.png';
+import whiteOutOfOffice from './Doctor_module/navbar/avatar/white_outofoffice.png';
+import whiteProfile from './Doctor_module/navbar/avatar/white_profile.png';
+import whiteProfileLink from './Doctor_module/navbar/avatar/white_profilelink.png';
+import whiteSubscription from './Doctor_module/navbar/avatar/white_subscription.png';
+import collapse_white from './Doctor_module/navbar/header/collapse_white.png';
+import vertical from './Doctor_module/vertical.png';
+// Doctor module dashboard icons
+import arrowRightNav from './Doctor_module/dashboard/arrowRightNav.svg';
+import appointementNav from './Doctor_module/dashboard/appointementNav.svg'; 
+import mapPoint from './Doctor_module/dashboard/mapPoint.svg';
+import staff from './Doctor_module/dashboard/staff.svg';
+import vector from './Doctor_module/dashboard/vector.svg';
+import admitWhite from './Doctor_module/dashboard/admit_white.png';
+import appointementWhite from './Doctor_module/dashboard/appointement_white.png';
+import avgTimeWhite from './Doctor_module/dashboard/avg_time_white.png';
+import downloadWhite from './Doctor_module/dashboard/download_white.png';
+import engageWhite from './Doctor_module/dashboard/engage_white.png';
+import newPatientWhite from './Doctor_module/dashboard/new_patient_white.png';
+import tokenWhite from './Doctor_module/dashboard/token_white.png';
+import waitingWhite from './Doctor_module/dashboard/waiting_white.png';
+import walkInBlue from './Doctor_module/dashboard/walk-in_blue.png';
+import table_white from './Doctor_module/patient/table_white.png'
+import action_calendar from './Doctor_module/patient/action_calendar.png'
+import action_dot from './Doctor_module/patient/action_dot.png'
+import action_heart from './Doctor_module/patient/action_heart.png'
+import queue_download from './Doctor_module/patient/queue_download.png'
+import refresh from './Doctor_module/patient/refresh.png'
+import terminate from './Doctor_module/patient/terminate.png'
+import cap from './Doctor_module/settings/cap.png'
+// Doctor module sidebar icons
+import calendarWhite from './Doctor_module/sidebar/calendar_white.png';
+import dashboardWhite from './Doctor_module/sidebar/dashboard_white.png';
+import patientBlue from './Doctor_module/sidebar/patient_blue.png';
+import patientWhite from './Doctor_module/sidebar/patient_white.png';
+import queueBlue from './Doctor_module/sidebar/queue_blue.png';
+import queueWhite from './Doctor_module/sidebar/queue_white.png';
+import settingBlue from './Doctor_module/sidebar/setting_blue.png';
+import helpWhite from './Doctor_module/sidebar/help_white.png';
 
 // Doctor info icons
 import blueBag from './doctor_info/bluebag.png';
 import docIcon from './doctor_info/doc.png';
 import whiteBag from './doctor_info/whitebag.png';
+
+import morningQueue from "/public/Doctor_module/queue/morningQueuee.svg";
+import eveningQueue from './Doctor_module/queue/eveningQueue.svg';
+import nightQueue from './Doctor_module/queue/nightQueue.svg';
+import afternoonQueue from './Doctor_module/queue/afternoonQueue.svg';  
 
 export {
   // Root PNGs
@@ -94,7 +142,54 @@ export {
   settingUnselect
   ,
   // Navbar icons
-  bell
+  bell,
+  blueCall,
+  blueId,
+  blueMail,
+  whiteLogout,
+  whiteOutOfOffice,
+  whiteProfile,
+  whiteProfileLink,
+  whiteSubscription,
+  collapse_white,
+  vertical,
+  // Doctor module dashboard icons
+  admitWhite,
+  appointementWhite,
+  avgTimeWhite,
+  downloadWhite,
+  engageWhite,
+  newPatientWhite,
+  vector,
+  staff, 
+  mapPoint,
+  arrowRightNav,
+  appointementNav,
+  tokenWhite,
+  waitingWhite,
+  walkInBlue,
+  table_white,
+  action_calendar,
+  action_dot,
+  action_heart,
+  cap,
+  queue_download,
+  refresh,
+  terminate,
+  // Doctor module sidebar icons
+  calendarWhite,
+  dashboardWhite,
+  patientBlue,
+  patientWhite,
+  queueBlue,
+  queueWhite,
+  settingBlue, 
+  helpWhite, 
+  //queue icons
+  morningQueue,
+  eveningQueue,
+  nightQueue,
+  afternoonQueue,
 };
 
 

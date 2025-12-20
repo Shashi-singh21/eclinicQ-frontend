@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3000', // backend origin
+        target:'https://api.upcharq.com' , // backend origin
         changeOrigin: true,
         secure: false,
       }

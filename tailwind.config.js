@@ -8,6 +8,9 @@ export default {
   theme: {
     extend: {
       colors: {
+        green : { 
+          primary100: '3EAF3F',
+        },
         blue: {
           primary400: '#1E3A8A',
           primary300: '#0D47A1',
@@ -31,11 +34,11 @@ export default {
           white: '#FFFFFF',
         },
         secondary: {
-          grey400: '#374151',
+          grey400: '#424242',
           grey300: '#626060',
-          grey200: '#9CA3AF',
+          grey200: '#8E8E8E',
           grey150: '#D1D5DB',
-          grey100: '#E5E7EB',
+          grey100: '#D6D6D6',
           grey50: '#F9F9F9',
         },
         warning: {

@@ -24,7 +24,7 @@ const Overview_cards = ({
     : 'text-red-500 bg-red-50'
 
   const RightIcon = ({ className = '' }) => (
-    <div className={`w-11 h-11 rounded-full border flex items-center justify-center bg-white shadow-sm ${className}`}>
+    <div className={`w-12 h-12 rounded-full border flex items-center justify-center bg-white shadow-sm ${className}`}>
       {icon ? (
         icon
       ) : isProfit ? (
@@ -44,8 +44,8 @@ const Overview_cards = ({
         className="absolute inset-0 rounded-[12px]"
         style={{
           background: isProfit
-            ? 'linear-gradient(to right, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 56.54%, rgba(109,219,114,0.15) 100%)'
-            : 'linear-gradient(to right, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 56.54%, rgba(240,68,56,0.12) 100%)',
+            ? 'linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 65.54%, rgba(109,219,114,0.25) 100%)'
+            : 'linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 65.54%, rgba(240,68,56,0.25) 100%)',
         }}
       ></div>
       <div className="relative z-10 flex items-stretch justify-between gap-6">

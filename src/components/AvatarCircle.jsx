@@ -1,7 +1,9 @@
 import React from 'react';
+import {Building2} from "lucide-react"
 
 // Size tokens: L(48px), MD(40px), S(32px), XS(24px)
 const sizeMap = {
+  xl: 'w-16 h-16 text-[30px]', // 64px
   l: 'w-12 h-12 text-xl', // 48px
   md: 'w-10 h-10 text-lg', // 40px
   s: 'w-8 h-8 text-base', // 32px
@@ -25,7 +27,7 @@ const colorTokens = {
  * @param {'blue'|'orange'|'grey'} [color]
  * @param {string} [className]
  */
-const AvatarCircle = ({ name, size = 'md', color = 'blue', className = '' }) => {
+const AvatarCircle = ({ name, size = 'md', color = 'blue', className = '', icon = null }) => {
   const initial = name?.[0]?.toUpperCase() || '?';
   const sz = sizeMap[size] || sizeMap.md;
   const { bg, border, text } = colorTokens[color] || colorTokens.blue;
@@ -41,7 +43,7 @@ const AvatarCircle = ({ name, size = 'md', color = 'blue', className = '' }) => 
         borderWidth: '1px', // approximates 0.5px across displays
       }}
     >
-      {initial}
+      {icon || initial}
     </span>
   );
 };

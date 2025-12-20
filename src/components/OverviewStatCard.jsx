@@ -14,7 +14,7 @@ const OverviewStatCard = ({
     typeof value === 'number' ? new Intl.NumberFormat().format(value) : value
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-center justify-between ${className}`}>
+    <div className={`bg-white rounded-lg shadow-sm  p-4 flex items-center justify-between ${className}`}>
       <div className='w-full '>
         <div className="text-sm text-gray-600">{title}</div>
         <div className='flex items-center gap-1'>

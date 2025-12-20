@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { CheckCircle2, Pencil, Phone, Mail, MapPin, Upload, FileText, Trash2, ChevronDown, UserPlus, Eye, ShieldPlus, ClipboardList, Crown } from 'lucide-react'
 import AvatarCircle from '../../../components/AvatarCircle'
 import Badge from '../../../components/Badge'
-import { hospital } from '../../../../public/index.js'
+import { cap, hospital } from '../../../../public/index.js'
 import Input from '../../../components/FormItems/Input'
 import Toggle from '../../../components/FormItems/Toggle'
 import TimeInput from '../../../components/FormItems/TimeInput'
@@ -24,6 +24,7 @@ import { registerStaff } from '../../../services/staff/registerStaffService';
 
 
 
+
 // Global drawer animation keyframes (used by all drawers in this page)
 const DrawerKeyframes = () => (
   <style>{`
@@ -36,31 +37,139 @@ const DrawerKeyframes = () => (
 
 // A light-weight field renderer
 const InfoField = ({ label, value, right }) => (
-  <div className="grid grid-cols-12 gap-2 text-[13px] leading-5">
-    <div className="col-span-4 text-gray-500">{label}</div>
-    <div className="col-span-8 text-gray-900 flex items-center gap-2">
+  <div className="flex flex-col text-[14px] border-b pb-2">
+    <div className="col-span-4  text-secondary-grey200">{label}</div>
+    <div className="col-span-8 text-secondary-grey400 flex items-center justify-between">
       <span className="truncate">{value || '-'}</span>
       {right}
     </div>
   </div>
 )
 
-const SectionCard = ({ title, subtitle, action, children }) => (
-  <div className="bg-white rounded-lg border border-gray-200">
-    <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-      <div className="text-sm">
-        <div className="font-medium text-gray-900">{title}</div>
-        {subtitle ? (
-          <div className="text-[12px] text-gray-500">{subtitle}</div>
-        ) : null}
+
+const SectionCard = ({
+  title,
+  subtitle,
+  subo,
+  Icon,
+  onIconClick,
+  headerRight,
+  children,
+}) => (
+  <div className="px-4 py-3 flex flex-col gap-3 bg-white rounded-lg ">
+    <div className="flex items-center justify-between">
+      
+      {/* LEFT */}
+      <div className="flex flex-col">
+        <div className="flex items-center gap-1 text-sm">
+          <div className="font-medium text-[14px] text-gray-900">
+            {title}
+          </div>
+
+          {subtitle && (
+            <div className="px-1 py-[2px] bg-secondary-grey50 rounded-md text-[12px] text-gray-500">
+              {subtitle}
+            </div>
+          )}
+        </div>
+
+        {subo && (
+          <div className="flex gap-1 text-[12px] text-secondary-grey200">
+            <span>{subo}</span>
+            <span className="text-blue-primary250">Call Us</span>
+          </div>
+        )}
       </div>
-      {action}
+
+      {/* RIGHT */}
+      <div className="flex items-center gap-3 shrink-0">
+        {headerRight}
+
+        {Icon && (
+          <button
+            onClick={onIconClick}
+            className="p-1 text-gray-500 hover:text-gray-700"
+          >
+            <Icon className="w-4 h-4" />
+          </button>
+        )}
+      </div>
     </div>
-    <div className="p-4">
-      {children}
-    </div>
+
+    <div>{children}</div>
   </div>
-)
+);
+
+
+const ProfileItemCard = ({
+  icon,
+  title,
+  badge,
+  subtitle,
+  date,
+  linkLabel,
+  linkUrl,
+  rightActions, // JSX slot (optional)
+}) => {
+  return (
+    <div className="flex items-start gap-4 py-3 border-b rounded-md bg-white">
+      
+      {/* Icon */}
+      <div className="w-[64px] h-[64px] rounded-full border border-secondary-grey50 bg-gray-100 flex items-center justify-center text-gray-600 shrink-0">
+        {typeof icon === 'string' ? (
+          <img src={icon} alt="" className="w-6 h-6 object-contain" />
+        ) : (
+          icon
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="flex flex-shrink-0  flex-col gap-[2px]">
+        <div className="flex flex-shrink-0  items-center gap-1 text-sm text-gray-900">
+          <span className="font-semibold">{title}</span>
+
+          {badge && (
+            <span className="text-[12px] shrink-0   min-w-[18px]  text-gray-500 bg-gray-50 rounded px-1 ">
+              {badge}
+            </span>
+          )}
+        </div>
+
+        {subtitle && (
+          <div className="text-sm text-gray-600">
+            {subtitle}
+          </div>
+        )}
+
+        {date && (
+          <div className="text-sm text-gray-500">
+            {date}
+          </div>
+        )}
+
+        {linkUrl && (
+          <a
+            href={linkUrl}
+            className="inline-flex items-center gap-1 text-sm text-blue-600"
+            target="_blank"
+            rel="noreferrer"
+            onClick={(e) => e.preventDefault()}
+          >
+            {linkLabel}
+          </a>
+        )}
+      </div>
+
+      {/* Right actions – render ONLY if provided */}
+      {rightActions && (
+        <div className="flex items-center gap-2">
+          {rightActions}
+        </div>
+      )}
+    </div>
+  );
+};
+
 
 // ======== Drawer: Edit Basic Info ========
 const BasicInfoDrawer = ({ open, onClose, initial, onSave }) => {
@@ -1157,7 +1266,7 @@ const StaffTab = () => {
   }, [])
 
   return (
-    <div className=' py-2 flex flex-col gap-3'>
+    <div className=' p-4 flex flex-col gap-3'>
       <div className='flex items-center justify-between'>
         <div className='flex gap-2'>
           <TabBtn label='Staff' active={tab==='staff'} onClick={() => setTab('staff')} />
@@ -1483,10 +1592,11 @@ const Doc_settings = () => {
 }
 
   return (
-    <div className="px-6 pb-10">
+    <div className="bg-gray-50 h-full">
+
       <DrawerKeyframes />
       {/* Top banner + centered avatar + tabs (as in screenshot) */}
-      <div className="-mx-6">
+      
         <div className="relative">
           <img src={hospital} alt="cover" className="w-full h-40 object-cover" />
           <div className="absolute -bottom-10 left-1/2 -translate-x-1/2">
@@ -1495,9 +1605,12 @@ const Doc_settings = () => {
             </div>
           </div>
         </div>
-        <div className="bg-white border-b border-gray-200">
-          <div className="px-6 pt-10">
-            <nav className="flex items-center gap-6 overflow-x-auto text-sm">
+        
+
+
+
+          <div className="px-2 pt-10 border-b">
+            <nav className="flex items-center gap-2 overflow-x-auto text-sm">
               {tabs.map((t) => {
                 const active = activeTab === t.key
                 return (
@@ -1509,10 +1622,10 @@ const Doc_settings = () => {
                       const dest = tabToPath(next)
                       if (location.pathname !== dest) navigate(dest)
                     }}
-                    className={`whitespace-nowrap pb-3 border-b-2 transition-colors ${
+                    className={`whitespace-nowrap px-[6px] py-1 pb-2 border-b-2 transition-colors ${
                       active
-                        ? 'border-blue-600 text-gray-900'
-                        : 'border-transparent text-gray-600 hover:text-gray-900'
+                        ? 'border-blue-600 text-blue-primary250'
+                        : 'border-transparent text-secondary-grey300 hover:text-gray-900'
                     }`}
                   >
                     {t.label}
@@ -1520,202 +1633,128 @@ const Doc_settings = () => {
                 )
               })}
             </nav>
-          </div>
+
         </div>
-      </div>
+
+
 
   {/* Content */}
   {activeTab === 'personal' ? (
-        <div className="mt-4 grid grid-cols-12 gap-4">
+        <div className="pt-6 px-4 grid grid-cols-12 gap-6">
           {/* Left column */}
-          <div className="col-span-12 xl:col-span-6 space-y-4">
+          <div className="col-span-12 xl:col-span-6 space-y-6">
+
             <SectionCard
               title="Basic Info"
               subtitle="Visible to Patient"
-              action={<button onClick={()=>setBasicOpen(true)} className="text-blue-600 text-sm inline-flex items-center gap-1"><Pencil size={14}/> Edit</button>}
+              Icon={Pencil}
+              onIconClick={() => setBasicOpen(true)}
             >
               <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3 text-[13px]">
+                <div className="grid grid-cols-2 gap-3 text-[14px]">
                   <InfoField label="First Name" value={profile.basic?.firstName} />
                   <InfoField label="Last Name" value={profile.basic?.lastName} />
-                  <InfoField label="Mobile Number" value={profile.basic?.phone} right={<span className="inline-flex items-center text-green-600 text-[12px]"><CheckCircle2 size={14} className="mr-1"/>Verified</span>} />
-                  <InfoField label="Email" value={profile.basic?.email} right={<span className="inline-flex items-center text-green-600 text-[12px]"><CheckCircle2 size={14} className="mr-1"/>Verified</span>} />
+                  <InfoField label="Mobile Number" value={profile.basic?.phone} right={<span className="inline-flex items-center text-green-600 border border-green-400 py-0.5 px-1 rounded-md text-[12px]"><CheckCircle2 size={14} className="mr-1"/>Verified</span>} />
+                  <InfoField label="Email" value={profile.basic?.email} right={<span className="inline-flex items-center text-green-600 border border-green-400 py-0.5 px-1 rounded-md text-[12px]"><CheckCircle2 size={14} className="mr-1"/>Verified</span>} />
                   <InfoField label="Gender" value={profile.basic?.gender?.charAt(0).toUpperCase() + profile.basic?.gender?.slice(1).toLowerCase()} />
                   <InfoField label="Language" value={profile.basic?.languages?.join(', ')} />
                   <InfoField label="City" value={profile.basic?.city} />
                   <InfoField label="Website" value={profile.basic?.website} />
                 </div>
 
-                <div className="mt-1">
-                  <div className="text-gray-500 text-[13px]">Profile Headline</div>
-                  <div className="text-[13px] text-gray-900 mt-1">{profile.basic?.headline}</div>
+                <div className="flex flex-col gap-3">
+                  <InfoField label="Profile Headline" value={profile.basic?.headline}/>
+                  <InfoField label="About" value={profile.basic?.about}/>
+                  
                 </div>
 
-                <div className="mt-1">
-                  <div className="text-gray-500 text-[13px]">About</div>
-                  <div className="text-[13px] text-gray-900 mt-1">{profile.basic?.about}</div>
-                </div>
+              
               </div>
             </SectionCard>
 
             <SectionCard
               title="Educational Details"
               subtitle="Visible to Patient"
-              action={<div className="flex items-center gap-2">
-                <button onClick={() => {
-                  setEduEditData(null);
-                  setEduEditMode('add');
-                  setEduOpen(true);
-                }} className="text-blue-600 text-sm inline-flex items-center gap-1"><Upload size={14}/> Add</button>
-              </div>}
+              Icon={Pencil}
+              onIconClick={() => setEduOpen(true)}
+              subo="To Change your Graduation Details please"
             >
+              
               <div className="space-y-3">
-                {Array.isArray(education) && education.length > 0 ? (
-                  education.map((ed, idx) => (
-                    <div key={ed.id || idx} className="flex items-start gap-3 p-3 border border-gray-200 rounded-md">
-                      <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">🎓</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm text-gray-900 font-medium flex items-center gap-2">
-                          {ed.degree}{ed.fieldOfStudy && ` in ${ed.fieldOfStudy}`}
-                          <span className="text-[11px] text-gray-600 border border-gray-300 bg-gray-50 rounded px-1.5 py-0.5">{ed.graduationType}</span>
-                        </div>
-                        <div className="text-[12px] text-gray-600">{ed.instituteName}</div>
-                        <div className="text-[12px] text-gray-600">{ed.startYear} - {ed.completionYear}</div>
-                        {ed.proofDocumentUrl && (
-                          <a className="text-[12px] text-blue-600 inline-flex items-center gap-1 mt-1" href={ed.proofDocumentUrl} target="_blank" rel="noreferrer" onClick={(e)=>e.preventDefault()}>
-                            <FileText size={14}/> Document
-                          </a>
-                        )}
-                        {ed.isVerified && (
-                          <span className="inline-flex items-center text-green-600 text-[11px] ml-2">
-                            <CheckCircle2 size={12} className="mr-1"/>Verified
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button 
+                  {education.map((ed, idx) => (
+                    <ProfileItemCard
+                      key={ed.id || idx}
+                      icon={cap}
+                      title={`${ed.degree}${ed.fieldOfStudy ? ` in ${ed.fieldOfStudy}` : ""}`}
+                      badge={ed.graduationType}
+                      subtitle={ed.instituteName}
+                      date={`${ed.startYear} - ${ed.completionYear}`}
+                      linkLabel="Degree_Certificate.pdf"
+                      linkUrl={ed.proofDocumentUrl}
+                      rightActions={
+                        <button
                           onClick={() => {
-                            // Map API fields to drawer fields
-                            const mappedData = {
+                            setEduEditData({
                               id: ed.id,
                               school: ed.instituteName,
                               gradType: ed.graduationType,
                               degree: ed.degree,
-                              field: ed.fieldOfStudy || '',
-                              start: ed.startYear?.toString() || '',
-                              end: ed.completionYear?.toString() || '',
-                              proof: ed.proofDocumentUrl || ''
-                            };
-                            setEduEditData(mappedData);
-                            setEduEditMode('edit');
+                              field: ed.fieldOfStudy || "",
+                              start: ed.startYear?.toString() || "",
+                              end: ed.completionYear?.toString() || "",
+                              proof: ed.proofDocumentUrl || "",
+                            });
+                            setEduEditMode("edit");
                             setEduOpen(true);
                           }}
-                          className="text-gray-400 hover:text-blue-600 transition"
+                          className="text-gray-400 hover:text-blue-600"
                           title="Edit"
                         >
-                          <Pencil size={16} />
+                          
                         </button>
-                        <button 
-                          onClick={async () => {
-                            if (window.confirm('Delete this education entry?')) {
-                              await deleteEducation(ed.id);
-                            }
-                          }}
-                          className="text-gray-400 hover:text-red-600 transition"
-                          title="Delete"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-sm text-gray-500 text-center py-4">No education entries yet. Click Add to create one.</div>
-                )}
-              </div>
+                      }
+                    />
+                  ))}
+                </div>
+
             </SectionCard>
 
-            <SectionCard title="Awards & Publications" subtitle="Visible to Patient" action={<div className="flex items-center gap-2"><button onClick={()=>setAwardOpen(true)} className="text-blue-600 text-sm inline-flex items-center gap-1"><Upload size={14}/> Add Award</button><button onClick={()=>setPubOpen(true)} className="text-blue-600 text-sm inline-flex items-center gap-1"><Upload size={14}/> Add Publication</button></div>}>
-              <div className="space-y-3">
-                {Array.isArray(awards) && awards.map((aw) => (
-                  <div key={aw.id} className="p-3 border border-gray-200 rounded-md flex items-start gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm text-gray-900 font-medium">{aw.awardName}</div>
-                      <div className="text-[12px] text-gray-600">{aw.issuerName}</div>
-                      <div className="text-[12px] text-gray-600">{new Date(aw.issueDate).toLocaleDateString()}</div>
-                      {aw.awardUrl && <a className="text-[12px] text-blue-600" href={aw.awardUrl} target="_blank" rel="noreferrer">View Certificate ↗</a>}
-                      {aw.description && <div className="text-[12px] text-gray-700 mt-1">{aw.description}</div>}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button 
-                        onClick={() => {
-                          setAwardEditData(aw);
-                          setAwardEditMode('edit');
-                          setAwardOpen(true);
-                        }}
-                        className="text-gray-400 hover:text-blue-600 transition"
-                        title="Edit"
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button 
-                        onClick={async () => {
-                          if (window.confirm('Delete this award?')) {
-                            await deleteAward(aw.id);
-                          }
-                        }}
-                        className="text-gray-400 hover:text-red-600 transition"
-                        title="Delete"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                {Array.isArray(publications) && publications?.length > 0 ? (
-                  <div className="pt-1">
-                    <div className="text-[12px] text-gray-500 mb-1">Publications</div>
-                    <div className="space-y-2">
-                      {publications.map((p)=>(
-                        <div key={p.id} className="p-3 border border-gray-200 rounded-md flex items-start gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm text-gray-900 font-medium">{p.title}</div>
-                            <div className="text-[12px] text-gray-600">{p.publisher}</div>
-                            <div className="text-[12px] text-gray-600">{new Date(p.publicationDate).toLocaleDateString()}</div>
-                            {p.publicationUrl && <a className="text-[12px] text-blue-600" href={p.publicationUrl} target="_blank" rel="noreferrer">Link ↗</a>}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button 
-                              onClick={() => {
-                                setPubEditData(p);
-                                setPubEditMode('edit');
-                                setPubOpen(true);
-                              }}
-                              className="text-gray-400 hover:text-blue-600 transition"
-                              title="Edit"
-                            >
-                              <Pencil size={16} />
-                            </button>
-                            <button 
-                              onClick={async () => {
-                                if (window.confirm('Delete this publication?')) {
-                                  await deletePublication(p.id);
-                                }
-                              }}
-                              className="text-gray-400 hover:text-red-600 transition"
-                              title="Delete"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
+            <SectionCard title="Awards & Publications" subtitle="Visible to Patient" 
+            Icon={Pencil}
+            onIconClick={()=>setAwardOpen(true)} 
+            >
+
+             <div className="space-y-3">
+              {Array.isArray(awards) && awards.map((aw) => (
+                <ProfileItemCard
+                  key={aw.id}
+                  icon={<Trophy className="w-5 h-5" />}
+                  title={aw.awardName}
+                  subtitle={aw.issuerName}
+                  date={new Date(aw.issueDate).toLocaleDateString()}
+                  linkLabel="Certificate ↗"
+                  linkUrl={aw.awardUrl}
+                  rightActions={
+                    <button
+                      onClick={() => {
+                        setAwardEditData(aw);
+                        setAwardEditMode("edit");
+                        setAwardOpen(true);
+                      }}
+                      className="text-gray-400 hover:text-blue-600 transition"
+                      title="Edit"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                  }
+                />
+              ))}
               </div>
+
             </SectionCard>
           </div>
+
+
 
           {/* Right column */}
           <div className="col-span-12 xl:col-span-6 space-y-4">
@@ -1723,9 +1762,11 @@ const Doc_settings = () => {
               title="Professional Details"
               subtitle="Visible to Patient"
             >
-              <div className="grid grid-cols-12 gap-2 text-[13px]">
-                <div className="col-span-12 text-[12px] text-gray-500">Medical Registration Details</div>
-                <div className="col-span-12 -mt-1 text-[12px] text-[#6B7280]">To change your MRN proof please <a className="text-[#2F66F6]" href="#" onClick={(e)=>e.preventDefault()}>Call Us</a></div>
+              <div className='flex flex-col gap-6'>
+
+              <div className="grid grid-cols-12 gap-1 text-[13px]">
+                <div className="col-span-12 text-[14px] text-gray-600 font-semibold">Medical Registration Details</div>
+                <div className="col-span-12 -mt-1 text-[12px] mb-2 text-[#6B7280]">To change your MRN proof please <a className="text-[#2F66F6]" href="#" onClick={(e)=>e.preventDefault()}>Call Us</a></div>
                 <div className="col-span-12 md:col-span-6 space-y-3">
                   <InfoField label="Medical Council Registration Number" value={medicalRegistration?.medicalCouncilRegistrationNumber || '-'} />
                   <InfoField label="Registration Year" value={medicalRegistration?.registrationYear || '-'} />
@@ -1737,29 +1778,66 @@ const Doc_settings = () => {
                   } />}
                 </div>
               </div>
-            </SectionCard>
 
-            <SectionCard title="Practice Details" action={<button onClick={()=>setPracticeOpen(true)} className="text-blue-600 text-sm inline-flex items-center gap-1"><Pencil size={14}/> Edit</button>}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <InfoField label="Work Experience" value={practiceDetails?.workExperience ? `${practiceDetails.workExperience} years` : '-'} />
-                <InfoField label="Medical Practice Type" value={practiceDetails?.medicalPracticeType || '-'} />
-                <div className="md:col-span-2">
-                  <div className="text-[13px] text-gray-500">Specialization</div>
-                  <div className="mt-1 flex flex-wrap gap-1.5">
-                    {Array.isArray(practiceDetails?.specialties) && practiceDetails.specialties.map((spec) => (
-                      <Badge key={spec.id} color="blue" size="s">{spec.specialtyName} ({spec.expYears}y)</Badge>
-                    ))}
-                  </div>
-                </div>
-                <div className="md:col-span-2">
-                  <div className="text-[13px] text-gray-500">Practice Area</div>
-                  <div className="mt-1 flex flex-wrap gap-1.5">
-                    {Array.isArray(practiceDetails?.practiceArea) && practiceDetails.practiceArea.map((a) => (
-                      <Badge key={a} color="gray" size="s">{a}</Badge>
-                    ))}
-                  </div>
-                </div>
+              <div className="grid grid-cols-12 gap-3 text-[13px]">
+  {/* Section title */}
+  <div className="col-span-12 text-[14px] text-gray-600 font-semibold">
+    Practice Details
+  </div>
+
+  {/* Content grid MUST span full width */}
+  <div className="col-span-12 grid grid-cols-1 md:grid-cols-2 gap-3">
+    <InfoField
+      label="Work Experience"
+      value={
+        practiceDetails?.workExperience
+          ? `${practiceDetails.workExperience} years`
+          : "-"
+      }
+    />
+
+    <InfoField
+      label="Medical Practice Type"
+      value={practiceDetails?.medicalPracticeType || "-"}
+    />
+
+    {/* Specialization */}
+<div className="md:col-span-2">
+  <InfoField
+      label="Specialization"
+      value={Array.isArray(practiceDetails?.specialties) && practiceDetails.specialties.length > 0 ? (
+      practiceDetails.specialties.map((spec, idx) => (
+        <span key={spec.id}>
+          {spec.specialtyName} (Exp: {spec.expYears} years)
+          {idx < practiceDetails.specialties.length - 1 && ", "}
+        </span>
+      ))
+    ) : (
+      <span className="text-gray-400">—</span>
+    )}
+    />
+  
+</div>
+
+
+    {/* Practice Area */}
+    <div className="md:col-span-2">
+      <div className="text-[13px] text-gray-500">Practice Area</div>
+      <div className="mt-1 flex flex-wrap gap-1.5">
+        {Array.isArray(practiceDetails?.practiceArea) &&
+          practiceDetails.practiceArea.map((a) => (
+            <Badge key={a} color="gray" size="s">
+              {a}
+            </Badge>
+          ))}
+      </div>
+    </div>
+  </div>
+</div>
+
+
               </div>
+
             </SectionCard>
 
             <SectionCard title="Experience Details" subtitle="Visible to Patient" action={<button onClick={()=>setExpOpen(true)} className="text-blue-600 text-sm inline-flex items-center gap-1"><Upload size={14}/> Add</button>}>
@@ -1808,96 +1886,170 @@ const Doc_settings = () => {
             </SectionCard>
           </div>
         </div>
+
+
   ) : activeTab === 'consultation' ? (
-        <div className="mt-4 space-y-4">
+        <div className=" space-y-4 p-4">
           {/* In-Clinic Consultation Fees */}
           <SectionCard title="In-Clinic Consultations Fees" subtitle="Visible to Patient">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="grid grid-cols-12 gap-2 items-end">
-                <div className="col-span-8">
-                  <div>
-                    <div className="text-[12px] text-gray-600 mb-1">First Time Consultation Fees:</div>
-                    <input
-                      className="h-8 w-full text-xs border border-gray-300 rounded px-2 bg-white"
-                      placeholder="Value"
-          value={consultationDetails?.consultationFees?.[0]?.consultationFee || ''}
-          onChange={(e)=>{
-                        const v = e.target.value;
-                        setConsultationDetails((d)=>({
-                          ...d,
-                          consultationFees: [{
-                            ...(d?.consultationFees?.[0]||{}),
-            consultationFee: v
-                          }]
-                        }));
-                        setConsultationDirty(true);
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-12 gap-2 items-end">
-                <div className="col-span-8">
-                  <div>
-                    <div className="text-[12px] text-gray-600 mb-1">Follow-up Consultation Fees:</div>
-                    <input
-                      className="h-8 w-full text-xs border border-gray-300 rounded px-2 bg-white"
-                      placeholder="Value"
-          value={consultationDetails?.consultationFees?.[0]?.followUpFee || ''}
-          onChange={(e)=>{
-                        const v = e.target.value;
-                        setConsultationDetails((d)=>({
-                          ...d,
-                          consultationFees: [{
-                            ...(d?.consultationFees?.[0]||{}),
-            followUpFee: v
-                          }]
-                        }));
-                        setConsultationDirty(true);
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="mt-3 flex items-center justify-end gap-2 text-sm">
-              <input id="autoApprove" type="checkbox" className="h-4 w-4" checked={Boolean(consultationDetails?.consultationFees?.[0]?.autoApprove)} readOnly />
-              <label htmlFor="autoApprove" className="text-gray-700">Auto Approve Requested Appointment</label>
-            </div>
-          </SectionCard>
+  <div className="grid md:grid-cols-2 gap-6">
 
-          {/* Consultation Hours */}
+    {/* First Time Consultation */}
+    <div>
+      <div className="text-[12px] text-gray-600 mb-1">
+        First Time Consultation Fees:
+      </div>
+
+      <div className="flex h-8">
+        <input
+          className="flex-1 text-xs border border-gray-300 rounded-l px-2 bg-white focus:outline-none"
+          placeholder="Value"
+          value={consultationDetails?.consultationFees?.[0]?.consultationFee || ""}
+          onChange={(e) => {
+            const v = e.target.value;
+            setConsultationDetails((d) => ({
+              ...d,
+              consultationFees: [
+                {
+                  ...(d?.consultationFees?.[0] || {}),
+                  consultationFee: v,
+                },
+              ],
+            }));
+            setConsultationDirty(true);
+          }}
+        />
+
+        <div className="px-3 flex items-center text-xs border border-l-0 border-gray-300 rounded-r bg-gray-50 text-gray-600">
+          Rupees
+        </div>
+      </div>
+    </div>
+
+    {/* Follow-up Consultation */}
+    <div>
+      <div className="text-[12px] text-gray-600 mb-1">
+        Follow-up Consultation Fees:
+      </div>
+
+      <div className="flex h-8">
+        <input
+          className="flex-1 text-xs border border-gray-300 rounded-l px-2 bg-white focus:outline-none"
+          placeholder="Value"
+          value={consultationDetails?.consultationFees?.[0]?.followUpFee || ""}
+          onChange={(e) => {
+            const v = e.target.value;
+            setConsultationDetails((d) => ({
+              ...d,
+              consultationFees: [
+                {
+                  ...(d?.consultationFees?.[0] || {}),
+                  followUpFee: v,
+                },
+              ],
+            }));
+            setConsultationDirty(true);
+          }}
+        />
+
+        <div className="px-3 flex items-center text-xs border border-l-0 border-gray-300 rounded-r bg-gray-50 text-gray-600">
+          Rupees
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+</SectionCard>
+
+
           <SectionCard
-            title={<div className="flex items-center gap-3">
-              <span>Set Your Consultation Hours</span>
-              <span className="text-[12px] text-gray-600">Total Monthly Tokens Available: <span className='text-green-600 font-medium'>775 / 800</span></span>
-            </div>}
-          >
+  title="Set your consultation hours"
+  headerRight={
+    <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+      <input
+        type="checkbox"
+        checked={Boolean(
+          consultationDetails?.consultationFees?.[0]?.autoApprove
+        )}
+        onChange={(e) => {
+          const v = e.target.checked;
+          setConsultationDetails((d) => ({
+            ...d,
+            consultationFees: [
+              {
+                ...(d?.consultationFees?.[0] || {}),
+                autoApprove: v,
+              },
+            ],
+          }));
+          setConsultationDirty(true);
+        }}
+      />
+      <span>Auto Approve Requested Appointment</span>
+    </label>
+  }
+>
+
+  {/* <div className="">
+      <label className="inline-flex items-center gap-2 text-sm font-normal  text-gray-700 shrink-0">
+        <input
+          type="checkbox"
+          checked={Boolean(consultationDetails?.consultationFees?.[0]?.autoApprove)}
+          onChange={(e) => {
+            const v = e.target.checked;
+            setConsultationDetails((d) => ({
+              ...d,
+              consultationFees: [
+                {
+                  ...(d?.consultationFees?.[0] || {}),
+                  autoApprove: v,
+                },
+              ],
+            }));
+            setConsultationDirty(true);
+          }}
+        />
+        <span>Auto Approve Requested Appointment</span>
+      </label>
+      </div> */}
+
+
+
             <div className="grid grid-cols-12 gap-3 items-end">
               <div className="col-span-6 md:col-span-4 lg:col-span-3">
-                <div>
-                  <div className="text-[12px] text-gray-600 mb-1">Average Consultation Min per Patient :</div>
-                  <input
-                    className="h-8 w-full text-xs border border-gray-300 rounded px-2 bg-white"
-                    placeholder="Value"
-                    value={(consultationDetails?.consultationFees?.[0]?.avgDurationMinutes ?? consultationDetails?.slotTemplates?.avgDurationMinutes ?? '')}
-                    onChange={(e)=>{
-                      const v = e.target.value;
-                      setConsultationDetails((d)=>({
-                        ...d,
-                        consultationFees: [{
-                          ...(d?.consultationFees?.[0]||{}),
-                          avgDurationMinutes: Number(v)||0
-                        }],
-                        slotTemplates: {
-                          ...(d?.slotTemplates||{}),
-                          avgDurationMinutes: Number(v)||0
-                        }
-                      }));
-                      setConsultationDirty(true);
-                    }}
-                  />
-                </div>
+                 <div>
+  <div className="text-[12px] text-gray-600 mb-1">
+    Average Consultation Min per Patient
+  </div>
+
+  <div className="flex h-8">
+    <input
+      className="flex-1 text-xs border border-gray-300 rounded-l px-2 bg-white focus:outline-none"
+      placeholder="Value"
+      value={consultationDetails?.consultationFees?.[0]?.avgDurationMinutes ?? ""}
+      onChange={(e) => {
+        const v = Number(e.target.value) || 0;
+        setConsultationDetails((d) => ({
+          ...d,
+          consultationFees: [
+            {
+              ...(d?.consultationFees?.[0] || {}),
+              avgDurationMinutes: v,
+            },
+          ],
+        }));
+        setConsultationDirty(true);
+      }}
+    />
+
+    <div className="px-3 flex items-center text-xs border border-l-0 border-gray-300 rounded-r bg-gray-50 text-gray-600">
+      Mins
+    </div>
+  </div>
+</div>
+
               </div>
               <div className="col-span-6 md:col-span-4 lg:col-span-3">
                 <div className="text-[12px] text-gray-600 mb-1">Set Availability Duration</div>
@@ -1931,7 +2083,36 @@ const Doc_settings = () => {
                       <span className="text-sm font-medium text-gray-700">{d.day}</span>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-gray-500">Available</span>
-                        <Toggle checked={Boolean(d.available)} onChange={()=>{}} />
+                        <Toggle
+  checked={Boolean(d.available)}
+  onChange={(v) => {
+    const checked =
+      typeof v === "boolean"
+        ? v
+        : v?.target?.checked;
+
+    setConsultationDetails((prev) => {
+      if (!prev?.slotTemplates?.schedule) return prev;
+
+      return {
+        ...prev,
+        slotTemplates: {
+          ...prev.slotTemplates,
+          schedule: prev.slotTemplates.schedule.map((day) =>
+            day.day === d.day
+              ? { ...day, available: checked }
+              : day
+          ),
+        },
+      };
+    });
+
+    setConsultationDirty(true);
+  }}
+/>
+
+
+
                       </div>
                     </div>
 
@@ -2012,250 +2193,131 @@ const Doc_settings = () => {
           </div>
         </div>
       ) : activeTab === 'clinical' ? (
-        <div className="mt-4 grid grid-cols-12 gap-4">
-          {/* Clinic Info (Left) */}
-          <div className="col-span-12 xl:col-span-6">
-            <SectionCard 
-              title="Clinic Info" 
-              subtitle="Visible to Patient"
-              action={
-                <button 
-                  onClick={() => setClinicEditMode(!clinicEditMode)}
-                  className="text-gray-400 hover:text-blue-600 transition"
-                  title={clinicEditMode ? "Cancel" : "Edit"}
-                >
-                  {clinicEditMode ? '✕' : <Pencil size={18} />}
-                </button>
-              }
-            >
-              <div className="space-y-3">
-                <Input 
-                  label="Clinic Name" 
-                  compulsory 
-                  placeholder="Clinic Name" 
-                  value={clinicForm.name}
-                  onChange={(e) => setClinicForm({...clinicForm, name: e.target.value})}
-                  disabled={!clinicEditMode}
-                />
+        <div className="p-4 grid grid-cols-12 gap-4">
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {/* Mobile */}
-                  <div>
-                    <Input 
-                      label="Mobile Number" 
-                      placeholder="91753 67487" 
-                      value={clinicForm.phone}
-                      onChange={(e) => setClinicForm({...clinicForm, phone: e.target.value})}
-                      disabled={!clinicEditMode}
-                    />
-                    <div className="mt-1 text-[12px] text-green-600 inline-flex items-center gap-1">
-                      <CheckCircle2 size={14}/> Verified
-                    </div>
-                  </div>
-                  {/* Email */}
-                  <div>
-                    <Input 
-                      label="Email" 
-                      compulsory 
-                      placeholder="email@example.com" 
-                      value={clinicForm.email}
-                      onChange={(e) => setClinicForm({...clinicForm, email: e.target.value})}
-                      disabled={!clinicEditMode}
-                    />
-                    <div className="mt-1 text-[12px] text-green-600 inline-flex items-center gap-1">
-                      <CheckCircle2 size={14}/> Verified
-                    </div>
-                  </div>
-                </div>
+  {/* LEFT: Clinic Info */}
+  <div className="col-span-12 xl:col-span-6">
+    <SectionCard
+  title="Clinic Info"
+  subtitle="Visible to Patient"
+  Icon={Pencil}
+>
+  <div className="space-y-4 text-sm">
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Input 
-                    label="Establishment Date" 
-                    compulsory 
-                    type="date" 
-                    value={clinicForm.establishmentDate}
-                    onChange={(e) => setClinicForm({...clinicForm, establishmentDate: e.target.value})}
-                    disabled={!clinicEditMode}
-                  />
-                  <div>
-                    <label className="text-sm text-gray-700">Establishment Proof</label>
-                    <div className="mt-1 h-[32px] border border-gray-300 rounded-lg flex items-center justify-between px-2 text-sm">
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-gray-100">📄</span>
-                        {clinic?.proof ? 'Establishment.pdf' : 'No file'}
-                      </div>
-                      <button className="text-blue-600 text-xs">Change</button>
-                    </div>
-                  </div>
-                </div>
+    {/* Clinic Name */}
+    <InfoField
+      label="Clinic Name"
+      value="Chauhan Clinic"
+      full
+      divider
+    />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
-                  <div>
-                    <label className="text-sm text-gray-700">Number of Beds</label>
-                    <div className="mt-1 flex items-center gap-2">
-                      <input 
-                        className="h-8 w-full border border-gray-300 rounded-lg px-2 text-sm" 
-                        placeholder="Enter Number of Beds" 
-                        value={clinicForm.noOfBeds}
-                        onChange={(e) => setClinicForm({...clinicForm, noOfBeds: e.target.value})}
-                        disabled={!clinicEditMode}
-                      />
-                      <span className="text-xs text-gray-500">Beds</span>
-                    </div>
-                  </div>
-                </div>
+    {/* Mobile + Email */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <InfoField
+        label="Mobile Number"
+        value="91753 67487"
+        right={<span className="inline-flex items-center text-green-600 border border-green-400 py-0.5 px-1 rounded-md text-[12px]"><CheckCircle2 size={14} className="mr-1"/>Verified</span>}
+      />
 
-                {/* About Clinic */}
-                <div>
-                  <div className="text-sm text-gray-700 mb-1">About Clinic</div>
-                  <div className="border border-gray-200 rounded-md">
-                    <div className="px-2 py-1 border-b border-gray-200 text-gray-600 text-sm flex items-center gap-2">
-                      {/* Simple toolbar mimic */}
-                      <button className="hover:text-gray-900">✎</button>
-                      <button className="hover:text-gray-900 font-bold">B</button>
-                      <button className="hover:text-gray-900 italic">I</button>
-                      <button className="hover:text-gray-900 underline">U</button>
-                      <button className="hover:text-gray-900">•</button>
-                    </div>
-                    <textarea 
-                      className="w-full min-h-[140px] p-3 text-sm outline-none" 
-                      value={clinicForm.about}
-                      onChange={(e) => setClinicForm({...clinicForm, about: e.target.value})}
-                      disabled={!clinicEditMode}
-                    />
-                    <div className="px-3 pb-2 text-[12px] text-gray-500 text-right">
-                      {clinicForm.about.length}/1600
-                    </div>
-                  </div>
-                </div>
+      <InfoField
+        label="Email"
+        value="milindchachun@gmail.com"
+        right={<span className="inline-flex items-center text-green-600 border border-green-400 py-0.5 px-1 rounded-md text-[12px]"><CheckCircle2 size={14} className="mr-1"/>Verified</span>}
+      />
+    </div>
 
-                {/* Clinic Photos */}
-                <div>
-                  <div className="text-sm text-gray-700 mb-2">Clinic Photos</div>
-                  <div className="flex flex-wrap gap-3 items-center">
-                    {clinic?.clinicPhotos && clinic.clinicPhotos.length > 0 ? (
-                      clinic.clinicPhotos.map((photo, i) => (
-                        <div key={i} className="w-28 h-20 bg-gray-100 rounded-md border border-gray-200 overflow-hidden">
-                          <img src={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5173'}/${photo}`} alt={`Clinic ${i + 1}`} className="w-full h-full object-cover" />
-                        </div>
-                      ))
-                    ) : (
-                      [1,2,3,4].map((i) => (
-                        <div key={i} className="w-28 h-20 bg-gray-100 rounded-md border border-gray-200" />
-                      ))
-                    )}
-                    <label className="w-40 h-20 border border-dashed border-gray-300 rounded-md grid place-items-center text-blue-600 text-sm cursor-pointer">
-                      <input type="file" className="hidden" />
-                      Upload File
-                    </label>
-                  </div>
-                  <div className="text-[12px] text-gray-500 mt-1">Support Size upto 2MB in .png, .jpg, .svg, .webp</div>
-                </div>
-              </div>
-            </SectionCard>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {/* Establishment Date */}
+    <InfoField
+      label="Establishment Date"
+      value="10/09/2005"
+    />
+
+    
+  </div>
+
+  
+
+    {/* About */}
+    <div>
+      <div className="text-[13px] text-gray-500 mb-1">About</div>
+      <p className="text-sm text-gray-700 leading-relaxed">
+        Dr. Milind Chauhan practices Gynaecologist and Obstetrician in Andheri East, Mumbai
+        and has 13 years of experience in this field. He has completed his DNB -
+        Obstetric and Gynecology and MBBS. Dr. Milind Chauhan has gained the confidence
+        of patients and is a popular Gynaecologist and Obstetrician expert in Mumbai
+        who performs treatment and procedures for various health issues related to
+        Gynaecologist and Obstetrician.
+      </p>
+    </div>
+
+    {/* Clinic Photos */}
+    <div>
+      <div className="text-[13px] text-gray-500 mb-2">Clinic Photos</div>
+
+      <div className="flex gap-3 flex-wrap">
+        {[1,2,3,4].map((i) => (
+          <div
+            key={i}
+            className="w-[120px] h-[120px] rounded-md overflow-hidden border bg-gray-100"
+          >
+            <img
+              src={`/dummy/clinic-${i}.jpg`}
+              className="w-full h-full object-cover"
+            />
           </div>
+        ))}
+      </div>
 
-          {/* Clinic Address (Right) */}
-          <div className="col-span-12 xl:col-span-6">
-            <SectionCard title="Clinic Address" subtitle="Visible to Patient">
-              <div className="space-y-3">
-                <label className="text-sm text-gray-700">Map Location</label>
-                <div className="h-[220px]">
-                  <MapLocation 
-                    heightClass="h-full" 
-                    addButtonLabel="Add Location" 
-                    initialPosition={
-                      clinic?.latitude && clinic?.longitude 
-                        ? [parseFloat(clinic.latitude), parseFloat(clinic.longitude)]
-                        : null
-                    }
-                  />
-                </div>
+      <div className="mt-2 text-[11px] text-gray-400">
+        Support Size upto 2MB in .png, .jpg, .svg, .webp
+      </div>
+    </div>
 
-                {/* Address fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Input 
-                    label="Block no./Shop no./House no." 
-                    compulsory 
-                    placeholder="Shop No 2" 
-                    value={clinicForm.blockNo}
-                    onChange={(e) => setClinicForm({...clinicForm, blockNo: e.target.value})}
-                    disabled={!clinicEditMode}
-                  />
-                  <Input 
-                    label="Road/Area/Street" 
-                    compulsory 
-                    placeholder="Jawahar Nagar, Gokul Colony" 
-                    value={clinicForm.areaStreet}
-                    onChange={(e) => setClinicForm({...clinicForm, areaStreet: e.target.value})}
-                    disabled={!clinicEditMode}
-                  />
-                  <Input 
-                    label="Landmark" 
-                    compulsory 
-                    placeholder="Near Chowk" 
-                    value={clinicForm.landmark}
-                    onChange={(e) => setClinicForm({...clinicForm, landmark: e.target.value})}
-                    disabled={!clinicEditMode}
-                  />
-                  <Input 
-                    label="Pincode" 
-                    compulsory 
-                    placeholder="444001" 
-                    value={clinicForm.pincode}
-                    onChange={(e) => setClinicForm({...clinicForm, pincode: e.target.value})}
-                    disabled={!clinicEditMode}
-                  />
-                  <Input 
-                    label="City" 
-                    compulsory 
-                    placeholder="Akola" 
-                    value={clinicForm.city}
-                    onChange={(e) => setClinicForm({...clinicForm, city: e.target.value})}
-                    disabled={!clinicEditMode}
-                  />
-                  <div>
-                    <label className="text-sm text-gray-700">State</label>
-                    <select 
-                      className="mt-1 h-8 w-full border border-gray-300 rounded-lg px-2 text-sm"
-                      value={clinicForm.state}
-                      onChange={(e) => setClinicForm({...clinicForm, state: e.target.value})}
-                      disabled={!clinicEditMode}
-                    >
-                      <option>Maharashtra</option>
-                      <option>Karnataka</option>
-                      <option>Gujarat</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </SectionCard>
+  </div>
+</SectionCard>
 
-            {/* Right column action bar to mirror screenshot spacing */}
-            {clinicEditMode && (
-              <div className="flex justify-end mt-4">
-                <button 
-                  onClick={async () => {
-                    try {
-                      await updateClinicInfo(clinicForm);
-                      setClinicEditMode(false);
-                    } catch (error) {
-                      console.error('Error updating clinic info:', error);
-                    }
-                  }}
-                  className="px-4 h-9 rounded bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
-                >
-                  Save
-                </button>
-              </div>
-            )}
-          </div>
+  </div>
+
+  {/* RIGHT: Address */}
+  <div className="col-span-12 xl:col-span-6">
+    <SectionCard title="Clinic Address" subtitle="Visible to Patient"  Icon={Pencil}>
+
+      <div className="mb-3">
+        <div className="text-[13px] text-gray-500 mb-1">Map Location</div>
+        <div className="h-[220px] rounded overflow-hidden border">
+          <MapLocation
+            heightClass="h-full"
+            initialPosition={[
+              parseFloat(clinic?.latitude) || 19.07,
+              parseFloat(clinic?.longitude) || 72.87,
+            ]}
+            readOnly
+          />
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+
+        <InfoField label="Block no./Shop no./House no." value={clinic?.blockNo} />
+        <InfoField label="Road/Area/Street" value={clinic?.areaStreet} />
+        <InfoField label="Landmark" value={clinic?.landmark} />
+        <InfoField label="Pincode" value={clinic?.pincode} />
+        <InfoField label="City" value={clinic?.city} />
+        <InfoField label="State" value={clinic?.state} />
+
+      </div>
+
+    </SectionCard>
+  </div>
+</div>
+
       ) : activeTab === 'staff' ? (
         <StaffTab />
       ) : (
-        <div className="mt-6 flex justify-left">
-          <div className="bg-white rounded-lg p-4 shadow-sm w-full max-w-md">
+        <div className="p-4 flex justify-left">
+          <div className=" rounded-lg p-4 shadow-sm w-full max-w-md">
             <h2 className="text-base font-semibold text-gray-900 mb-2">Change Password</h2>
             <form className="space-y-3">
               <div>

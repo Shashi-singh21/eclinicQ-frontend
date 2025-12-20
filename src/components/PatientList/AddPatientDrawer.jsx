@@ -36,7 +36,7 @@ export default function AddPatientDrawer({ open, onClose, onSave }) {
   {/* Drawer panel with top-most z-index */}
   <aside className={`absolute top-4 right-4 bottom-4 w-[520px] bg-white shadow-2xl border border-gray-200 rounded-xl overflow-hidden ${closing ? 'animate-[drawerOut_.22s_ease-in_forwards]' : 'animate-[drawerIn_.25s_ease-out_forwards]'}`} role="dialog" aria-modal="true" style={{ zIndex: 5002 }}>
         <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-white">
-          <div className="text-sm font-medium text-gray-900">Add New Patient</div>
+          <div className="text-sm  font-medium text-gray-900">Add New Patient</div>
           <div className="flex items-center gap-2">
             <button disabled={!canSave} onClick={()=> canSave && onSave?.(form)} className={`h-8 px-3 rounded text-sm ${canSave ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}>Save</button>
             <button onClick={requestClose} className="w-8 h-8 rounded-full grid place-items-center hover:bg-gray-100" aria-label="Close">✕</button>
