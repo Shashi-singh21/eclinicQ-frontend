@@ -1,6 +1,6 @@
 import checkbox from './checkbox.png';
 import iIcon from './i-icon.png';
-import logo from './logo.png';
+import logo from './logo.svg';
 import normalTick from './normal-tick.png';
 import tick from './tick.png';
 // Newly added contact icons
