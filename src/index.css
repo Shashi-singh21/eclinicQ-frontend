@@ -1,3 +1,6 @@
+/* Utility: Hide scrollbar while preserving scroll */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

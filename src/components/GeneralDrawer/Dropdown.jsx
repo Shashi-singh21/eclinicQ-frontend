@@ -44,10 +44,10 @@ export default function Dropdown({
       <div className="fixed inset-0 z-[5999]" onClick={onClose} />
       <div
         ref={panelRef}
-        className={`absolute z-[6000] mt-2 w-[360px] rounded-md border border-gray-200 bg-white shadow-lg ${className}`}
+        className={`absolute z-[6000]  w-[360px] rounded-md border border-gray-200 bg-white shadow-lg ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <ul className="max-h-[240px] overflow-auto py-1">
+  <ul className="max-h-[240px] overflow-auto py-1 scrollbar-hide">
           {items.map((it) => {
             const isSel = selectedValue !== undefined && it.value === selectedValue;
             return (

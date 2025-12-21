@@ -441,7 +441,7 @@ const WalkInAppointmentDrawer = ({
                         value={dob}
                         onChange={(e) => setDob(e.target.value)}
                         type="text"
-                        placeholder="YYYY-MM-DD"
+                        placeholder="Select Date of Birth"
                         className={`w-full rounded-md border px-3 py-2 text-sm pr-8 focus:outline-none ${
                           fieldErrors.dob
                             ? "border-red-400 focus:border-red-500"

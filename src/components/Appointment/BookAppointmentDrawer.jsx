@@ -7,6 +7,7 @@ import Dropdown from "../GeneralDrawer/Dropdown";
 import { findPatientSlots, bookWalkInAppointment } from "../../services/authService";
 import { classifyISTDayPart, buildISTRangeLabel } from "../../lib/timeUtils";
 import { Calendar as ShadcnCalendar } from "@/components/ui/calendar";
+import calendarWhite from "/Doctor_module/sidebar/calendar_white.png";
 
 // UI-only Book Appointment Drawer using GeneralDrawer and shared inputs
 // Integrated Book Appointment Drawer fetching real slots and booking via APIs
@@ -19,6 +20,10 @@ export default function BookAppointmentDrawer({
   hospitalId,
   onBookedRefresh,
 }) {
+  // Wrap public calendar image as an icon component for InputWithMeta
+  const CalendarWhiteIcon = () => (
+    <img src={calendarWhite} alt="Calendar" className="w-4 h-4" />
+  );
   const [isExisting, setIsExisting] = useState(false);
   const [apptType, setApptType] = useState("New Consultation");
   const [reason, setReason] = useState("");
@@ -49,12 +54,14 @@ export default function BookAppointmentDrawer({
   const [openGenderDD, setOpenGenderDD] = useState(false);
   const [openBloodDD, setOpenBloodDD] = useState(false);
   const [openReasonDD, setOpenReasonDD] = useState(false);
+  const [openBucketDD, setOpenBucketDD] = useState(false);
 
   const openOnly = (which) => {
     setOpenApptTypeDD(which === "appt");
     setOpenGenderDD(which === "gender");
     setOpenBloodDD(which === "blood");
     setOpenReasonDD(which === "reason");
+  setOpenBucketDD(which === "bucket");
   };
 
   const toggleOpen = (which) => {
@@ -278,8 +285,20 @@ export default function BookAppointmentDrawer({
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ">
-            <InputWithMeta label="First Name" requiredDot value={firstName} onChange={setFirstName} placeholder="Enter First Name" />
-            <InputWithMeta label="Last Name" requiredDot value={lastName} onChange={setLastName} placeholder="Enter Last Name" />
+            <InputWithMeta
+              label="First Name"
+              requiredDot
+              value={firstName}
+              onChange={setFirstName}
+              placeholder="Enter First Name"
+            />
+            <InputWithMeta
+              label="Last Name"
+              requiredDot
+              value={lastName}
+              onChange={setLastName}
+              placeholder="Enter Last Name"
+            />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ">
             <InputWithMeta label="Mobile Number" requiredDot value={mobile} onChange={setMobile} placeholder="Enter Mobile Number" />
@@ -288,10 +307,11 @@ export default function BookAppointmentDrawer({
                 label="Date of Birth"
                 requiredDot
                 value={dob}
-                onChange={setDob}
-                placeholder="YYYY-MM-DD"
-                RightIcon={Calendar}
+                placeholder="Select Date of Birth"
+                RightIcon={CalendarWhiteIcon}
                 onIconClick={() => setShowDobCalendar((v) => !v)}
+                dropdownOpen={showDobCalendar}
+                onRequestClose={() => setShowDobCalendar(false)}
               />
               {showDobCalendar && (
                 <div className="shadcn-calendar-dropdown absolute z-[10000]  bg-white border border-gray-200 rounded-xl shadow-2xl p-2">
@@ -436,8 +456,10 @@ export default function BookAppointmentDrawer({
             value={apptDate}
             onChange={setApptDate}
             placeholder="YYYY-MM-DD"
-            RightIcon={Calendar}
+            RightIcon={CalendarWhiteIcon}
             onIconClick={() => setShowApptDateCalendar((v) => !v)}
+            dropdownOpen={showApptDateCalendar}
+            onRequestClose={() => setShowApptDateCalendar(false)}
           />
           {showApptDateCalendar && (
             <div className="shadcn-calendar-dropdown absolute z-[10000] mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl">
@@ -465,62 +487,47 @@ export default function BookAppointmentDrawer({
             </div>
           )}
         </div>
+        {/* Available Slot visible for both Existing/New patients */}
         <div className="flex flex-col gap-2">
-          <label className="text-xs text-gray-600">Available Slot <span className="text-red-500">*</span></label>
-          {timeBuckets.length === 0 ? (
-            // Fallback: show an empty input when there are no slots
-            <InputWithMeta
-              label=""
-              value=""
-              onChange={() => {}}
-              placeholder={loadingSlots ? "Loading…" : "No slots available"}
-              RightIcon={ChevronDown}
-            />
-          ) : (
-            <>
-              {/* Buckets */}
-              <div className="grid grid-cols-2 gap-2"><div className="w-[0.7px] h-6 bg-secondary-grey300"></div>
-                {timeBuckets.map(({ key, label, time, Icon }) => (
-                  <button
-                    key={key}
-                    type="button"
-                    className={`flex items-center gap-2 border rounded-md px-2 py-2 text-left ${bucketKey === key ? "border-blue-500 bg-blue-50" : "border-gray-200"}`}
-                    onClick={() => {
+          <div className="relative">
+              <InputWithMeta
+                label="Available Slot"
+                requiredDot
+                value={(() => {
+                  if (loadingSlots) return "Loading…";
+                  if (!timeBuckets.length) return "No slots available";
+                  const cur = timeBuckets.find((tb) => tb.key === bucketKey) || timeBuckets[0];
+                  const t = cur?.time || "loading…";
+                  return `${cur.label} - (${t})`;
+                })()}
+                onChange={() => {}}
+                placeholder="Select"
+                RightIcon={ChevronDown}
+                onFieldOpen={() => openOnly("bucket")}
+                dropdownOpen={openBucketDD}
+                onRequestClose={() => setOpenBucketDD(false)}
+                dropdown={
+                  <Dropdown
+                    open={openBucketDD}
+                    onClose={() => setOpenBucketDD(false)}
+                    items={timeBuckets.map(({ key, label, time }) => ({ label: `${label} - (${time || "loading…"})`, value: key }))}
+                    onSelect={(it) => {
+                      const key = it.value;
                       setBucketKey(key);
                       const firstSlot = (grouped[key] || [])[0] || null;
                       setSelectedSlotId(firstSlot ? firstSlot.id || firstSlot.slotId || firstSlot._id : null);
+                      setOpenBucketDD(false);
                     }}
-                  >
-                    {Icon ? <Icon className="w-4 h-4 text-gray-700" /> : null}
-                    <div className="flex-1">
-                      <div className="text-sm font-medium">{label}</div>
-                      <div className="text-xs text-gray-600">{time}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-              {/* Slot list */}
-              <div className="grid grid-cols-3 gap-2 mt-2">
-                {(grouped[bucketKey] || []).map((s) => {
-                  const sid = s.id || s.slotId || s._id;
-                  const selected = selectedSlotId === sid;
-                  return (
-                    <button
-                      key={sid}
-                      type="button"
-                      className={`text-xs border rounded px-2 py-1 ${selected ? "border-blue-500 bg-blue-50" : "border-gray-200"}`}
-                      onClick={() => setSelectedSlotId(sid)}
-                    >
-                      {buildISTRangeLabel(s.startTime, s.endTime)}
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          )}
+                    className="w-full"
+                    selectedValue={bucketKey}
+                  />
+                }
+              />
+          </div>
           {loadingSlots && <div className="text-xs text-gray-500">Loading slots…</div>}
           {slotsError && <div className="text-xs text-red-600">{slotsError}</div>}
         </div>
+        
       </div>
       {errorMsg && (
         <div className="p-2 rounded border border-red-200 bg-red-50 text-[12px] text-red-700">{errorMsg}</div>

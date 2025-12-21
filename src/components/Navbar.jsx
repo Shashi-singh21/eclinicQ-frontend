@@ -6,6 +6,8 @@ import NotificationDrawer from './NotificationDrawer.jsx'
 import AddPatientDrawer from './PatientList/AddPatientDrawer.jsx'
 import BookAppointmentDrawer from './Appointment/BookAppointmentDrawer.jsx'
 import AvatarCircle from './AvatarCircle.jsx'
+import useAuthStore from '../store/useAuthStore'
+import { getDoctorMe } from '../services/authService'
 
 const Partition = () => {
   return (
@@ -100,6 +102,7 @@ const Navbar = () => {
   const dropdownRef = useRef(null);
   const profileRef = useRef(null);
   const navigate = useNavigate();
+  const { doctorDetails, doctorLoading, fetchDoctorDetails } = useAuthStore();
 
   // module switcher state derived from pathname (hospital/doctor)
   const [activeModule, setActiveModule] = useState('hospital');
@@ -137,6 +140,13 @@ const Navbar = () => {
       window.removeEventListener('keydown', onKey);
     };
   }, []);
+
+  // Ensure doctor context is available so the drawer can load slots
+  useEffect(() => {
+    if (!doctorDetails && !doctorLoading) {
+      try { fetchDoctorDetails?.(getDoctorMe); } catch {}
+    }
+  }, [doctorDetails, doctorLoading, fetchDoctorDetails]);
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -216,7 +226,14 @@ const Navbar = () => {
       </div>
   <NotificationDrawer show={showNotifications} onClose={() => setShowNotifications(false)} />
   <AddPatientDrawer open={addPatientOpen} onClose={() => setAddPatientOpen(false)} onSave={(data)=>{ /* TODO: API hook */ setAddPatientOpen(false) }} />
-  <BookAppointmentDrawer open={bookApptOpen} onClose={() => setBookApptOpen(false)} onSave={() => setBookApptOpen(false)} />
+  <BookAppointmentDrawer
+    open={bookApptOpen}
+    onClose={() => setBookApptOpen(false)}
+  doctorId={doctorDetails?.userId || doctorDetails?.id}
+  clinicId={doctorDetails?.associatedWorkplaces?.clinic?.id || doctorDetails?.clinicId}
+  hospitalId={(Array.isArray(doctorDetails?.associatedWorkplaces?.hospitals) && doctorDetails?.associatedWorkplaces?.hospitals[0]?.id) || undefined}
+    onSave={() => setBookApptOpen(false)}
+  />
     </>
   )
 }
