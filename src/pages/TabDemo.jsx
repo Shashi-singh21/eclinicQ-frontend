@@ -1,11 +1,16 @@
 import React, { useState } from "react";
 import Tab from "../components/Tab";
 import Button from "../components/Button";
-import GeneralDrawer from "../components/GeneralDrawer";
+import GeneralDrawer from "../components/GeneralDrawer/GeneralDrawer";
+import RadioButton from "../components/GeneralDrawer/RadioButton";
+import InputWithMeta from "../components/GeneralDrawer/InputWithMeta";
 import SampleTable from "./SampleTable";
 
 const TabDemo = () => {
   const [open, setOpen] = useState(false);
+  const [isExisting, setIsExisting] = useState(true);
+  const [slotOpen, setSlotOpen] = useState(false);
+  const [slotLabel, setSlotLabel] = useState("Morning (10:00 am - 12 : 30 pm)");
 
   return (
     <>
@@ -19,28 +24,85 @@ const TabDemo = () => {
       <GeneralDrawer
         isOpen={open}
         onClose={() => setOpen(false)}
-        title="Add New Patient"
+        title="Book Walk-In Appointment"
+        primaryActionLabel={isExisting ? "Book Appointment" : "Save"}
+        onPrimaryAction={() => setOpen(false)}
+        primaryActionDisabled={false}
       >
-        {/* Example content to demonstrate padding, gap and scroll */}
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <label className="space-y-1 block">
-              <span className="text-xs text-gray-500">First Name</span>
-              <input className="w-full rounded-md border p-2" placeholder="Enter First Name" />
-            </label>
-            <label className="space-y-1 block">
-              <span className="text-xs text-gray-500">Last Name</span>
-              <input className="w-full rounded-md border p-2" placeholder="Enter Last Name" />
-            </label>
-            <label className="space-y-1 block col-span-2">
-              <span className="text-xs text-gray-500">Email ID</span>
-              <input className="w-full rounded-md border p-2" placeholder="Enter Email" />
-            </label>
+        {/* Header radios */}
+        <div className="flex items-center gap-6">
+          <RadioButton
+            name="pt"
+            value="existing"
+            checked={isExisting}
+            onChange={(v) => setIsExisting(v === "existing")}
+            label="Existing Patients"
+          />
+          <RadioButton
+            name="pt"
+            value="new"
+            checked={!isExisting}
+            onChange={(v) => setIsExisting(v === "existing" ? true : false)}
+            label="New Patient"
+          />
+        </div>
+
+        {/* Body inputs demo */}
+        {isExisting ? (
+          <div className="mt-3">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Patient</label>
+            <input
+              type="text"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+              placeholder="Search Patient by name, Abha id, Patient ID or Contact Number"
+            />
           </div>
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={() => setOpen(false)}>Save</Button>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+              <input type="text" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-blue-500" placeholder="Enter First Name" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+              <input type="text" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-blue-500" placeholder="Enter Last Name" />
+            </div>
           </div>
+        )}
+
+        {/* Available Slot row demo */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+          <InputWithMeta
+            label="Available Slot"
+            requiredDot
+            rightMeta={<span>5 Tokens available</span>}
+            value={slotLabel}
+            onChange={setSlotLabel}
+            onIconClick={() => setSlotOpen((s) => !s)}
+            dropdown={
+              slotOpen && (
+                <div className="border rounded-md shadow-sm bg-white">
+                  {[
+                    "Morning (10:00 am - 12 : 30 pm)",
+                    "Afternoon (12:30 pm - 3:30 pm)",
+                    "Evening (4:00 pm - 7:00 pm)",
+                  ].map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                      onClick={() => {
+                        setSlotLabel(opt);
+                        setSlotOpen(false);
+                      }}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              )
+            }
+          />
         </div>
       </GeneralDrawer>
 

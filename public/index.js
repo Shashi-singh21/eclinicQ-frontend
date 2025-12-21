@@ -60,7 +60,7 @@ import arrowRightNav from "./Doctor_module/dashboard/arrowRightNav.svg";
 import appointementNav from "./Doctor_module/dashboard/appointementNav.svg";
 import mapPoint from "./Doctor_module/dashboard/mapPoint.svg";
 import staff from "./Doctor_module/dashboard/staff.svg";
-import vector from "./Doctor_module/dashboard/vector.svg";
+import vector from "./Doctor_module/dashboard/Vector.svg";
 import admitWhite from "./Doctor_module/dashboard/admit_white.png";
 import appointementWhite from "./Doctor_module/dashboard/appointement_white.png";
 import avgTimeWhite from "./Doctor_module/dashboard/avg_time_white.png";

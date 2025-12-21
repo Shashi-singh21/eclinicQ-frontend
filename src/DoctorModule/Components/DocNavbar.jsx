@@ -391,7 +391,16 @@ const DocNavbar = ({ moduleSwitcher }) => {
       </div>
       <NotificationDrawer show={showNotifications} onClose={() => setShowNotifications(false)} />
       <AddPatientDrawer open={addPatientOpen} onClose={() => setAddPatientOpen(false)} onSave={() => setAddPatientOpen(false)} />
-      <BookAppointmentDrawer open={bookApptOpen} onClose={() => setBookApptOpen(false)} />
+      <BookAppointmentDrawer
+        open={bookApptOpen}
+        onClose={() => setBookApptOpen(false)}
+        doctorId={doctorDetails?.id || doctorDetails?._id || doctorDetails?.doctorId}
+        clinicId={doctorDetails?.associatedWorkplaces?.clinic?.id || doctorDetails?.clinicId || undefined}
+        hospitalId={doctorDetails?.associatedWorkplaces?.hospital?.id || doctorDetails?.hospitalId || undefined}
+        onBookedRefresh={() => {
+          // Optional: trigger any queue refresh if present
+        }}
+      />
     </div>
   )
 }

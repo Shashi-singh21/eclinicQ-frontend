@@ -50,6 +50,7 @@ import {
   terminate,
   vertical,
 } from "../../../../public/index.js";
+import BookAppointmentDrawer from "../../../components/Appointment/BookAppointmentDrawer.jsx";
 
 // Walk-in Appointment Drawer (full version replicated from Front Desk)
 const WalkInAppointmentDrawer = ({
@@ -2149,8 +2150,8 @@ const Queue = () => {
             document.body
           )}
       </div>
-      <WalkInAppointmentDrawer
-        show={showWalkIn}
+      <BookAppointmentDrawer
+        open={showWalkIn}
         onClose={() => setShowWalkIn(false)}
         doctorId={doctorId}
         clinicId={clinicId}

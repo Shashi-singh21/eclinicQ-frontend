@@ -1,9 +1,24 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Calendar, X, Sunrise, Sun, Sunset, Moon } from "lucide-react";
-import { createPortal } from "react-dom";
+import { Calendar, Sunrise, Sun, Sunset, Moon, ChevronDown } from "lucide-react";
+import GeneralDrawer from "../GeneralDrawer/GeneralDrawer";
+import RadioButton from "../GeneralDrawer/RadioButton";
+import InputWithMeta from "../GeneralDrawer/InputWithMeta";
+import Dropdown from "../GeneralDrawer/Dropdown";
+import { findPatientSlots, bookWalkInAppointment } from "../../services/authService";
+import { classifyISTDayPart, buildISTRangeLabel } from "../../lib/timeUtils";
+import { Calendar as ShadcnCalendar } from "@/components/ui/calendar";
 
-// UI-only Book Appointment Drawer (no API calls). Derived from Doctor Queue drawer UI.
-export default function BookAppointmentDrawer({ open, onClose, onSave }) {
+// UI-only Book Appointment Drawer using GeneralDrawer and shared inputs
+// Integrated Book Appointment Drawer fetching real slots and booking via APIs
+export default function BookAppointmentDrawer({
+  open,
+  onClose,
+  onSave,
+  doctorId,
+  clinicId,
+  hospitalId,
+  onBookedRefresh,
+}) {
   const [isExisting, setIsExisting] = useState(false);
   const [apptType, setApptType] = useState("New Consultation");
   const [reason, setReason] = useState("");
@@ -19,6 +34,8 @@ export default function BookAppointmentDrawer({ open, onClose, onSave }) {
     new Date().toISOString().slice(0, 10)
   );
   const apptDateRef = useRef(null);
+  const [showDobCalendar, setShowDobCalendar] = useState(false);
+  const [showApptDateCalendar, setShowApptDateCalendar] = useState(false);
   const suggestions = [
     "New Consultation",
     "Follow-up Consultation",
@@ -27,30 +44,43 @@ export default function BookAppointmentDrawer({ open, onClose, onSave }) {
   const reasonSuggestions = ["Cough", "Cold", "Headache", "Nausea"];
   const genders = ["Male", "Female", "Other"];
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+  // Dropdown open states
+  const [openApptTypeDD, setOpenApptTypeDD] = useState(false);
+  const [openGenderDD, setOpenGenderDD] = useState(false);
+  const [openBloodDD, setOpenBloodDD] = useState(false);
+  const [openReasonDD, setOpenReasonDD] = useState(false);
 
-  // UI-only time buckets; in real integration, fill from slots API
-  const [timeBuckets, setTimeBuckets] = useState([
-    {
-      key: "morning",
-      label: "Morning",
-      time: "8:00 AM - 11:30 AM",
-      Icon: Sunrise,
-    },
-    {
-      key: "afternoon",
-      label: "Afternoon",
-      time: "12:00 PM - 3:30 PM",
-      Icon: Sun,
-    },
-    {
-      key: "evening",
-      label: "Evening",
-      time: "4:00 PM - 7:00 PM",
-      Icon: Sunset,
-    },
-    { key: "night", label: "Night", time: "7:30 PM - 9:00 PM", Icon: Moon },
-  ]);
+  const openOnly = (which) => {
+    setOpenApptTypeDD(which === "appt");
+    setOpenGenderDD(which === "gender");
+    setOpenBloodDD(which === "blood");
+    setOpenReasonDD(which === "reason");
+  };
+
+  const toggleOpen = (which) => {
+    const isAppt = which === "appt";
+    const isGender = which === "gender";
+    const isBlood = which === "blood";
+  const isReason = which === "reason";
+  const alreadyOpen = (isAppt && openApptTypeDD) || (isGender && openGenderDD) || (isBlood && openBloodDD);
+    if (alreadyOpen) {
+      // close all
+      openOnly("");
+    } else {
+      openOnly(which);
+    }
+  };
+
+  // Real slots from API
+  const [grouped, setGrouped] = useState({ morning: [], afternoon: [], evening: [], night: [] });
+  const [timeBuckets, setTimeBuckets] = useState([]);
   const [bucketKey, setBucketKey] = useState("morning");
+  const [selectedSlotId, setSelectedSlotId] = useState(null);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [slotsError, setSlotsError] = useState("");
+  const [booking, setBooking] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [closing, setClosing] = useState(false);
 
   useEffect(() => {
@@ -59,6 +89,80 @@ export default function BookAppointmentDrawer({ open, onClose, onSave }) {
     return () => window.removeEventListener("keydown", onEsc);
   }, []);
 
+  // Close calendars on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const target = event.target;
+      const isCalendarClick = target.closest(".shadcn-calendar-dropdown");
+      if (!isCalendarClick) {
+        setShowDobCalendar(false);
+        setShowApptDateCalendar(false);
+      }
+    };
+
+    if (showDobCalendar || showApptDateCalendar) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showDobCalendar, showApptDateCalendar]);
+
+  // Load slots when opened or date/ids change
+  useEffect(() => {
+    let ignore = false;
+    const load = async () => {
+      if (!open) return;
+      if (!doctorId || (!clinicId && !hospitalId)) return;
+      setSelectedSlotId(null);
+      setGrouped({ morning: [], afternoon: [], evening: [], night: [] });
+      setTimeBuckets([]);
+      setLoadingSlots(true);
+      setSlotsError("");
+      try {
+        const resp = await findPatientSlots({ doctorId, date: apptDate, clinicId, hospitalId });
+        const arr = Array.isArray(resp) ? resp : resp?.data || resp?.slots || [];
+        if (ignore) return;
+        const grp = (arr || []).reduce(
+          (acc, s) => {
+            const part = classifyISTDayPart(s.startTime);
+            if (!acc[part]) acc[part] = [];
+            acc[part].push(s);
+            return acc;
+          },
+          { morning: [], afternoon: [], evening: [], night: [] }
+        );
+        setGrouped(grp);
+        const tb = [];
+        if (grp.morning.length) {
+          const f = grp.morning[0], l = grp.morning[grp.morning.length - 1];
+          tb.push({ key: "morning", label: "Morning", time: buildISTRangeLabel(f.startTime, l.endTime), Icon: Sunrise });
+        }
+        if (grp.afternoon.length) {
+          const f = grp.afternoon[0], l = grp.afternoon[grp.afternoon.length - 1];
+          tb.push({ key: "afternoon", label: "Afternoon", time: buildISTRangeLabel(f.startTime, l.endTime), Icon: Sun });
+        }
+        if (grp.evening.length) {
+          const f = grp.evening[0], l = grp.evening[grp.evening.length - 1];
+          tb.push({ key: "evening", label: "Evening", time: buildISTRangeLabel(f.startTime, l.endTime), Icon: Sunset });
+        }
+        if (grp.night.length) {
+          const f = grp.night[0], l = grp.night[grp.night.length - 1];
+          tb.push({ key: "night", label: "Night", time: buildISTRangeLabel(f.startTime, l.endTime), Icon: Moon });
+        }
+        setTimeBuckets(tb);
+        const firstNonEmpty = tb[0]?.key || "morning";
+        setBucketKey(firstNonEmpty);
+        const firstSlot = (grp[firstNonEmpty] || [])[0] || null;
+        setSelectedSlotId(firstSlot ? firstSlot.id || firstSlot.slotId || firstSlot._id : null);
+      } catch (e) {
+        if (!ignore) setSlotsError(e?.response?.data?.message || e.message || "Failed to load slots");
+      } finally {
+        if (!ignore) setLoadingSlots(false);
+      }
+    };
+    load();
+    return () => { ignore = true; };
+  }, [open, apptDate, doctorId, clinicId, hospitalId]);
+
   const requestClose = () => {
     setClosing(true);
     setTimeout(() => {
@@ -66,351 +170,362 @@ export default function BookAppointmentDrawer({ open, onClose, onSave }) {
       onClose?.();
     }, 220);
   };
-  if (!open && !closing) return null;
 
   const canSave = () => {
+    if (!selectedSlotId) return false;
     if (isExisting) return mobile.trim().length >= 3;
     return firstName && lastName && dob && gender && bloodGroup && mobile;
   };
 
-  const save = () => {
-    const payload = isExisting
-      ? {
-          method: "EXISTING",
-          mobile,
-          apptType,
-          reason,
-          apptDate,
-          slotBucket: bucketKey,
-        }
-      : {
-          method: "NEW",
-          firstName,
-          lastName,
-          dob,
-          gender,
-          bloodGroup,
-          mobile,
-          email,
-          apptType,
-          reason,
-          apptDate,
-          slotBucket: bucketKey,
-        };
-    onSave ? onSave(payload) : onClose?.();
+  const mapBloodGroup = (bg) => {
+    if (!bg) return undefined;
+    const base = bg.toUpperCase();
+    if (base.endsWith("+")) return base.replace("+", "_POSITIVE");
+    if (base.endsWith("-")) return base.replace("-", "_NEGATIVE");
+    return base;
   };
 
-  const drawer = (
-    <div className="fixed inset-0 z-[5000]">
-      <style>{`
-        @keyframes drawerIn { from { transform: translateX(100%); opacity: 0.6; } to { transform: translateX(0%); opacity: 1; } }
-        @keyframes drawerOut { from { transform: translateX(0%); opacity: 1; } to { transform: translateX(100%); opacity: 0.6; } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: .3; } }
-        @keyframes fadeOut { from { opacity: .3; } to { opacity: 0; } }
-      `}</style>
-      <div
-        className={`absolute inset-0 bg-black/40 ${
-          closing
-            ? "animate-[fadeOut_.2s_ease-in_forwards]"
-            : "animate-[fadeIn_.25s_ease-out_forwards]"
-        }`}
-        onClick={requestClose}
-        style={{ zIndex: 5001 }}
-      />
-      <aside
-        className={`absolute top-4 right-4 bottom-4 w-[520px] bg-white shadow-2xl border border-gray-200 rounded-xl overflow-hidden ${
-          closing
-            ? "animate-[drawerOut_.22s_ease-in_forwards]"
-            : "animate-[drawerIn_.25s_ease-out_forwards]"
-        }`}
-        role="dialog"
-        aria-modal="true"
-        style={{ zIndex: 5002 }}
-      >
-        <div className="p-4 flex flex-col h-full bg-white">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-[18px] font-semibold">Book Appointment</h2>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={save}
-                disabled={!canSave()}
-                className={`text-sm font-medium rounded px-3 py-1.5 border ${
-                  canSave()
-                    ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
-                    : "text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed"
-                }`}
-              >
-                Book Appointement
-              </button>
-              <button
-                className="text-gray-500 hover:text-gray-700"
-                onClick={requestClose}
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+  const save = async () => {
+    if (!canSave() || booking) return;
+    setBooking(true);
+    setErrorMsg("");
+    setFieldErrors({});
+    try {
+      let payload;
+      if (isExisting) {
+        payload = {
+          method: "EXISTING",
+          bookingMode: "WALK_IN",
+          patientId: mobile.trim(),
+          reason: reason.trim(),
+          slotId: selectedSlotId,
+          bookingType: apptType?.toLowerCase().includes("follow") ? "FOLLOW_UP" : "NEW",
+          doctorId,
+          clinicId,
+          hospitalId,
+          date: apptDate,
+        };
+      } else {
+        payload = {
+          method: "NEW_USER",
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          phone: mobile.trim(),
+          emailId: (email || "").trim() || undefined,
+          dob: dob.trim(),
+          gender: (gender || "").toUpperCase(),
+          bloodGroup: mapBloodGroup(bloodGroup),
+          reason: reason.trim(),
+          slotId: selectedSlotId,
+          bookingType: apptType?.toUpperCase().includes("REVIEW") ? "FOLLOW_UP" : "NEW",
+        };
+      }
+      await bookWalkInAppointment(payload);
+      onBookedRefresh?.();
+      if (onSave) onSave(payload);
+      onClose?.();
+    } catch (e) {
+      const msg = e?.message || "Booking failed";
+      const errs = e?.validation || e?.response?.data?.errors || null;
+      if (errs && typeof errs === "object") setFieldErrors(errs);
+      setErrorMsg(String(msg));
+    } finally {
+      setBooking(false);
+    }
+  };
+  return (
+    <GeneralDrawer
+      isOpen={open}
+      onClose={onClose}
+      title="Book Walk-In Appointment"
+      primaryActionLabel="Book Appointment"
+      onPrimaryAction={save}
+      primaryActionDisabled={!canSave()}
+      width={600}
+    >
+      <div className="flex flex-col gap-4">
+
+
+      {/* Radios */}
+      <div className="flex items-center gap-6">
+        <RadioButton
+          name="pt"
+          value="existing"
+          checked={isExisting}
+          onChange={(v) => setIsExisting(v === "existing")}
+          label="Existing Patients"
+        />
+        <RadioButton
+          name="pt"
+          value="new"
+          checked={!isExisting}
+          onChange={(v) => setIsExisting(v === "existing" ? true : false)}
+          label="New Patient"
+        />
+      </div>
+
+      {/* Body */}
+      {isExisting ? (
+        <div className="">
+          <InputWithMeta
+            label="Patient"
+            requiredDot
+            value={mobile}
+            onChange={setMobile}
+            placeholder="Search Patient by name, Abha id, Patient ID or Contact Number"
+          />
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ">
+            <InputWithMeta label="First Name" requiredDot value={firstName} onChange={setFirstName} placeholder="Enter First Name" />
+            <InputWithMeta label="Last Name" requiredDot value={lastName} onChange={setLastName} placeholder="Enter Last Name" />
           </div>
-
-          <div className="flex items-center gap-6 mt-2 mb-4">
-            <label className="inline-flex items-center gap-2 text-sm">
-              <input
-                type="radio"
-                name="pt"
-                checked={isExisting}
-                onChange={() => setIsExisting(true)}
-              />{" "}
-              Existing Patients
-            </label>
-            <label className="inline-flex items-center gap-2 text-sm">
-              <input
-                type="radio"
-                name="pt"
-                checked={!isExisting}
-                onChange={() => setIsExisting(false)}
-              />{" "}
-              New Patient
-            </label>
-          </div>
-
-          <div className="flex-1 min-h-0 overflow-y-auto pr-1">
-            {isExisting ? (
-              <div className="mb-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Patient <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={mobile}
-                  onChange={(e) => setMobile(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-                  placeholder="Search Patient by name, Abha id, Patient ID or Contact Number"
-                />
-              </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      First Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      type="text"
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-                      placeholder="Enter First Name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Last Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      type="text"
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-                      placeholder="Enter Last Name"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Date of Birth <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        ref={dobRef}
-                        value={dob}
-                        onChange={(e) => setDob(e.target.value)}
-                        type="date"
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm pr-8 focus:outline-none focus:border-blue-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          dobRef.current?.showPicker
-                            ? dobRef.current.showPicker()
-                            : dobRef.current?.focus()
-                        }
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
-                      >
-                        <Calendar className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Gender <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={gender}
-                      onChange={(e) => setGender(e.target.value)}
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-                    >
-                      <option value="" disabled>
-                        Select Gender
-                      </option>
-                      {genders.map((g) => (
-                        <option key={g} value={g}>
-                          {g}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Blood Group <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={bloodGroup}
-                      onChange={(e) => setBloodGroup(e.target.value)}
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-                    >
-                      <option value="" disabled>
-                        Select Blood Group
-                      </option>
-                      {bloodGroups.map((bg) => (
-                        <option key={bg} value={bg}>
-                          {bg}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Mobile Number <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      value={mobile}
-                      onChange={(e) => setMobile(e.target.value)}
-                      type="tel"
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-                      placeholder="Enter Mobile Number"
-                    />
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email ID
-                  </label>
-                  <input
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    type="email"
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-                    placeholder="Enter Email"
-                  />
-                </div>
-              </>
-            )}
-
-            <div className="mb-3 mt-3">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Appointment Type <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={apptType}
-                onChange={(e) => setApptType(e.target.value)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-              >
-                {suggestions.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-              <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                {suggestions.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    className="px-2 py-1 rounded border border-gray-200 text-gray-700 hover:bg-gray-50"
-                    onClick={() => setApptType(s)}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="mb-3">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Reason for Visit <span className="text-red-500">*</span>
-              </label>
-              <input
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                type="text"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-                placeholder="Enter Reason for Visit"
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ">
+            <InputWithMeta label="Mobile Number" requiredDot value={mobile} onChange={setMobile} placeholder="Enter Mobile Number" />
+            <div className="relative">
+              <InputWithMeta
+                label="Date of Birth"
+                requiredDot
+                value={dob}
+                onChange={setDob}
+                placeholder="YYYY-MM-DD"
+                RightIcon={Calendar}
+                onIconClick={() => setShowDobCalendar((v) => !v)}
               />
-              <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                {reasonSuggestions.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    className="px-2 py-1 rounded border border-gray-200 text-gray-700 hover:bg-gray-50"
-                    onClick={() => setReason(s)}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Appointment Date <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    ref={apptDateRef}
-                    type="date"
-                    value={apptDate}
-                    onChange={(e) => setApptDate(e.target.value)}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm pr-8 focus:outline-none focus:border-blue-500"
+              {showDobCalendar && (
+                <div className="shadcn-calendar-dropdown absolute z-[10000]  bg-white border border-gray-200 rounded-xl shadow-2xl p-2">
+                  <ShadcnCalendar
+                    mode="single"
+                    selected={dob ? new Date(dob) : undefined}
+                    onSelect={(date) => {
+                      if (date) {
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, "0");
+                        const day = String(date.getDate()).padStart(2, "0");
+                        setDob(`${year}-${month}-${day}`);
+                      }
+                      setShowDobCalendar(false);
+                    }}
+                    captionLayout="dropdown"
+                    fromYear={1900}
+                    toYear={new Date().getFullYear()}
+                    className="rounded-lg p-1"
+                    classNames={{
+                      day_selected: "bg-blue-600 text-white hover:bg-blue-600",
+                      // keep today subtle default; no blue accents
+                    }}
                   />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      apptDateRef.current?.showPicker
-                        ? apptDateRef.current.showPicker()
-                        : apptDateRef.current?.focus()
-                    }
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
-                  >
-                    <Calendar className="w-4 h-4" />
-                  </button>
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Available Slot <span className="text-red-500">*</span>
-                </label>
-                <select
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-                  value={bucketKey}
-                  onChange={(e) => setBucketKey(e.target.value)}
-                >
-                  {timeBuckets.map((t) => (
-                    <option key={t.key} value={t.key}>
-                      {t.label} ({t.time})
-                    </option>
-                  ))}
-                </select>
-                <div className="mt-1 text-xs text-gray-500">
-                  Tokens info will appear here in the integrated version.
-                </div>
-              </div>
+              )}
             </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ">
+            <div className="relative">
+              <InputWithMeta
+                label="Blood Group"
+                value={bloodGroup}
+                onChange={setBloodGroup}
+                placeholder="Select Blood Group"
+                RightIcon={ChevronDown}
+                onFieldOpen={() => toggleOpen("blood")}
+                dropdownOpen={openBloodDD}
+              />
+              <Dropdown
+                open={openBloodDD}
+                onClose={() => setOpenBloodDD(false)}
+                items={bloodGroups.map((bg) => ({ label: bg, value: bg }))}
+                onSelect={(it) => setBloodGroup(it.value)}
+                anchorClassName=""
+                className="w-full"
+                selectedValue={bloodGroup}
+              />
+            </div>
+            <div className="relative">
+              <InputWithMeta
+                label="Gender"
+                value={gender}
+                onChange={setGender}
+                placeholder="Select Gender"
+                RightIcon={ChevronDown}
+                onFieldOpen={() => toggleOpen("gender")}
+                dropdownOpen={openGenderDD}
+              />
+              <Dropdown
+                open={openGenderDD}
+                onClose={() => setOpenGenderDD(false)}
+                items={genders.map((g) => ({ label: g, value: g }))}
+                onSelect={(it) => setGender(it.value)}
+                anchorClassName=""
+                className="w-full"
+                selectedValue={gender}
+              />
+            </div>
+          </div>
+          <div className="">
+            <InputWithMeta label="Email ID" value={email} onChange={setEmail} placeholder="Enter Email" />
+          </div>
+        </>
+      )}
+
+      <div className="relative">
+        <InputWithMeta
+          label="Appointment Type"
+          requiredDot
+          value={apptType}
+          onChange={setApptType}
+          placeholder="Select or Enter Appointment Type"
+          RightIcon={ChevronDown}
+          onFieldOpen={() => toggleOpen("appt")}
+          dropdownOpen={openApptTypeDD}
+        />
+        <Dropdown
+          open={openApptTypeDD}
+          onClose={() => setOpenApptTypeDD(false)}
+          items={[
+            "New Consultation",
+            "Follow-up Consultation",
+            "Review Visit",
+            "Routine Health Check-up",
+            "Emergency OPD (Non-admission)",
+            "Second Opinion",
+          ].map((t) => ({ label: t, value: t }))}
+          onSelect={(it) => setApptType(it.value)}
+          className="w-full"
+          selectedValue={apptType}
+        />
+        <div className="flex gap-2 items-center mt-1">
+          <div className="text-xs text-[#2372EC] ">Suggestion:</div>
+          <div className="flex flex-wrap gap-2">
+            {suggestions.map((s) => (
+              <button key={s} className="px-1 py-0.5 bg-secondary-grey50 rounded-[4px] min-w-[18px] text-xs hover:bg-gray-50" type="button" onClick={() => setApptType(s)}>
+                {s}
+              </button>
+            ))}
           </div>
         </div>
-      </aside>
-    </div>
-  );
+        
+      </div>
 
-  return createPortal(drawer, document.body);
+      <div>
+        <InputWithMeta
+          label="Reason for Visit"
+          value={reason}
+          onChange={setReason}
+          placeholder="Enter Reason for Visit"
+        />
+        <div className="flex gap-2 items-center mt-1">
+          <div className="text-xs text-[#2372EC] ">Suggestion:</div>
+          <div className="flex flex-wrap gap-2">
+            {reasonSuggestions.map((s) => (
+              <button key={s} className="px-1 py-0.5 bg-secondary-grey50 rounded-[4px] min-w-[18px] text-xs hover:bg-gray-50" type="button" onClick={() => setReason(s)}>
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-secondary-grey150 w-0.5px h-[1px] "></div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ">
+        <div className="relative">
+          <InputWithMeta
+            label="Appointment Date"
+            requiredDot
+            value={apptDate}
+            onChange={setApptDate}
+            placeholder="YYYY-MM-DD"
+            RightIcon={Calendar}
+            onIconClick={() => setShowApptDateCalendar((v) => !v)}
+          />
+          {showApptDateCalendar && (
+            <div className="shadcn-calendar-dropdown absolute z-[10000] mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl">
+              <ShadcnCalendar
+                mode="single"
+                selected={apptDate ? new Date(apptDate) : undefined}
+                onSelect={(date) => {
+                  if (date) {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, "0");
+                    const day = String(date.getDate()).padStart(2, "0");
+                    setApptDate(`${year}-${month}-${day}`);
+                  }
+                  setShowApptDateCalendar(false);
+                }}
+                captionLayout="dropdown"
+                fromYear={new Date().getFullYear() - 1}
+                toYear={new Date().getFullYear() + 1}
+                className="rounded-lg "
+                classNames={{
+                  day_selected: "bg-blue-600 text-white hover:bg-blue-600",
+                  // keep other controls neutral; no blue accents
+                }}
+              />
+            </div>
+          )}
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="text-xs text-gray-600">Available Slot <span className="text-red-500">*</span></label>
+          {timeBuckets.length === 0 ? (
+            // Fallback: show an empty input when there are no slots
+            <InputWithMeta
+              label=""
+              value=""
+              onChange={() => {}}
+              placeholder={loadingSlots ? "Loading…" : "No slots available"}
+              RightIcon={ChevronDown}
+            />
+          ) : (
+            <>
+              {/* Buckets */}
+              <div className="grid grid-cols-2 gap-2"><div className="w-[0.7px] h-6 bg-secondary-grey300"></div>
+                {timeBuckets.map(({ key, label, time, Icon }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className={`flex items-center gap-2 border rounded-md px-2 py-2 text-left ${bucketKey === key ? "border-blue-500 bg-blue-50" : "border-gray-200"}`}
+                    onClick={() => {
+                      setBucketKey(key);
+                      const firstSlot = (grouped[key] || [])[0] || null;
+                      setSelectedSlotId(firstSlot ? firstSlot.id || firstSlot.slotId || firstSlot._id : null);
+                    }}
+                  >
+                    {Icon ? <Icon className="w-4 h-4 text-gray-700" /> : null}
+                    <div className="flex-1">
+                      <div className="text-sm font-medium">{label}</div>
+                      <div className="text-xs text-gray-600">{time}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              {/* Slot list */}
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {(grouped[bucketKey] || []).map((s) => {
+                  const sid = s.id || s.slotId || s._id;
+                  const selected = selectedSlotId === sid;
+                  return (
+                    <button
+                      key={sid}
+                      type="button"
+                      className={`text-xs border rounded px-2 py-1 ${selected ? "border-blue-500 bg-blue-50" : "border-gray-200"}`}
+                      onClick={() => setSelectedSlotId(sid)}
+                    >
+                      {buildISTRangeLabel(s.startTime, s.endTime)}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+          {loadingSlots && <div className="text-xs text-gray-500">Loading slots…</div>}
+          {slotsError && <div className="text-xs text-red-600">{slotsError}</div>}
+        </div>
+      </div>
+      {errorMsg && (
+        <div className="p-2 rounded border border-red-200 bg-red-50 text-[12px] text-red-700">{errorMsg}</div>
+      )}
+            </div>
+    </GeneralDrawer>
+  );
 }
