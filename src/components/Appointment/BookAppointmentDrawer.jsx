@@ -285,7 +285,20 @@ export default function BookAppointmentDrawer({
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ">
-            <InputWithMeta label="First Name" requiredDot value={firstName} onChange={setFirstName} placeholder="Enter First Name" />
+            <InputWithMeta
+              label="First Name"
+              requiredDot
+              value={firstName}
+              onChange={setFirstName}
+              placeholder="Enter First Name"
+            />
+            <InputWithMeta
+              label="Last Name"
+              requiredDot
+              value={lastName}
+              onChange={setLastName}
+              placeholder="Enter Last Name"
+            />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ">
             <InputWithMeta label="Mobile Number" requiredDot value={mobile} onChange={setMobile} placeholder="Enter Mobile Number" />
@@ -474,58 +487,47 @@ export default function BookAppointmentDrawer({
             </div>
           )}
         </div>
+        {/* Available Slot visible for both Existing/New patients */}
         <div className="flex flex-col gap-2">
-          <label className="text-xs text-gray-600">Available Slot <span className="text-red-500">*</span></label>
-          {timeBuckets.length === 0 ? (
-            // Fallback: show an empty input when there are no slots
-            <InputWithMeta
-              label=""
-              value=""
-              onChange={() => {}}
-              placeholder={loadingSlots ? "Loading…" : "No slots available"}
-              RightIcon={ChevronDown}
-            />
-          ) : (
-            <>
-              {/* Buckets dropdown (styled) */}
-              <div className="relative">
-                <InputWithMeta
-                  label=""
-                  value={(
-                    () => {
-                      const cur = timeBuckets.find(tb => tb.key === bucketKey);
-                      if (!cur) return "Select";
-                      const t = cur.time || "loading…";
-                      return `${cur.label} - (${t})`;
-                    }
-                  )()}
-                  onChange={() => {}}
-                  placeholder="Select"
-                  RightIcon={ChevronDown}
-                  onFieldOpen={() => openOnly("bucket")}
-                  dropdownOpen={openBucketDD}
-                />
-                <Dropdown
-                  open={openBucketDD}
-                  onClose={() => setOpenBucketDD(false)}
-                  items={timeBuckets.map(({ key, label, time }) => ({ label: `${label} - (${time || "loading…"})`, value: key }))}
-                  onSelect={(it) => {
-                    const key = it.value;
-                    setBucketKey(key);
-                    const firstSlot = (grouped[key] || [])[0] || null;
-                    setSelectedSlotId(firstSlot ? firstSlot.id || firstSlot.slotId || firstSlot._id : null);
-                    setOpenBucketDD(false);
-                  }}
-                  className="w-full"
-                  selectedValue={bucketKey}
-                />
-              </div>
-              {/* Slot list removed per request */}
-            </>
-          )}
+          <div className="relative">
+              <InputWithMeta
+                label="Available Slot"
+                requiredDot
+                value={(() => {
+                  if (loadingSlots) return "Loading…";
+                  if (!timeBuckets.length) return "No slots available";
+                  const cur = timeBuckets.find((tb) => tb.key === bucketKey) || timeBuckets[0];
+                  const t = cur?.time || "loading…";
+                  return `${cur.label} - (${t})`;
+                })()}
+                onChange={() => {}}
+                placeholder="Select"
+                RightIcon={ChevronDown}
+                onFieldOpen={() => openOnly("bucket")}
+                dropdownOpen={openBucketDD}
+                onRequestClose={() => setOpenBucketDD(false)}
+                dropdown={
+                  <Dropdown
+                    open={openBucketDD}
+                    onClose={() => setOpenBucketDD(false)}
+                    items={timeBuckets.map(({ key, label, time }) => ({ label: `${label} - (${time || "loading…"})`, value: key }))}
+                    onSelect={(it) => {
+                      const key = it.value;
+                      setBucketKey(key);
+                      const firstSlot = (grouped[key] || [])[0] || null;
+                      setSelectedSlotId(firstSlot ? firstSlot.id || firstSlot.slotId || firstSlot._id : null);
+                      setOpenBucketDD(false);
+                    }}
+                    className="w-full"
+                    selectedValue={bucketKey}
+                  />
+                }
+              />
+          </div>
           {loadingSlots && <div className="text-xs text-gray-500">Loading slots…</div>}
           {slotsError && <div className="text-xs text-red-600">{slotsError}</div>}
         </div>
+        
       </div>
       {errorMsg && (
         <div className="p-2 rounded border border-red-200 bg-red-50 text-[12px] text-red-700">{errorMsg}</div>

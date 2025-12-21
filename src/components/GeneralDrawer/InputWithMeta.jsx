@@ -12,6 +12,12 @@ export default function InputWithMeta({
   onFieldOpen,
   readonlyWhenIcon = true,
   dropdown,
+  // Built-in dropdown support (optional)
+  dropdownItems,
+  onSelectItem,
+  selectedValue,
+  itemRenderer,
+  closeOnReclick = true,
   disabled = false,
   className = "",
   // indicate dropdown is currently open for UX cursor
@@ -26,9 +32,9 @@ export default function InputWithMeta({
 
   const handleOpen = () => {
     if (disabled) return;
-    // If already open and a close handler exists, close on re-click
-    if (dropdownOpen && onRequestClose) {
-      onRequestClose();
+    // If already open and close-on-reclick is enabled, close instead
+    if (dropdownOpen && closeOnReclick) {
+      onRequestClose?.();
       return;
     }
     if (onFieldOpen) onFieldOpen();
@@ -52,7 +58,7 @@ export default function InputWithMeta({
   }, [dropdownOpen, onRequestClose, outsideIgnoreSelectors]);
 
   return (
-    <div ref={rootRef} className={`w-full flex flex-col gap-1 ${className}`}>
+    <div ref={rootRef} className={`w-full flex flex-col gap-1 relative ${className}`}>
       <div className="flex items-center justify-between ">
         <label className="text-sm text-secondary-grey300 flex items-center gap-1">
           {label}
@@ -78,7 +84,6 @@ export default function InputWithMeta({
             if (isReadOnly) e.preventDefault();
             handleOpen();
           }}
-          onClick={handleOpen}
           onKeyDown={(e) => {
             if (!isReadOnly) return;
             // Allow navigation keys; block typing
@@ -102,7 +107,33 @@ export default function InputWithMeta({
         ) : null}
       </div>
 
+      {/* External dropdown slot */}
       {dropdown}
+
+      {/* Built-in dropdown menu */}
+      {dropdownOpen && Array.isArray(dropdownItems) && dropdownItems.length > 0 && (
+        <div className="input-meta-dropdown absolute left-0 top-full mt-1 z-[10000] bg-white border border-gray-200 rounded-xl shadow-2xl w-full max-h-60 overflow-auto">
+          <ul className="py-1">
+            {dropdownItems.map((it, idx) => {
+              const isSelected = selectedValue === (it.value ?? it.label);
+              return (
+                <li key={it.value ?? idx}>
+                  <button
+                    type="button"
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${isSelected ? "bg-gray-100" : ""}`}
+                    onClick={() => {
+                      onSelectItem?.(it);
+                      onRequestClose?.();
+                    }}
+                  >
+                    {itemRenderer ? itemRenderer(it, { isSelected }) : it.label}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
