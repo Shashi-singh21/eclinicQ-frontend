@@ -394,9 +394,9 @@ const DocNavbar = ({ moduleSwitcher }) => {
       <BookAppointmentDrawer
         open={bookApptOpen}
         onClose={() => setBookApptOpen(false)}
-        doctorId={doctorDetails?.id || doctorDetails?._id || doctorDetails?.doctorId}
-        clinicId={doctorDetails?.associatedWorkplaces?.clinic?.id || doctorDetails?.clinicId || undefined}
-        hospitalId={doctorDetails?.associatedWorkplaces?.hospital?.id || doctorDetails?.hospitalId || undefined}
+  doctorId={doctorDetails?.userId || doctorDetails?.id}
+  clinicId={doctorDetails?.associatedWorkplaces?.clinic?.id || doctorDetails?.clinicId}
+  hospitalId={(Array.isArray(doctorDetails?.associatedWorkplaces?.hospitals) && doctorDetails?.associatedWorkplaces?.hospitals[0]?.id) || undefined}
         onBookedRefresh={() => {
           // Optional: trigger any queue refresh if present
         }}

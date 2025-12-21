@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
+import useAuthStore from "../../../store/useAuthStore";
+import { getDoctorMe } from "../../../services/authService";
 import {
   Download,
   ChevronDown,
@@ -7,6 +9,7 @@ import {
   UserPlus,
   Check,
 } from "lucide-react";
+import useSlotStore from "../../../store/useSlotStore";
 import Overview_cards from "../../../components/Dashboard/Overview_cards";
 import BookAppointmentDrawer from "../../../components/Appointment/BookAppointmentDrawer.jsx";
 import {
@@ -59,6 +62,10 @@ const SectionCard = ({ title, children, right }) => (
 );
 
 const DocDashboard = () => {
+  const { doctorDetails, doctorLoading, fetchDoctorDetails } = useAuthStore();
+  // Slot store hooks must be used inside component
+  const selectedSlotId = useSlotStore((s) => s.selectedSlotId);
+  const loadAppointmentsForSelectedSlot = useSlotStore((s) => s.loadAppointmentsForSelectedSlot);
   const [period, setPeriod] = useState("Daily");
   // Month dropdown state
   const months = [
@@ -81,6 +88,12 @@ const DocDashboard = () => {
   const monthBtnRef = useRef(null);
   const monthDropRef = useRef(null);
   const [bookOpen, setBookOpen] = useState(false);
+  // Ensure doctor context exists so drawer can load slots
+  useEffect(() => {
+    if (!doctorDetails && !doctorLoading) {
+      try { fetchDoctorDetails?.(getDoctorMe); } catch {}
+    }
+  }, [doctorDetails, doctorLoading, fetchDoctorDetails]);
   // Close handlers for month dropdown
 
   useEffect(() => {
@@ -330,6 +343,14 @@ const DocDashboard = () => {
       <BookAppointmentDrawer
         open={bookOpen}
         onClose={() => setBookOpen(false)}
+  doctorId={doctorDetails?.userId || doctorDetails?.id}
+  clinicId={doctorDetails?.associatedWorkplaces?.clinic?.id || doctorDetails?.clinicId}
+  hospitalId={(Array.isArray(doctorDetails?.associatedWorkplaces?.hospitals) && doctorDetails?.associatedWorkplaces?.hospitals[0]?.id) || undefined}
+        onBookedRefresh={() => {
+          if (selectedSlotId) {
+            try { loadAppointmentsForSelectedSlot(); } catch {}
+          }
+        }}
       />
     </div>
   );
