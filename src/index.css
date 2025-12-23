@@ -1,6 +1,11 @@
 /* Utility: Hide scrollbar while preserving scroll */
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -46,6 +51,26 @@ body {
   to {
     opacity: 0;
     transform: translateY(-8px);
+  }
+}
+
+@keyframes blink-dot {
+  0%,
+  100% {
+    background-color: #2e7d32;
+  }
+  50% {
+    background-color: #f2fff3;
+  }
+}
+
+@keyframes blink-dot-warning {
+  0%,
+  100% {
+    background-color: #ec7600;
+  }
+  50% {
+    background-color: #fff7f0;
   }
 }
 @keyframes cardEnter {

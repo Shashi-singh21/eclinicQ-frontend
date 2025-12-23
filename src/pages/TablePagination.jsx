@@ -1,50 +1,173 @@
-import { ChevronDown } from "lucide-react";
-import { arrowLeft, arrowRight } from "../../public/index.js";
+import { useState } from "react";
+import { arrowLeft, arrowRight, paginationDown } from "../../public/index.js";
 
-export default function TablePagination() {
+export default function TablePagination({
+  page = 1,
+  pageSize = 10,
+  total = 0,
+  start = 1,
+  end = 10,
+  canPrev = false,
+  canNext = false,
+  goto = () => {},
+}) {
+  const [goToValue, setGoToValue] = useState("");
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages = [];
+
+    if (totalPages <= 5) {
+      // Show all pages if total is 5 or less
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Dynamic pagination based on current page
+      if (page <= 3) {
+        // Near the start: 1, 2, 3, ..., last
+        pages.push(1, 2, 3, "...", totalPages);
+      } else if (page >= totalPages - 2) {
+        // Near the end: 1, ..., last-2, last-1, last
+        pages.push(1, "...", totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        // In the middle: 1, ..., current, ..., last
+        pages.push(1, "...", page, "...", totalPages);
+      }
+    }
+    return pages;
+  };
+
+  const handleGoToPage = () => {
+    const pageNum = parseInt(goToValue);
+    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages) {
+      goto(pageNum);
+      setGoToValue("");
+    }
+  };
+
   return (
-    <div className="flex items-center justify-center border rounded-b-lg bg-white py-1 mt-4">
-      <div className="flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-sm text-gray-600">
-        {/* Left Arrow */}
-        <button className="flex h-7 w-7 items-center justify-center rounded hover:bg-gray-100">
-          <img src={arrowLeft} alt="Previous" className="w-3 h-3" />
-        </button>
+    <div className="flex items-center justify-center py-2 px-4">
+      <div className="flex items-center justify-between gap-2 bg-secondary-grey50 rounded-lg px-3 py-1.5">
+        {/* Left side - Page navigation */}
+        <div className="flex items-center gap-2">
+          {/* Left Arrow */}
+          <button
+            className="flex h-6 w-6 items-center justify-center rounded hover:bg-secondary-grey100 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => canPrev && goto(page - 1)}
+            disabled={!canPrev}
+          >
+            <img src={arrowLeft} alt="Previous" className="w-3 h-3" />
+          </button>
 
-        {/* Page numbers */}
-        <button className="h-7 min-w-[28px] rounded border border-gray-300 bg-white px-2 text-gray-900">
-          1
-        </button>
-        <button className="h-7 min-w-[28px] rounded px-2 hover:bg-gray-100">
-          2
-        </button>
-        <button className="h-7 min-w-[28px] rounded px-2 hover:bg-gray-100">
-          3
-        </button>
+          {/* Page numbers */}
+          {getPageNumbers().map((pageNum, idx) => {
+            if (pageNum === "...") {
+              return (
+                <span
+                  key={`ellipsis-${idx}`}
+                  className="px-1 text-secondary-grey200"
+                  style={{
+                    fontFamily: "Inter",
+                    fontWeight: 400,
+                    fontSize: "14px",
+                    lineHeight: "120%",
+                    verticalAlign: "middle",
+                  }}
+                >
+                  …
+                </span>
+              );
+            }
 
-        <span className="px-1">…</span>
+            const isActive = pageNum === page;
+            return (
+              <button
+                key={pageNum}
+                onClick={() => goto(pageNum)}
+                className={`h-6 min-w-[24px] px-1.5 py-1 rounded ${
+                  isActive
+                    ? "bg-monochrom-white border border-secondary-grey100 text-secondary-grey400"
+                    : "text-secondary-grey200 hover:text-secondary-grey300"
+                }`}
+                style={{
+                  fontFamily: "Inter",
+                  fontWeight: 400,
+                  fontSize: "14px",
+                  lineHeight: "120%",
+                  letterSpacing: "0%",
+                  verticalAlign: "middle",
+                  borderRadius: "4px",
+                }}
+              >
+                {pageNum}
+              </button>
+            );
+          })}
 
-        <button className="h-7 min-w-[28px] rounded px-2 hover:bg-gray-100">
-          10
-        </button>
+          {/* Right Arrow */}
+          <button
+            className="flex h-6 w-6 items-center justify-center rounded hover:bg-secondary-grey100 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => canNext && goto(page + 1)}
+            disabled={!canNext}
+          >
+            <img src={arrowRight} alt="Next" className="w-3 h-3" />
+          </button>
+        </div>
 
-        {/* Right Arrow */}
-        <button className="flex h-7 w-7 items-center justify-center rounded hover:bg-gray-100">
-          <img src={arrowRight} alt="Next" className="w-3 h-3" />
-        </button>
+        {/* Right side - Controls */}
+        <div className="flex items-center gap-2">
+          {/* Divider */}
 
-        {/* Divider */}
-        <span className="mx-1 h-5 w-px bg-gray-200" />
+          {/* Page size selector */}
+          <div
+            className="flex items-center gap-2 bg-monochrom-white border border-secondary-grey200 px-1.5 py-1 h-6 whitespace-nowrap"
+            style={{
+              borderRadius: "4px",
+              borderWidth: "0.5px",
+            }}
+          >
+            <span
+              className="text-secondary-grey300"
+              style={{
+                fontFamily: "Inter",
+                fontWeight: 500,
+                fontSize: "12px",
+                lineHeight: "120%",
+                letterSpacing: "0%",
+                verticalAlign: "middle",
+              }}
+            >
+              {pageSize} / Page
+            </span>
+            <img
+              src={paginationDown}
+              alt="Dropdown"
+              className="w-2.5 h-2.5 flex-shrink-0"
+            />
+          </div>
 
-        {/* Page size selector */}
-        <button className="flex items-center gap-1 rounded border border-gray-300 bg-white px-2 py-1 text-sm">
-          10 / Page
-          <ChevronDown size={14} />
-        </button>
-
-        {/* Go to page */}
-        <button className="rounded border border-gray-300 bg-white px-3 py-1 text-sm text-gray-500">
-          Go to Page
-        </button>
+          {/* Go to page */}
+          <input
+            type="text"
+            placeholder="Go to Page"
+            value={goToValue}
+            onChange={(e) => setGoToValue(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleGoToPage()}
+            onBlur={handleGoToPage}
+            className="bg-monochrom-white border border-secondary-grey200 px-2 py-1 w-[100px] h-6 placeholder:text-secondary-grey200"
+            style={{
+              fontFamily: "Inter",
+              fontWeight: 400,
+              fontSize: "14px",
+              lineHeight: "120%",
+              letterSpacing: "0%",
+              borderRadius: "4px",
+              borderWidth: "0.5px",
+            }}
+          />
+        </div>
       </div>
     </div>
   );

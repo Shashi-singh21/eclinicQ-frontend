@@ -13,6 +13,7 @@ import {
 } from "../../../public/index.js";
 import useAuthStore from "../../store/useAuthStore";
 import AvatarCircle from "../../components/AvatarCircle";
+import SearchInput from "../../components/SearchInput";
 import { getDoctorMe } from "../../services/authService";
 import {
   Mail,
@@ -216,22 +217,7 @@ const DocNavbar = ({ moduleSwitcher }) => {
 
       {/* Center: Search (right-aligned, fixed width) */}
       <div className="ml-auto">
-        <div className="relative w-[360px] max-w-[60vw]">
-          <img
-            src={searchIcon}
-            alt="Search"
-            className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4"
-          />
-          <input
-            ref={searchRef}
-            type="text"
-            placeholder="Search Patients"
-            className="w-full h-8 rounded border border-secondary-grey300 bg-white pl-8 pr-16 text-sm text-secondary-grey400 placeholder:text-secondary-grey100 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#2372EC]"
-          />
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-secondary-grey200 rounded px-1 py-0.5 bg-white">
-            Ctrl+K
-          </div>
-        </div>
+        <SearchInput ref={searchRef} placeholder="Search Patients" showCtrlK />
       </div>
       <Partition />
 

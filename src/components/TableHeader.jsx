@@ -1,4 +1,5 @@
 import React from "react";
+import { sortIcon } from "../../public/index.js";
 
 /**
  * TableHeader: header label with optional icon
@@ -14,17 +15,25 @@ import React from "react";
 export default function TableHeader({
   label,
   showIcon = true,
-  iconSrc = "/Doctor_module/patient/table_white.png",
+  iconSrc = sortIcon,
   iconAlt = "table icon",
   className = "",
   children,
 }) {
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div
+      className={`flex items-center gap-2 h-8 text-secondary-grey400 ${className}`}
+      style={{
+        fontFamily: 'Inter',
+        fontWeight: 500,
+        fontSize: '14px',
+        lineHeight: '120%',
+        letterSpacing: '0%',
+        verticalAlign: 'middle'
+      }}
+    >
       {children ? children : <span>{label}</span>}
-      {showIcon && (
-        <img src={iconSrc} alt={iconAlt} className="h-4 w-4" />
-      )}
+      {showIcon && <img src={iconSrc} alt={iconAlt} className="h-4 w-4" />}
     </div>
   );
 }

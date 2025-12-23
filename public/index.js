@@ -72,7 +72,7 @@ import waitingWhite from "./Doctor_module/dashboard/waiting_white.png";
 import walkInBlue from "./Doctor_module/dashboard/walk-in_blue.png";
 import table_white from "./Doctor_module/patient/table_white.png";
 import action_calendar from "./Doctor_module/patient/action_calendar.png";
-import action_dot from "./Doctor_module/patient/action_dot.png";
+import action_dot from "./action-icon.svg";
 import action_heart from "./Doctor_module/patient/action_heart.png";
 import queue_download from "./Doctor_module/patient/queue_download.png";
 import refresh from "./Doctor_module/patient/refresh.png";
@@ -105,7 +105,20 @@ import verifiedTick from "./verified-tick.svg";
 import inviteUserIcon from "./invite-user-icon.svg";
 import searchIcon from "./search-icon.svg";
 import drawerCross from "./drawer-cross.svg";
-
+import calenderArrowLeft from "./calender-arrow-left.svg";
+import calenderArrowRight from "./calender-arrow-right.svg";
+import calenderUndo from "./calender-undo.svg";
+import queueUndo from "./queue-undo.svg";
+import angelDown from "./angel-down.svg";
+import filerIcon from "./filter-icon.svg";
+import sortIcon from "./sort-icon.svg";
+import paginationDown from "./pagination-down.svg";
+import downloadIcon from "./download-icon.svg";
+import pauseIconRed from "./pause-icon-red.svg";
+import pauseMenuIcon from "./pause-menu-icon.svg";
+import infoCircle from "./info-circle.svg";
+import timerOrange from "./timer-orange.svg";
+import restartQueueIcon from "./restart-queue-icon.svg";
 export {
   // Root PNGs
   checkbox,
@@ -205,4 +218,18 @@ export {
   inviteUserIcon,
   searchIcon,
   drawerCross,
+  calenderArrowLeft,
+  calenderArrowRight,
+  calenderUndo,
+  queueUndo,
+  angelDown,
+  filerIcon,
+  sortIcon,
+  paginationDown,
+  downloadIcon,
+  pauseIconRed,
+  pauseMenuIcon,
+  infoCircle,
+  timerOrange,
+  restartQueueIcon
 };

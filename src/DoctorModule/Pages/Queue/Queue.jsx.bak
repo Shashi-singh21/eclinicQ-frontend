@@ -44,8 +44,6 @@ import {
   calenderUndo,
   angelDown,
   pauseIconRed,
-  timerOrange,
-  restartQueueIcon,
 } from "../../../../public/index.js";
 import BookAppointmentDrawer from "../../../components/Appointment/BookAppointmentDrawer.jsx";
 import PauseQueueModal from "../../../components/PauseQueueModal.jsx";
@@ -1361,7 +1359,8 @@ const Queue = () => {
         : Date.now() + pauseMinutes * 60 * 1000;
       setPauseEndsAt(ends);
       setPauseRemaining(Math.max(0, Math.floor((ends - Date.now()) / 1000)));
-      if (autoResumeTimerRef.current) clearTimeout(autoResumeTimerRef.current);
+      if (autoResumeTimerRef.current)
+        clearTimeout(autoResumeTimerRef.current);
       autoResumeTimerRef.current = setTimeout(() => {
         if (wasRunningOnPauseRef.current) setRunStartAt(Date.now());
         setQueuePaused(false);
@@ -1575,7 +1574,7 @@ const Queue = () => {
   return (
     <>
       <div className="h-screen overflow-hidden bg-gray-50">
-        <div className="sticky top-0 z-10 bg-white px-4 py-1 flex items-center">
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-1 flex items-center">
           <div className="relative mr-6" ref={slotAnchorRef}>
             <button
               type="button"
@@ -1847,19 +1846,15 @@ const Queue = () => {
           {sessionStarted && (
             <div>
               <div
-                className="w-full h-[38px] flex items-center relative px-0 rounded-none"
-                style={
-                  queuePaused
-                    ? { background: "#FFF7F0" }
-                    : { background: "#27CA40" }
-                }
+                className={`w-full h-[38px] flex items-center relative px-0 rounded-none ${
+                  queuePaused ? "bg-[#FFF4E5]" : ""
+                }`}
+                style={!queuePaused ? { background: "#27CA40" } : {}}
               >
                 <div className="flex-1 flex items-center justify-center gap-3">
                   <span
                     className={`${
-                      queuePaused
-                        ? "text-secondary-grey200"
-                        : "text-monochrom-white"
+                      queuePaused ? "text-[#92400E]" : "text-monochrom-white"
                     }`}
                     style={{
                       fontFamily: "Inter",
@@ -1873,7 +1868,7 @@ const Queue = () => {
                   </span>
                   <span
                     className={`inline-flex items-center gap-2 ${
-                      queuePaused ? "text-warning-400" : "text-monochrom-white"
+                      queuePaused ? "text-[#92400E]" : "text-monochrom-white"
                     }`}
                     style={{
                       fontFamily: "Inter",
@@ -1884,40 +1879,36 @@ const Queue = () => {
                     }}
                   >
                     <span
-                      className="inline-block w-4 h-4 rounded-full"
-                      style={{
-                        animation: queuePaused
-                          ? "blink-dot-warning 1s infinite"
-                          : "blink-dot 1s infinite",
-                      }}
+                      className={`inline-block w-4 h-4 rounded-full ${
+                        queuePaused
+                          ? "bg-[#FDBA74] border border-[#FDBA74]"
+                          : ""
+                      }`}
+                      style={
+                        !queuePaused
+                          ? {
+                              animation: "blink-dot 1s infinite",
+                            }
+                          : {}
+                      }
                     ></span>
                     {String(activePatient?.token ?? 0).padStart(2, "0")}
                   </span>
                   {queuePaused && (
                     <span
-                      className="inline-flex items-center text-warning-400 bg-monochrom-white whitespace-nowrap"
+                      className="inline-flex items-center gap-2 text-[#92400E] bg-[#FED7AA] px-2 py-0.5 rounded"
                       style={{
-                        height: "22px",
-                        minWidth: "22px",
-                        paddingTop: "2px",
-                        paddingRight: "6px",
-                        paddingBottom: "2px",
-                        paddingLeft: "6px",
-                        gap: "4px",
-                        borderRadius: "4px",
-                        border: "0.5px solid var(--warning-400)",
                         fontFamily: "Inter",
-                        fontWeight: 400,
-                        fontSize: "14px",
+                        fontWeight: 500,
+                        fontSize: "12px",
                         lineHeight: "120%",
-                        textAlign: "center",
                         verticalAlign: "middle",
                       }}
                     >
-                      <img src={timerOrange} alt="Timer" className="w-4 h-4" />
+                      <span className="inline-block w-2 h-2 rounded-full bg-[#F97316]" />
                       Paused (
                       {String(Math.floor(pauseRemaining / 60)).padStart(2, "0")}
-                      :{String(pauseRemaining % 60).padStart(2, "0")} Mins)
+                      :{String(pauseRemaining % 60).padStart(2, "0")})
                     </span>
                   )}
                 </div>
@@ -1942,30 +1933,10 @@ const Queue = () => {
                     <button
                       onClick={resumeQueue}
                       disabled={resumeSubmitting}
-                      className="inline-flex items-center bg-blue-primary250 text-monochrom-white hover:bg-blue-primary300 transition-colors"
-                      style={{
-                        height: "24px",
-                        minWidth: "24px",
-                        paddingTop: "4px",
-                        paddingRight: "6px",
-                        paddingBottom: "4px",
-                        paddingLeft: "6px",
-                        gap: "8px",
-                        borderRadius: "4px",
-                        fontFamily: "Inter",
-                        fontWeight: 500,
-                        fontSize: "12px",
-                        lineHeight: "120%",
-                        verticalAlign: "middle",
-                        opacity: resumeSubmitting ? 0.7 : 1,
-                        cursor: resumeSubmitting ? "not-allowed" : "pointer",
-                      }}
+                      className={`flex items-center gap-2 bg-blue-600 text-white text-xs font-semibold px-3 py-1.5 rounded border border-blue-600 hover:bg-blue-700 ${
+                        resumeSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                      }`}
                     >
-                      <img
-                        src={restartQueueIcon}
-                        alt="Restart"
-                        className="w-4 h-4"
-                      />
                       {resumeSubmitting ? "Resuming…" : "Restart Queue"}
                     </button>
                     {resumeError && (
@@ -2188,6 +2159,300 @@ const Queue = () => {
           pauseError={pauseError}
           onConfirm={handlePauseConfirm}
         />
+      </div>
+      <BookAppointmentDrawer
+        open={showWalkIn}
+        onClose={() => setShowWalkIn(false)}
+                    lineHeight: "100%",
+                    verticalAlign: "middle",
+                  }}
+                >
+                  Select the duration to pause your queue. It will resume
+                  automatically afterward.
+                </p>
+
+                {/* Duration buttons */}
+                <div className="grid grid-cols-5 gap-2">
+                  {[5, 10, 15, 20, 30].map((min) => (
+                    <button
+                      key={min}
+                      onClick={() => setPauseMinutes(min)}
+                      className={`text-center ${
+                        pauseMinutes === min
+                          ? "bg-blue-primary50 text-blue-primary250"
+                          : "bg-secondary-grey50 text-secondary-grey400 hover:bg-blue-primary50 hover:text-blue-primary250"
+                      }`}
+                      style={{
+                        minWidth: "22px",
+                        height: "22px",
+                        paddingTop: "2px",
+                        paddingRight: "6px",
+                        paddingBottom: "2px",
+                        paddingLeft: "6px",
+                        borderRadius: "4px",
+                        border:
+                          pauseMinutes === min
+                            ? "0.5px solid #2372EC"
+                            : "0.5px solid #D1D5DB",
+                        fontFamily: "Inter",
+                        fontWeight: 400,
+                        fontSize: "14px",
+                        lineHeight: "120%",
+                        verticalAlign: "middle",
+                      }}
+                    >
+                      {min} min
+                    </button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {[45, 60].map((min) => (
+                    <button
+                      key={min}
+                      onClick={() => setPauseMinutes(min)}
+                      className={`text-center ${
+                        pauseMinutes === min
+                          ? "bg-blue-primary50 text-blue-primary250"
+                          : "bg-secondary-grey50 text-secondary-grey400 hover:bg-blue-primary50 hover:text-blue-primary250"
+                      }`}
+                      style={{
+                        minWidth: "22px",
+                        height: "22px",
+                        paddingTop: "2px",
+                        paddingRight: "6px",
+                        paddingBottom: "2px",
+                        paddingLeft: "6px",
+                        borderRadius: "4px",
+                        border:
+                          pauseMinutes === min
+                            ? "0.5px solid #2372EC"
+                            : "0.5px solid #D1D5DB",
+                        fontFamily: "Inter",
+                        fontWeight: 400,
+                        fontSize: "14px",
+                        lineHeight: "120%",
+                        verticalAlign: "middle",
+                      }}
+                    >
+                      {min} min
+                    </button>
+                  ))}
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex items-center gap-2">
+                  <button
+                    className="bg-monochrom-white text-secondary-grey400 hover:bg-secondary-grey50"
+                    style={{
+                      width: "178px",
+                      height: "32px",
+                      minWidth: "32px",
+                      borderRadius: "4px",
+                      padding: "8px",
+                      border: "0.5px solid #8E8E8E",
+                      fontFamily: "Inter",
+                      fontWeight: 500,
+                      fontSize: "14px",
+                      lineHeight: "120%",
+                      verticalAlign: "middle",
+                    }}
+                    onClick={() => setShowPauseModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    disabled={
+                      !pauseMinutes || pauseSubmitting || !selectedSlotId
+                    }
+                    className={
+                      pauseMinutes && !pauseSubmitting && selectedSlotId
+                        ? "bg-blue-primary250 hover:bg-blue-primary300"
+                        : "bg-secondary-grey50 cursor-not-allowed"
+                    }
+                    style={{
+                      width: "178px",
+                      height: "32px",
+                      minWidth: "32px",
+                      borderRadius: "4px",
+                      padding: "8px",
+                      fontFamily: "Inter",
+                      fontWeight: 500,
+                      fontSize: "14px",
+                      lineHeight: "120%",
+                      verticalAlign: "middle",
+                      color:
+                        pauseMinutes && !pauseSubmitting && selectedSlotId
+                          ? "#FFFFFF"
+                          : "#D6D6D6",
+                    }}
+                    onClick={() => {
+                      if (!pauseMinutes || !selectedSlotId) return;
+                      setPauseError("");
+                      setPauseSubmitting(true);
+                      (async () => {
+                        try {
+                          const resp = await pauseSlotEta(
+                            selectedSlotId,
+                            pauseMinutes
+                          );
+                          const serverEnds =
+                            resp?.data?.pauseEndsAt ||
+                            resp?.pauseEndsAt ||
+                            null;
+                          const wasRunning = !!runStartAt;
+                          if (wasRunning) {
+                            const delta = Math.floor(
+                              (Date.now() - runStartAt) / 1000
+                            );
+                            setBaseElapsed((b) => b + Math.max(0, delta));
+                            setRunStartAt(null);
+                          }
+                          wasRunningOnPauseRef.current = wasRunning;
+                          setQueuePaused(true);
+                          setShowPauseModal(false);
+                          const ends = serverEnds
+                            ? new Date(serverEnds).getTime()
+                            : Date.now() + pauseMinutes * 60 * 1000;
+                          setPauseEndsAt(ends);
+                          setPauseRemaining(
+                            Math.max(0, Math.floor((ends - Date.now()) / 1000))
+                          );
+                          if (autoResumeTimerRef.current)
+                            clearTimeout(autoResumeTimerRef.current);
+                          autoResumeTimerRef.current = setTimeout(() => {
+                            if (wasRunningOnPauseRef.current)
+                              setRunStartAt(Date.now());
+                            setQueuePaused(false);
+                            if (pauseTickerRef.current) {
+                              clearInterval(pauseTickerRef.current);
+                              pauseTickerRef.current = null;
+                            }
+                            setPauseEndsAt(null);
+                            setPauseRemaining(0);
+                            autoResumeTimerRef.current = null;
+                          }, pauseMinutes * 60 * 1000);
+                        } catch (e) {
+                          const msg =
+                            e?.response?.data?.message || e.message || "";
+                          // If backend requires ending current patient first, do it automatically then retry pause
+                          if (
+                            msg.includes(
+                              "Cannot pause session while a patient is currently being served"
+                            )
+                          ) {
+                            try {
+                              if (
+                                selectedSlotId &&
+                                activePatient?.token != null
+                              ) {
+                                await endPatientSessionEta(
+                                  selectedSlotId,
+                                  activePatient.token
+                                );
+                                await loadAppointmentsForSelectedSlot();
+                              }
+                              const resp2 = await pauseSlotEta(
+                                selectedSlotId,
+                                pauseMinutes
+                              );
+                              const serverEnds =
+                                resp2?.data?.pauseEndsAt ||
+                                resp2?.pauseEndsAt ||
+                                null;
+                              const wasRunning = !!runStartAt;
+                              if (wasRunning) {
+                                const delta = Math.floor(
+                                  (Date.now() - runStartAt) / 1000
+                                );
+                                setBaseElapsed((b) => b + Math.max(0, delta));
+                                setRunStartAt(null);
+                              }
+                              wasRunningOnPauseRef.current = wasRunning;
+                              setQueuePaused(true);
+                              setShowPauseModal(false);
+                              const ends = serverEnds
+                                ? new Date(serverEnds).getTime()
+                                : Date.now() + pauseMinutes * 60 * 1000;
+                              setPauseEndsAt(ends);
+                              setPauseRemaining(
+                                Math.max(
+                                  0,
+                                  Math.floor((ends - Date.now()) / 1000)
+                                )
+                              );
+                              if (autoResumeTimerRef.current)
+                                clearTimeout(autoResumeTimerRef.current);
+                              autoResumeTimerRef.current = setTimeout(() => {
+                                if (wasRunningOnPauseRef.current)
+                                  setRunStartAt(Date.now());
+                                setQueuePaused(false);
+                                if (pauseTickerRef.current) {
+                                  clearInterval(pauseTickerRef.current);
+                                  pauseTickerRef.current = null;
+                                }
+                                setPauseEndsAt(null);
+                                setPauseRemaining(0);
+                                autoResumeTimerRef.current = null;
+                              }, pauseMinutes * 60 * 1000);
+                            } catch (e2) {
+                              setPauseError(
+                                e2?.response?.data?.message ||
+                                  e2.message ||
+                                  "Failed to pause"
+                              );
+                            }
+                          } else {
+                            setPauseError(msg || "Failed to pause");
+                          }
+                        } finally {
+                          setPauseSubmitting(false);
+                        }
+                      })();
+                    }}
+                  >
+                    {pauseSubmitting ? "Pausing…" : "Confirm"}
+                  </button>
+                </div>
+
+                {/* Warning section */}
+                <div
+                  className="bg-secondary-grey50 flex items-center gap-1"
+                  style={{
+                    width: "400px",
+                    height: "32px",
+                    marginLeft: "-16px",
+                    marginRight: "-16px",
+                    marginBottom: "-16px",
+                    padding: "8px",
+                    borderTop: "0.5px solid #D6D6D6",
+                    borderBottomLeftRadius: "12px",
+                    borderBottomRightRadius: "12px",
+                  }}
+                >
+                  <img src={infoCircle} alt="Info" className="w-4 h-4" />
+                  <span
+                    className="text-secondary-grey300"
+                    style={{
+                      fontFamily: "Inter",
+                      fontWeight: 400,
+                      fontSize: "11px",
+                      lineHeight: "100%",
+                      verticalAlign: "middle",
+                    }}
+                  >
+                    Queue will automatically resume after selected time.
+                  </span>
+                </div>
+
+                {pauseError && (
+                  <div className="mt-2 text-[12px] text-red-600 text-center">
+                    {pauseError}
+                  </div>
+                )}
+              </div>
+            </div>,
+            document.body
+          )}
       </div>
       <BookAppointmentDrawer
         open={showWalkIn}

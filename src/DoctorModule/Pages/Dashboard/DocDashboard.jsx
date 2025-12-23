@@ -1,14 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import useAuthStore from "../../../store/useAuthStore";
 import { getDoctorMe } from "../../../services/authService";
-import {
-  Download,
-  ChevronDown,
-  ChevronRight,
-  ChevronLeft,
-  UserPlus,
-  Check,
-} from "lucide-react";
 import useSlotStore from "../../../store/useSlotStore";
 import Overview_cards from "../../../components/Dashboard/Overview_cards";
 import BookAppointmentDrawer from "../../../components/Appointment/BookAppointmentDrawer.jsx";
@@ -21,6 +13,10 @@ import {
   tokenWhite,
   waitingWhite,
   newPatientWhite,
+  angelDown,
+  calenderArrowLeft,
+  calenderArrowRight,
+  downloadIcon,
 } from "../../../../public/index.js";
 
 const PeriodTabs = ({ value, onChange }) => {
@@ -53,7 +49,7 @@ const SectionCard = ({ title, children, right }) => (
       <div className="flex items-center gap-2">
         {right}
         <button className="p-1.5 rounded  hover:bg-gray-50">
-          <Download className="w-5 h-5  text-gray-600" />
+          <img src={downloadIcon} alt="Download" className="w-5 h-5" />
         </button>
       </div>
     </div>
@@ -65,7 +61,9 @@ const DocDashboard = () => {
   const { doctorDetails, doctorLoading, fetchDoctorDetails } = useAuthStore();
   // Slot store hooks must be used inside component
   const selectedSlotId = useSlotStore((s) => s.selectedSlotId);
-  const loadAppointmentsForSelectedSlot = useSlotStore((s) => s.loadAppointmentsForSelectedSlot);
+  const loadAppointmentsForSelectedSlot = useSlotStore(
+    (s) => s.loadAppointmentsForSelectedSlot
+  );
   const [period, setPeriod] = useState("Daily");
   // Month dropdown state
   const months = [
@@ -91,7 +89,9 @@ const DocDashboard = () => {
   // Ensure doctor context exists so drawer can load slots
   useEffect(() => {
     if (!doctorDetails && !doctorLoading) {
-      try { fetchDoctorDetails?.(getDoctorMe); } catch {}
+      try {
+        fetchDoctorDetails?.(getDoctorMe);
+      } catch {}
     }
   }, [doctorDetails, doctorLoading, fetchDoctorDetails]);
   // Close handlers for month dropdown
@@ -179,7 +179,7 @@ const DocDashboard = () => {
             ref={monthBtnRef}
             type="button"
             onClick={() => setMonthOpen((v) => !v)}
-            className={`inline-flex items-center gap-2 px-3 h-8 rounded-md border border-gray-200 bg-white text-sm text-[#424242] ${
+            className={`inline-flex items-center gap-2 px-3 h-8 rounded-md border border-secondary-grey200 bg-white text-sm text-[#424242] ${
               isMonthOpen ? "ring-1 ring-[#2372EC]/30" : ""
             }`}
             aria-haspopup="listbox"
@@ -188,8 +188,10 @@ const DocDashboard = () => {
             <span className="text-secondary-grey400  font-medium">
               {selectedMonth}
             </span>
-            <ChevronDown
-              className={`w-4 h-4 text-gray-500 transition-transform ${
+            <img
+              src={angelDown}
+              alt="Dropdown"
+              className={`w-3 h-3 transition-transform ${
                 isMonthOpen ? "rotate-180" : ""
               }`}
             />
@@ -197,25 +199,29 @@ const DocDashboard = () => {
 
           <button
             type="button"
-            className={`inline-flex items-center gap-1 px-2 h-8 rounded-md border border-gray-200 bg-white text-sm text-[#424242]`}
+            className={`inline-flex items-center gap-1 px-2 h-8 rounded-md border border-secondary-grey200 bg-white text-sm text-[#424242]`}
           >
-            <ChevronLeft
-              className={`w-4 h-4 text-gray-500 transition-transform `}
-            />
+            <img src={calenderArrowLeft} alt="Previous" className="w-3 h-3" />
             <span className="text-secondary-grey400  font-medium">2025</span>
-            <ChevronRight
-              className={`w-4 h-4 text-gray-500 transition-transform `}
-            />
+            <img src={calenderArrowRight} alt="Next" className="w-3 h-3" />
           </button>
 
           {/* Month dropdown */}
           {isMonthOpen && (
             <div
               ref={monthDropRef}
-              className="absolute z-[1000] left-0 top-10 w-[120px] rounded-md border border-gray-200 bg-white shadow-lg"
+              className="absolute z-[1000] left-0 top-10 w-[126px] rounded-lg bg-monochrom-white p-2 overflow-hidden"
+              style={{
+                borderWidth: "0.5px",
+                borderColor: "#D6D6D6",
+                boxShadow: "0px 12px 60px -15px rgba(0, 0, 0, 0.06)",
+              }}
               role="listbox"
             >
-              <div className="py-1 max-h-[200px] overflow-y-auto no-scrollbar">
+              <div
+                className="flex flex-col gap-2 overflow-y-auto no-scrollbar"
+                style={{ maxHeight: "236px" }}
+              >
                 {months.map((m) => (
                   <button
                     key={m}
@@ -224,17 +230,22 @@ const DocDashboard = () => {
                       setSelectedMonth(m);
                       setMonthOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between hover:bg-gray-50 ${
+                    className={`w-[108px] h-8 px-2 py-1 rounded text-secondary-grey400 text-left ${
                       selectedMonth === m
-                        ? "bg-[#F5F9FF] border border-[#D5E6FF]"
-                        : ""
+                        ? "bg-blue-primary50 border-[0.5px] border-blue-primary150"
+                        : "hover:bg-secondary-grey50"
                     }`}
+                    style={{
+                      fontFamily: "Inter",
+                      fontWeight: 400,
+                      fontSize: "14px",
+                      lineHeight: "120%",
+                      letterSpacing: "0%",
+                      verticalAlign: "middle",
+                    }}
                     role="option"
                   >
-                    <span>{m}</span>
-                    {selectedMonth === m && (
-                      <Check className="w-4 h-4 text-[#2372EC]" />
-                    )}
+                    {m}
                   </button>
                 ))}
               </div>
@@ -343,12 +354,21 @@ const DocDashboard = () => {
       <BookAppointmentDrawer
         open={bookOpen}
         onClose={() => setBookOpen(false)}
-  doctorId={doctorDetails?.userId || doctorDetails?.id}
-  clinicId={doctorDetails?.associatedWorkplaces?.clinic?.id || doctorDetails?.clinicId}
-  hospitalId={(Array.isArray(doctorDetails?.associatedWorkplaces?.hospitals) && doctorDetails?.associatedWorkplaces?.hospitals[0]?.id) || undefined}
+        doctorId={doctorDetails?.userId || doctorDetails?.id}
+        clinicId={
+          doctorDetails?.associatedWorkplaces?.clinic?.id ||
+          doctorDetails?.clinicId
+        }
+        hospitalId={
+          (Array.isArray(doctorDetails?.associatedWorkplaces?.hospitals) &&
+            doctorDetails?.associatedWorkplaces?.hospitals[0]?.id) ||
+          undefined
+        }
         onBookedRefresh={() => {
           if (selectedSlotId) {
-            try { loadAppointmentsForSelectedSlot(); } catch {}
+            try {
+              loadAppointmentsForSelectedSlot();
+            } catch {}
           }
         }}
       />

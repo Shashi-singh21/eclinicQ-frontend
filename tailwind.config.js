@@ -57,22 +57,22 @@ export default {
           primary50: "#F8FAFF",
         },
         error: {
-          400: "#DC2626",
-          200: "#F87171",
-          50: "#FEE2E2",
+          400: "#F04248",
+          200: "#EB8B85",
+          50: "#FFF8F8",
         },
         success: {
           400: "#16A34A",
-          300: "#22C55E",
+          300: "#3EAF3F",
           200: "#4ADE80",
-          100: "#DCFCE7",
+          100: "#F2FFF3",
         },
         monochrom: {
           white: "#FFFFFF",
         },
         warning: {
-          400: "#F59E42",
-          50: "#FFF7ED",
+          400: "#EC7600",
+          50: "#FFF7F0",
         },
         warning2: {
           400: "#FBBF24",

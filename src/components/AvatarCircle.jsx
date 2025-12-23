@@ -15,7 +15,7 @@ const sizeMap = {
 // orange: bg #FFF7F0, border #EC7600
 // grey: bg #F9F9F9, border #D6D6D6
 const colorTokens = {
-  blue: { bg: '#F8FAFF', border: '#96BFFF', text: '#2563EB' },
+  blue: { bg: '#F8FAFF', border: '#96BFFF', text: '#2372EC' },
   orange: { bg: '#FFF7F0', border: '#EC7600', text: '#EC7600' },
   grey: { bg: '#F9F9F9', border: '#D6D6D6', text: '#6B7280' },
 };

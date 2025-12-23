@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Calendar as ShadcnCalendar } from "@/components/ui/calendar";
+import { calenderArrowLeft, calenderArrowRight } from "../../public/index.js";
 
 // Reusable popover calendar for queue headers (doctor & front desk)
 // Props: date (Date), onChange(newDate:Date)
@@ -145,18 +145,16 @@ export default function QueueDatePicker({ date, onChange }) {
 
   return (
     <div className="flex items-center space-x-4" ref={anchorRef}>
-      <ChevronLeft
-        className="h-5 w-5 text-gray-400 cursor-pointer hover:text-gray-600"
+      <img
+        src={calenderArrowLeft}
+        alt="Previous Day"
+        className="h-3 w-3 cursor-pointer"
         onClick={goPrevDay}
       />
       <div className="flex items-center space-x-2">
         {relativeDay && (
           <button
-            className="font-medium px-2 py-1 rounded-md"
-            style={{
-              backgroundColor: "rgba(248, 250, 255, 1)",
-              color: "rgba(35, 114, 236, 1)",
-            }}
+            className="font-inter font-normal text-[14px] leading-[120%] text-center text-blue-primary250 bg-blue-primary50 px-2 py-1 rounded-md border border-transparent hover:border-blue-primary250 hover:border-[0.5px] transition-colors"
             onClick={goToday}
           >
             {relativeDay}
@@ -170,8 +168,10 @@ export default function QueueDatePicker({ date, onChange }) {
           {formattedDate}
         </button>
       </div>
-      <ChevronRight
-        className="h-5 w-5 text-gray-400 cursor-pointer hover:text-gray-600"
+      <img
+        src={calenderArrowRight}
+        alt="Next Day"
+        className="h-3 w-3 cursor-pointer"
         onClick={goNextDay}
       />
       {showCal &&
