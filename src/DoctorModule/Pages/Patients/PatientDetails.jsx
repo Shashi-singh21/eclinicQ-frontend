@@ -152,7 +152,24 @@ export default function PatientDetails() {
     <>
       {/* Header row */}
       <div className="bg-white px-4 py-3 border border-gray-200  flex items-center justify-between">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-[10px]">
+          <button
+            className="
+              w-6 h-6 p-1 rounded
+              opacity-100
+              transition-all
+              flex items-center justify-center
+              hover:bg-gray-100
+              hover:scale-105
+            "
+          >
+            <img
+              src="/arrow-left.svg"
+              alt="left arrow button"
+              className="w-[16px] h-[16px] object-contain"
+            />
+          </button>
+
           <AvatarCircle name={name} size="l" />
           <div className="flex flex-col">
             <div>
@@ -724,7 +741,10 @@ export default function PatientDetails() {
                         </div>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Oxygen Saturation:</span> <span>98%</span>
+                        <span className="text-gray-600">
+                          Oxygen Saturation:
+                        </span>{" "}
+                        <span>98%</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Temperature:</span>{" "}
@@ -737,7 +757,8 @@ export default function PatientDetails() {
                         </div>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Weight:</span> <span>75 Kgs</span>
+                        <span className="text-gray-600">Weight:</span>{" "}
+                        <span>75 Kgs</span>
                       </div>
                     </div>
                   )}
@@ -824,11 +845,7 @@ export default function PatientDetails() {
                 </div>
               )}
 
-              {leftTab === "demographics" && (
-                <div className="bg-white p-4 rounded border border-gray-200">
-                  <PatientDemographics />
-                </div>
-              )}
+              {leftTab === "demographics" && <PatientDemographics />}
             </div>
 
             {/* Right flexible column with its own nav */}
