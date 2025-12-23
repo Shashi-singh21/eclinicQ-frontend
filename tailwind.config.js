@@ -53,7 +53,7 @@ export default {
           primary300: "#0D47A1",
           primary250: "#2372EC",
           primary150: "#96BFFF",
-          primary100: "#BFDBFE",
+          primary100: "#F2F7FF",
           primary50: "#F8FAFF",
         },
         error: {

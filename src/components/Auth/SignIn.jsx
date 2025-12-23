@@ -243,7 +243,7 @@ export default function SignIn({ variant = "neutral" }) {
             <img
               src="/sign-in-object.svg"
               alt="welcome"
-              className="w-[320px] md:w-[360px] mx-auto"
+              className="w-[599px] md:w-[599px] mx-auto"
             />
             <h2 className="text-xl font-semibold mt-4">Welcome To Upchar-Q</h2>
             <p className="text-sm opacity-90">

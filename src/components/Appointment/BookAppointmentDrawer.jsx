@@ -401,7 +401,7 @@ export default function BookAppointmentDrawer({
                       className="rounded-lg p-1"
                       classNames={{
                         day_selected:
-                          "bg-blue-600 text-white hover:bg-blue-600",
+                          "bg-blue-primary250 text-white hover:bg-blue-primary250",
                         // keep today subtle default; no blue accents
                       }}
                     />

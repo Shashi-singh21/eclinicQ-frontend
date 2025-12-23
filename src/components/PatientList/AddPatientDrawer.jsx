@@ -101,17 +101,18 @@ export default function AddPatientDrawer({ open, onClose, onSave }) {
               onRequestClose={() => setShowCalendar(false)}
             />
             {showCalendar && (
-              <div className="shadcn-calendar-dropdown absolute z-[10000] mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl">
+              <div className="shadcn-calendar-dropdown absolute z-[10000] bg-white border border-gray-200 rounded-xl shadow-2xl p-2">
                 <ShadcnCalendar
                   mode="single"
                   selected={form.dob ? new Date(form.dob) : undefined}
                   onSelect={handleDateSelect}
-                  className="rounded-md border-0 p-0"
+                  className="rounded-lg p-1"
                   captionLayout="dropdown"
                   fromYear={1900}
                   toYear={new Date().getFullYear()}
                   classNames={{
-                    day_selected: "bg-blue-600 text-white hover:bg-blue-600",
+                    day_selected:
+                      "bg-blue-primary250 text-white hover:bg-blue-primary250",
                   }}
                 />
               </div>

@@ -277,7 +277,7 @@ const DocNavbar = ({ moduleSwitcher }) => {
             aria-expanded={showAddMenu}
           >
             <span className="text-sm font-medium">Add New</span>
-            <div className="flex border-l border-blue-400 pl-1">
+            <div className="flex border-l-[0.5px] border-monochrom-white border-opacity-20 pl-1">
               <ChevronDown
                 className={`w-4 h-4 text-white transition-transform ${
                   showAddMenu ? "rotate-180" : ""
