@@ -33,8 +33,8 @@ export default function RadioButton({
         className={
           "relative inline-flex items-center justify-center w-5 h-5 rounded-full border " +
           (checked
-            ? "border-blue-600 bg-blue-600"
-            : "border-gray-300 bg-white")
+            ? "border-blue-600 bg-blue-primary250"
+            : "border-secondary-grey200 bg-white")
         }
         aria-hidden="true"
       >

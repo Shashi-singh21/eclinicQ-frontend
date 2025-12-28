@@ -129,7 +129,7 @@ export default function AddEducationDrawer({ open, onClose, onSave, mode = "add"
       primaryActionDisabled={!canSave}
       width={600}
     >
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3.5">
         {/* School/College/University */}
         <div className="relative">
           <InputWithMeta
