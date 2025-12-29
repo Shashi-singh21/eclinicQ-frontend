@@ -3,7 +3,8 @@ import GeneralDrawer from "@/components/GeneralDrawer/GeneralDrawer";
 import InputWithMeta from "@/components/GeneralDrawer/InputWithMeta";
 import Dropdown from "@/components/GeneralDrawer/Dropdown";
 import RadioButton from "@/components/GeneralDrawer/RadioButton";
-import { ChevronDown } from "lucide-react";
+import RichTextBox from "@/components/GeneralDrawer/RichTextBox";
+import { ChevronDown, BadgeCheck } from "lucide-react";
 
 /**
  * EditBasicInfoDrawer — doctor settings: Basic Info form.
@@ -61,6 +62,34 @@ export default function EditBasicInfoDrawer({ open, onClose, onSave, initialData
     return Boolean(firstName && lastName && mobile);
   };
 
+  // Disable update until something has changed from initialData
+  const isDirty = useMemo(() => {
+    const norm = (v) => (v ?? "");
+    const arrEq = (a = [], b = []) => {
+      if (!Array.isArray(a) || !Array.isArray(b)) return false;
+      if (a.length !== b.length) return true; // different length => dirty
+      // compare as sets preserving values
+      const as = [...a].sort();
+      const bs = [...b].sort();
+      for (let i = 0; i < as.length; i++) {
+        if (as[i] !== bs[i]) return true;
+      }
+      return false;
+    };
+    return (
+      norm(firstName) !== norm(initialData.firstName) ||
+      norm(lastName) !== norm(initialData.lastName) ||
+      norm(mobile) !== norm(initialData.mobile || initialData.phone) ||
+      norm(email) !== norm(initialData.email) ||
+      norm(gender) !== norm(initialData.gender && (initialData.gender.charAt(0).toUpperCase() + initialData.gender.slice(1).toLowerCase())) ||
+      norm(city) !== norm(initialData.city) ||
+      arrEq(languages, Array.isArray(initialData.languages) ? initialData.languages : []) ||
+      norm(website) !== norm(initialData.website) ||
+      norm(headline) !== norm(initialData.headline) ||
+      norm(about) !== norm(initialData.about)
+    );
+  }, [firstName, lastName, mobile, email, gender, city, languages, website, headline, about, initialData]);
+
   const save = () => {
     if (!canSave()) return;
     const data = {
@@ -86,64 +115,65 @@ export default function EditBasicInfoDrawer({ open, onClose, onSave, initialData
       title="Edit Basic Info"
       primaryActionLabel="Update"
       onPrimaryAction={save}
-      primaryActionDisabled={!canSave()}
+  primaryActionDisabled={!canSave() || !isDirty}
       width={600}
     >
-      <div className="flex flex-col gap-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ">
+      <div className="flex flex-col gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 ">
           <InputWithMeta label="First Name" requiredDot value={firstName} onChange={setFirstName} placeholder="Enter First Name" />
           <InputWithMeta label="Last Name" requiredDot value={lastName} onChange={setLastName} placeholder="Enter Last Name" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ">
-          <InputWithMeta label="Mobile Number" requiredDot value={mobile} onChange={setMobile} placeholder="Enter Mobile Number" />
-          <InputWithMeta label="Email" value={email} onChange={setEmail} placeholder="Enter Email" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <InputWithMeta
+            label="Mobile Number"
+            requiredDot
+            value={mobile}
+            immutable
+            ImmutableRightIcon={BadgeCheck}
+          />
+          <InputWithMeta
+            label="Email"
+            requiredDot
+            value={email}
+            immutable
+            ImmutableRightIcon={BadgeCheck}
+          />
         </div>
 
-        {/* Gender + Language in one row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="flex flex-col gap-2">
-            <label className="text-sm text-secondary-grey300 flex items-center gap-1">
-         Gender
-            <div className="bg-red-500 w-1 h-1 rounded-full"></div>
-        
-        </label>
-            <div className="flex items-center gap-3 ">
+        <div className="flex gap-1 items-center text-[12px]">
+          <span className="text-secondary-grey200 ">To Change your Mobile & Email please</span>
+          <span className="text-blue-primary250">Call Us</span>
+        </div>
+
+        {/* Gender + Language with InputWithMeta layout; inputs optional, radios/chips inside */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          {/* Gender as radio group using the InputWithMeta label row */}
+          <InputWithMeta label="Gender" requiredDot showInput={false}>
+            <div className="flex items-center gap-3 mt-1">
               {genders.map((g) => (
-                <RadioButton key={g} name="gender" value={g} checked={gender === g} onChange={(v) => setGender(v)} label={g} />
+                <RadioButton
+                  key={g}
+                  name="gender"
+                  value={g}
+                  checked={gender === g}
+                  onChange={(v) => setGender(v)}
+                  label={g}
+                />
               ))}
             </div>
-          </div>
+          </InputWithMeta>
 
-          {/* Language chips inside input field (no dropdown icon) */}
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-secondary-grey300">Language</label>
-            <div className="w-full rounded-md border-[0.5px] border-secondary-grey300 p-1 min-h-8 text-sm text-secondary-grey400 flex flex-wrap gap-1">
-              {Array.isArray(languages) && languages.length > 0 ? (
-                languages.map((lang) => (
-                  <span
-                    key={lang}
-                    className="inline-flex items-center h-5 gap-1 px-[6px]  text-sm rounded  bg-secondary-grey50 text-secondary-grey400"
-                  >
-                    <span>{lang}</span>
-                    <button
-                      type="button"
-                      aria-label={`remove ${lang}`}
-                      className="text-secondary-grey300 hover:text-gray-700"
-                      onClick={() => setLanguages((prev) => prev.filter((l) => l !== lang))}
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))
-              ) : (
-                <span className="text-secondary-grey100 px-1">Select Language</span>
-              )}
-            </div>
-          </div>
+          {/* Language chips using built-in badges mode */}
+          <InputWithMeta
+            label="Language"
+            badges={languages}
+            onBadgeRemove={(b) => setLanguages((prev) => prev.filter((l) => l !== b))}
+            badgesEmptyPlaceholder="Select Language"
+          />
         </div>
 
         {/* City + Website on the same row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div className="relative">
             <InputWithMeta
               label="City"
@@ -179,41 +209,22 @@ export default function EditBasicInfoDrawer({ open, onClose, onSave, initialData
         {/* Profile Headline with counter */}
         <div className="flex flex-col gap-1">
           <label className="text-sm text-secondary-grey300">Profile Headline</label>
-          <div className="w-full rounded-md border-[0.5px] border-secondary-grey300">
+          <div className="w-full rounded-md border-[0.5px] border-secondary-grey200 ">
             <textarea
-              className="w-full p-2 h-16 text-sm text-secondary-grey400 placeholder:text-secondary-grey100 focus:ring-0 focus:outline-none resize-none rounded-md"
+              className="w-full p-2 h-16 text-sm text-secondary-grey400 placeholder:text-secondary-grey100 focus:ring-0 focus:outline-none  resize-none rounded-md"
               value={headline}
               onChange={(e) => setHeadline(e.target.value.slice(0, 220))}
               placeholder=""
               maxLength={220}
             />
-            <div className="text-[11px] text-secondary-grey200 pr-2 pb-1 text-right">
+            <div className="text-xs text-secondary-grey200 pr-2 pb-2 text-right">
               {headline?.length || 0}/220
             </div>
           </div>
         </div>
 
-        {/* About Us with toolbar and bordered box */}
-        <div className="flex flex-col gap-1">
-          <label className="text-sm text-secondary-grey300">About Us</label>
-          <div className="w-full rounded-md border-[0.5px] border-secondary-grey300 overflow-hidden">
-            <div className="flex items-center gap-3 px-2 py-1 border-b border-secondary-grey200 text-secondary-grey300 text-sm">
-              <button type="button" className="hover:text-gray-700" aria-label="attach">
-                📎
-              </button>
-              <button type="button" className="hover:text-gray-700 font-bold" aria-label="bold">B</button>
-              <button type="button" className="hover:text-gray-700 italic" aria-label="italic">I</button>
-              <button type="button" className="hover:text-gray-700 underline" aria-label="underline">U</button>
-              <button type="button" className="hover:text-gray-700" aria-label="list">≡</button>
-            </div>
-            <textarea
-              className="w-full p-2 h-28 text-sm text-secondary-grey400 placeholder:text-secondary-grey100 focus:ring-0 outline-none resize-none"
-              value={about}
-              onChange={(e) => setAbout(e.target.value)}
-              placeholder=""
-            />
-          </div>
-        </div>
+  {/* About Us using shared component */}
+  <RichTextBox label="About Us" value={about} onChange={setAbout} />
       </div>
     </GeneralDrawer>
   );

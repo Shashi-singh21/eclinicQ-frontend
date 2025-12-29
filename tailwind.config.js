@@ -75,8 +75,8 @@ export default {
           50: "#FFF7F0",
         },
         warning2: {
-          400: "#FBBF24",
-          50: "#FFFBEB",
+          400: "#BE8B00",
+          50: "#FEF9E6",
         },
       },
       borderRadius: {
