@@ -1589,6 +1589,22 @@ const StaffTab = () => {
         setRolesError(
           e?.response?.data?.message || e?.message || "Failed to load roles"
         );
+        // Fallback: seed dummy roles so permissions UI remains usable
+        const dummy = [
+          { id: "role-frontdesk", name: "Front Desk", description: "Reception and queue ops", permissions: 8, _count: { userRoles: 3 }, createdAt: new Date().toISOString() },
+          { id: "role-consultant", name: "Consultant", description: "Consultation management", permissions: 12, _count: { userRoles: 2 }, createdAt: new Date().toISOString() },
+          { id: "role-admin", name: "Admin", description: "Administrative access", permissions: 20, _count: { userRoles: 1 }, createdAt: new Date().toISOString() }
+        ];
+        const mapped = dummy.map((r) => ({
+          id: r.id,
+          name: r.name,
+          subtitle: r.description,
+          staffCount: r._count?.userRoles || 0,
+          permissions: r.permissions,
+          created: r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "",
+          icon: /admin/i.test(r.name) ? "crown" : "clipboard",
+        }));
+        setRoles(mapped);
         setRolesLoading(false);
       }
     };
@@ -1649,6 +1665,13 @@ const StaffTab = () => {
         setStaff(mapped);
       } catch (e) {
         console.error("Failed to load staff", e);
+        // Fallback: seed dummy staff
+        const dummy = [
+          { name: "Anita Rao", email: "anita.rao@example.com", phone: "9876543210", position: "Receptionist", role: "Front Desk", joined: new Date().toLocaleDateString("en-GB"), status: "Active" },
+          { name: "Karan Mehta", email: "karan.mehta@example.com", phone: "9812345678", position: "Nurse", role: "Consultant", joined: new Date().toLocaleDateString("en-GB"), status: "Active" },
+          { name: "Sana Khan", email: "sana.khan@example.com", phone: "9890011223", position: "Assistant", role: "Admin", joined: new Date().toLocaleDateString("en-GB"), status: "Inactive" }
+        ];
+        setStaff(dummy);
       }
     };
     // initial fetch
@@ -2120,7 +2143,7 @@ const Doc_settings = () => {
 
       {/* Content */}
       {activeTab === "personal" ? (
-        <div className="pt-6 px-4 grid grid-cols-12 gap-6">
+        <div className="pt-6 px-4 grid grid-cols-12 gap-6 bg-secondary-grey50">
           {/* Left column */}
           <div className="col-span-12 xl:col-span-6 space-y-6">
             <SectionCard
@@ -2143,7 +2166,7 @@ const Doc_settings = () => {
                     label="Mobile Number"
                     value={profile.basic?.phone}
                     right={
-                      <span className="inline-flex items-center text-green-600 border border-green-400 py-0.5 px-1 rounded-md text-[12px]">
+                      <span className="inline-flex items-center text-success-300 border bg-success-100 border-success-300 py-0.5 px-1 rounded-md text-[12px]">
                         <img
                           src={verifiedTick}
                           alt="Verified"
@@ -2157,7 +2180,7 @@ const Doc_settings = () => {
                     label="Email"
                     value={profile.basic?.email}
                     right={
-                      <span className="inline-flex items-center text-green-600 border border-green-400 py-0.5 px-1 rounded-md text-[12px]">
+                      <span className="inline-flex items-center text-success-300 border bg-success-100 border-success-300 py-0.5 px-1 rounded-md text-[12px]">
                         <img
                           src={verifiedTick}
                           alt="Verified"
