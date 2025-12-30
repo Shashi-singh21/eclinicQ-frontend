@@ -1,8 +1,17 @@
 import React, { useMemo, useState, useEffect } from 'react'
 import { CheckCircle2, Upload, FileText } from 'lucide-react'
 import AvatarCircle from '../../../components/AvatarCircle'
-import { hospital as coverImg } from '../../../../public/index.js'
+import { hospital as coverImg,
+  add,
+  pencil,
+  verifiedTick
+ } from '../../../../public/index.js'
 import { useLocation, useNavigate } from 'react-router-dom'
+import Input from "../../../components/FormItems/Input";
+import Toggle from "../../../components/FormItems/Toggle";
+import TimeInput from "../../../components/FormItems/TimeInput";
+import MapLocation from "../../../components/FormItems/MapLocation";
+
 
 const InfoField = ({ label, value, right }) => (
   <div className="grid grid-cols-12 gap-2 text-[13px] leading-5">
@@ -14,7 +23,7 @@ const InfoField = ({ label, value, right }) => (
   </div>
 )
 
-const SectionCard = ({ title, subtitle, action, children, variant = 'default' }) => (
+const SectionCard = ({ title, subtitle, action, Icon, children,onIconClick, variant = 'default' }) => (
   <div className="bg-white rounded-lg border border-gray-200">
     {variant === 'default' ? (
       <>
@@ -23,7 +32,20 @@ const SectionCard = ({ title, subtitle, action, children, variant = 'default' })
             <div className="font-medium text-gray-900">{title}</div>
             {subtitle ? <div className="text-[12px] text-gray-500">{subtitle}</div> : null}
           </div>
-          {action}
+         
+        
+        {Icon && (
+          <button
+            onClick={onIconClick}
+            className="p-1 text-gray-500 hover:bg-gray-50"
+          >
+            {typeof Icon === "string" ? (
+              <img src={Icon} alt="icon" className="w-7 h-7" />
+            ) : (
+              <Icon className="w-7 h-7" />
+            )}
+          </button>
+        )}
         </div>
         <div className="p-4">{children}</div>
       </>
@@ -36,7 +58,7 @@ const SectionCard = ({ title, subtitle, action, children, variant = 'default' })
               <span className="text-[11px] px-2 py-0.5 rounded border bg-gray-50 text-gray-600">{subtitle}</span>
             ) : null}
           </div>
-          {action}
+         
         </div>
         <div>{children}</div>
       </div>
@@ -47,6 +69,9 @@ const SectionCard = ({ title, subtitle, action, children, variant = 'default' })
 export default function HAccount(){
   const location = useLocation()
   const navigate = useNavigate()
+  const [hospitalDrawerOpen, setHospitalDrawerOpen] = useState(false);
+  const [hospital, setHospital] = useState(null);
+
 
   const tabs = [
     { key: 'account', label: 'Account Detail', path: '/hospital/settings/account' },
@@ -93,6 +118,7 @@ export default function HAccount(){
       'https://images.unsplash.com/photo-1579154206451-2bdb0fd2d375?w=400',
     ],
   }), [])
+    const [showAddMenu, setShowAddMenu] = useState(false);
 
   return (
     <div className="px-6 pb-10">
@@ -131,20 +157,110 @@ export default function HAccount(){
         <div className="mt-4 grid grid-cols-12 gap-4">
           {/* Two-column layout: left 7, right 5 */}
           <div className="col-span-12 xl:col-span-7 space-y-4">
-            {/* About */}
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
-              <p className="text-[13px] leading-6 text-gray-800">{profile.about}</p>
-            </div>
+            <SectionCard
+              title="Basic Info"
+              subtitle="Visible to Patient"
+              Icon={pencil}
+              onIconClick={() => setBasicOpen(true)}
+            >
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-4 text-[14px] mb-4">
+                  <InfoField
+                    label="First Name"
+                    value={profile.basic?.firstName}
+                  />
+                  <InfoField
+                    label="Last Name"
+                    value={profile.basic?.lastName}
+                  />
+                  <InfoField
+                    label="Mobile Number"
+                    value={profile.basic?.phone}
+                    right={
+                      <span className="inline-flex items-center text-green-600 border border-green-400 py-0.5 px-1 rounded-md text-[12px]">
+                        <img
+                          src={verifiedTick}
+                          alt="Verified"
+                          className="w-3.5 h-3.5 mr-1"
+                        />
+                        Verified
+                      </span>
+                    }
+                  />
+                  <InfoField
+                    label="Email"
+                    value={profile.basic?.email}
+                    right={
+                      <span className="inline-flex items-center text-green-600 border border-green-400 py-0.5 px-1 rounded-md text-[12px]">
+                        <img
+                          src={verifiedTick}
+                          alt="Verified"
+                          className="w-3.5 h-3.5 mr-1"
+                        />
+                        Verified
+                      </span>
+                    }
+                  />
+                  <InfoField
+                    label="Gender"
+                    value={
+                      profile.basic?.gender?.charAt(0).toUpperCase() +
+                      profile.basic?.gender?.slice(1).toLowerCase()
+                    }
+                  />
+                  
+                  <InfoField
+                    label="Language"
+                    value={
+                      Array.isArray(profile.basic?.languages) && profile.basic.languages.length > 0 ? (
+                        <div className="flex gap-1">
+                          {profile.basic.languages.map((lang, idx) => (
+                            <span
+                              key={`${lang}-${idx}`}
+                              className="inline-flex items-center h-5 gap-2 px-[6px] rounded-[4px] bg-secondary-grey50 text-secondary-grey400"
+                            >
+                              <span className="text-[14px] text-secondary-grey400 inline-flex items-center">{lang}</span>
+                              {/* removable button omitted in read-only view */}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-secondary-grey100 px-1">Select Language</span>
+                      )
+                    }
+                  />
+                  <InfoField label="City" value={profile.basic?.city} />
+                  <InfoField label="Website" value={profile.basic?.website} />
+                </div>
 
-            {/* Photos */}
-            <SectionCard variant="subtle" title="Hospital Photos">
+                <div className="flex flex-col gap-5">
+                  <InfoField
+                    label="Profile Headline"
+                    value={profile.basic?.headline}
+                  />
+                  <InfoField label="About" value={profile.basic?.about} />
+                </div>
+                 <p className="text-[13px] leading-6 text-gray-800">{profile.about}</p>
+
+                 {/* <SectionCard variant="subtle" title="Hospital Photos"> */}
               <div className="flex items-center gap-3 overflow-x-auto">
+
                 {profile.photos.map((src, i) => (
                   <img key={i} src={src} alt="hospital" className="w-36 h-24 rounded-md object-cover border" />
                 ))}
               </div>
+            {/* </SectionCard> */}
+              </div>
             </SectionCard>
+            {/* About */}
+            {/* <div className="bg-white border border-gray-200 rounded-lg p-4">
 
+             
+            </div> */}
+
+            {/* Photos */}
+            
+ 
             {/* Medical Specialties */}
             <SectionCard
               variant="subtle"
@@ -174,7 +290,8 @@ export default function HAccount(){
               variant="subtle"
               title="Awards & Accreditations"
               subtitle="Visible to Patient"
-              action={<button className="text-blue-600 text-sm inline-flex items-center gap-1"><Upload size={14}/> Add</button>}
+              Icon={add}
+              onIconClick={() => setShowAddMenu((v)=>!v)}
             >
               <div className="space-y-3">
                 <div className="p-3 border border-gray-200 rounded-md">
@@ -186,15 +303,99 @@ export default function HAccount(){
           </div>
 
           <div className="col-span-12 xl:col-span-5 space-y-4">
+
+            <SectionCard
+              title="hospital Address"
+              subtitle="Visible to Patient"
+              Icon={pencil}
+              onIconClick={() => setHospitalDrawerOpen(true)}
+            >
+              <div className="mb-3">
+                <div className="text-[13px] text-gray-500 mb-1">
+                  Map Location
+                </div>
+                <div className="h-[220px] rounded overflow-hidden border">
+                  <MapLocation
+                    heightClass="h-full"
+                    initialPosition={[
+                      parseFloat(hospital?.latitude) || 19.07,
+                      parseFloat(hospital?.longitude) || 72.87,
+                    ]}
+                    readOnly
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <InfoField
+                  label="Block no./Shop no./House no."
+                  value={hospital?.blockNo}
+                />
+                <InfoField
+                  label="Road/Area/Street"
+                  value={hospital?.areaStreet}
+                />
+                <InfoField label="Landmark" value={hospital?.landmark} />
+                <InfoField label="Pincode" value={hospital?.pincode} />
+                <InfoField label="City" value={hospital?.city} />
+                <InfoField label="State" value={hospital?.state} />
+              </div>
+            
+            </SectionCard>
+          
+
+
+          <div className="col-span-12 xl:col-span-5 xl:col-start-8 space-y-4">
+
             {/* Basic Info on right */}
-            <SectionCard variant="subtle" title="Basic Info" subtitle="Visible to Patient">
+            <SectionCard variant="subtle" title="Primary Admin Account detail" subtitle="Visible to Patient">
               <div className="grid grid-cols-2 gap-3 text-[13px]">
-                <InfoField label="Mobile Number" value={profile.phone} right={<span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200"><CheckCircle2 size={14}/> Verified</span>} />
-                <InfoField label="Email" value={profile.email} right={<span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200"><CheckCircle2 size={14}/> Verified</span>} />
-                <InfoField label="Gender" value={profile.gender} />
-                <InfoField label="City" value={profile.city} />
-                <InfoField label="Designation" value={profile.designation} />
-                <InfoField label="Role" value={profile.role} />
+               <InfoField
+                    label="First Name"
+                    value={profile.basic?.firstName}
+                  />
+                  <InfoField
+                    label="Last Name"
+                    value={profile.basic?.lastName}
+                  />
+                  <InfoField
+                    label="Mobile Number"
+                    value={profile.basic?.phone}
+                    right={
+                      <span className="inline-flex items-center text-green-600 border border-green-400 py-0.5 px-1 rounded-md text-[12px]">
+                        <img
+                          src={verifiedTick}
+                          alt="Verified"
+                          className="w-3.5 h-3.5 mr-1"
+                        />
+                        Verified
+                      </span>
+                    }
+                  /> 
+                  <InfoField
+                    label="Email"
+                    value={profile.basic?.email}
+                    right={
+                      <span className="inline-flex items-center text-green-600 border border-green-400 py-0.5 px-1 rounded-md text-[12px]">
+                        <img
+                          src={verifiedTick}
+                          alt="Verified"
+                          className="w-3.5 h-3.5 mr-1"
+                        />
+                        Verified
+                      </span>
+                    }
+                  />
+                  <InfoField
+                    label="Gender"
+                    value={
+                      profile.basic?.gender?.charAt(0).toUpperCase() +
+                      profile.basic?.gender?.slice(1).toLowerCase()
+                    }
+                  />
+                  <InfoField label="City" value={profile.basic?.city} />
+                  <InfoField label="Designation" value={profile.basic?.designation} />
+                  <InfoField label="Role" value={profile.basic?.role} />
               </div>
             </SectionCard>
 
@@ -230,6 +431,7 @@ export default function HAccount(){
                 </div>
               </div>
             </SectionCard>
+            </div>
           </div>
         </div>
       )}

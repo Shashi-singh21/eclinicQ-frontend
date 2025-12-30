@@ -29,7 +29,7 @@ import {
   experience,
   publication,
   award
-} from "../../../../public/index.js";
+ } from "../../../../public/index.js";
 import Input from "../../../components/FormItems/Input";
 import Toggle from "../../../components/FormItems/Toggle";
 import TimeInput from "../../../components/FormItems/TimeInput";
