@@ -116,7 +116,7 @@ const SectionCard = ({
           <div className="font-medium text-[14px] text-gray-900">{title}</div>
 
           {subtitle && (
-            <div className="px-1 py-[2px] bg-secondary-grey50 rounded-md text-[12px] text-gray-500">
+            <div className="px-1 border border-secondary-grey50 bg-secondary-grey50 rounded-sm text-[12px] text-gray-500 hover:border hover:border-blue-primary150 hover:text-blue-primary250 cursor-pointer">
               {subtitle}
             </div>
           )}
@@ -140,9 +140,9 @@ const SectionCard = ({
             className="p-1 text-gray-500 hover:bg-gray-50"
           >
             {typeof Icon === "string" ? (
-              <img src={Icon} alt="icon" className="w-7 h-7" />
+              <img src={Icon} alt="icon" className="w-6 h-6" />
             ) : (
-              <Icon className="w-7 h-7" />
+              <Icon className="w-6 h-6" />
             )}
           </button>
         )}
@@ -1458,7 +1458,7 @@ const Doc_settings = () => {
           </div>
 
           {/* Right column */}
-          <div className="col-span-12 xl:col-span-6 space-y-4">
+          <div className="col-span-12 xl:col-span-6 space-y-6">
             <SectionCard
               title="Professional Details"
               subtitle="Visible to Patient"

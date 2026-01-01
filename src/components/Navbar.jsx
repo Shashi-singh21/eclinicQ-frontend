@@ -93,7 +93,7 @@ const AddNewDropdown = ({ isOpen, onClose, onAddPatient, onBookAppointment, onIn
           <span className="text-[#424242] font-normal text-sm">Book Appointment</span>
         </button>
 
-        <button
+        {/* <button
           onClick={handleInviteStaff}
           className="w-full rounded-md flex items-center gap-2 hover:bg-gray-50 h-8 transition-colors"
         >
@@ -101,7 +101,7 @@ const AddNewDropdown = ({ isOpen, onClose, onAddPatient, onBookAppointment, onIn
             <img src={hospitalIcon} alt="Invite Staff" />
           </div>
           <span className="text-[#424242] font-normal text-sm">Invite Staff</span>
-        </button>
+        </button> */}
       </div>
     </div>
   );
