@@ -9,7 +9,7 @@ import MapLocation from "@/components/FormItems/MapLocation";
 import useImageUploadStore from "@/store/useImageUploadStore";
 import { Calendar as ShadcnCalendar } from "@/components/ui/calendar";
 import calendarWhite from "/Doctor_module/sidebar/calendar_white.png";
-
+const upload = '/Doctor_module/settings/upload.png'
 /**
  * EditClinicDetailsDrawer — unified drawer for Clinic Info + Address.
  * Props:
@@ -317,7 +317,11 @@ export default function EditClinicDetailsDrawer({ open, onClose, onSave, initial
                 accept="image/png, image/jpeg, image/jpg, image/svg+xml, image/webp"
                 onChange={(e) => onUploadPhotos(e.target.files)}
               />
-              Upload File
+              
+              <div className="flex gap-1 items-center">
+                      <img src={upload} alt="Upload" className="w-4 h-4" />
+                      <span>Upload File</span>
+                    </div>
             </label>
           </div>
           <div className="text-[12px] text-secondary-grey200 mt-1">

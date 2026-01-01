@@ -274,41 +274,6 @@ const ProfileItemCard = ({
   );
 };
 
-// ======== Drawer: Edit Basic Info (moved to shared component) ========
-
-// Reusable small inputs used by other drawers
-const FieldLabel = ({ children, required }) => (
-  <span className="text-[12px] text-[#424242] font-medium">
-    {children} {required && <span className="text-red-500">*</span>}
-  </span>
-);
-
-const TextInput = (props) => (
-  <input
-    {...props}
-    className={`mt-1 h-8 w-full rounded-md border border-[#E6E6E6] px-3 text-sm outline-none focus:border-[#BFD3FF] focus:ring-2 focus:ring-[#EAF2FF] ${props.className || ""
-      }`}
-  />
-);
-
-const SelectInput = ({ children, ...props }) => (
-  <div className="relative">
-    <select
-      {...props}
-      className="mt-1 h-9 w-full rounded-md border border-[#E6E6E6] px-3 text-sm outline-none appearance-none focus:border-[#BFD3FF] focus:ring-2 focus:ring-[#EAF2FF]"
-    >
-      {children}
-    </select>
-    <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400">
-      ▾
-    </span>
-  </div>
-);
-
-// Education drawer moved to its own component under drawers/AddEducationDrawer.jsx
-
-
-
 // Small helpers to format experience period and duration consistently
 const formatMonthYear = (d) => {
   if (!d) return "-";
@@ -375,118 +340,6 @@ const formatExperienceRange = (startDate, endDate, isCurrent) => {
   return `${start} - ${end} | ${dur}`;
 };
 
-
-// Drawer: Professional Details (Registration)
-const ProfessionalDrawer = ({ open, onClose, initial, onSave }) => {
-  const [closing, setClosing] = useState(false);
-  const [form, setForm] = useState(
-    initial || { mrn: "", year: "", council: "", proof: "" }
-  );
-  useEffect(() => {
-    setForm(initial || { mrn: "", year: "", council: "", proof: "" });
-  }, [initial, open]);
-  if (!open && !closing) return null;
-  const requestClose = () => {
-    setClosing(true);
-    setTimeout(() => {
-      setClosing(false);
-      onClose?.();
-    }, 220);
-  };
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
-  const canSave = form.mrn && form.year && form.council;
-  return (
-    <div className="fixed inset-0 z-50">
-      <div
-        className={`absolute inset-0 bg-black/30 ${closing
-          ? "animate-[fadeOut_.2s_ease-in_forwards]"
-          : "animate-[fadeIn_.25s_ease-out_forwards]"
-          }`}
-        onClick={requestClose}
-      />
-      <aside
-        className={`absolute top-16 right-5 bottom-5 w-[600px] bg-white shadow-2xl border border-[#E6E6E6] rounded-xl overflow-hidden ${closing
-          ? "animate-[drawerOut_.22s_ease-in_forwards]"
-          : "animate-[drawerIn_.25s_ease-out_forwards]"
-          }`}
-        role="dialog"
-        aria-modal="true"
-      >
-        <div className="px-3 py-2 border-b border-[#EFEFEF] flex items-center justify-between">
-          <h3 className="text-[16px] font-semibold text-[#424242]">
-            Edit Professional Details
-          </h3>
-          <div className="flex items-center gap-3">
-            <button
-              disabled={!canSave}
-              onClick={() => canSave && onSave?.(form)}
-              className={
-                "text-xs md:text-sm h-8 px-3 rounded-md transition " +
-                (!canSave
-                  ? "bg-[#F2F2F2] text-[#9AA1A9] cursor-not-allowed"
-                  : "bg-[#2F66F6] text-white hover:bg-[#1e4cd8]")
-              }
-            >
-              Save
-            </button>
-            <button
-              onClick={requestClose}
-              className="w-8 h-8 rounded-full grid place-items-center hover:bg-gray-100"
-              aria-label="Close"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-        <div className="p-3 overflow-y-auto grid grid-cols-1 gap-2">
-          <label className="block">
-            <FieldLabel required>
-              Medical Council Registration Number
-            </FieldLabel>
-            <TextInput
-              value={form.mrn}
-              onChange={(e) => set("mrn", e.target.value)}
-            />
-          </label>
-          <label className="block">
-            <FieldLabel required>Registration Year</FieldLabel>
-            <TextInput
-              value={form.year}
-              onChange={(e) => set("year", e.target.value)}
-              placeholder="2015"
-            />
-          </label>
-          <label className="block">
-            <FieldLabel required>Registration Council</FieldLabel>
-            <TextInput
-              value={form.council}
-              onChange={(e) => set("council", e.target.value)}
-              placeholder="Maharashtra Medical Council"
-            />
-          </label>
-          <div>
-            <FieldLabel>Upload Proof</FieldLabel>
-            <div className="mt-1 h-[32px] border border-gray-300 rounded-lg flex items-center justify-between px-2 text-sm">
-              <div className="text-gray-600">{form.proof || "Upload File"}</div>
-              <button
-                className="text-blue-600 text-xs"
-                onClick={(e) => {
-                  e.preventDefault();
-                  set("proof", "MRN Proof.pdf");
-                }}
-              >
-                Upload
-              </button>
-            </div>
-          </div>
-        </div>
-      </aside>
-    </div>
-  );
-};
-
-
-
 // ======== Staff Permissions (copied inline; not linked) ========
 const StaffTab = () => {
   const TabBtn = ({ label, active, onClick }) => (
@@ -505,52 +358,7 @@ const StaffTab = () => {
     </button>
   );
 
-  const InfoBanner = () => (
-    <div className="flex items-start gap-2 border rounded-md px-3 py-2 bg-[#F6FAFF] border-[#D8E7FF] text-[#3A6EEA]">
-      <img src="/i-icon.png" alt="info" className="w-4 h-4 mt-0.5" />
-      <p className="text-[12px] leading-5">
-        Staff will receive an email invitation to create their account and set
-        up Secure Account
-      </p>
-    </div>
-  );
-
-  const Field = ({ label, required, children }) => (
-    <label className="block">
-      <span className="text-[12px] text-[#424242] font-medium">
-        {label} {required && <span className="text-red-500">*</span>}
-      </span>
-      <div className="mt-1">{children}</div>
-    </label>
-  );
-
-  const TextInput = (props) => (
-    <input
-      {...props}
-      className={
-        "w-full h-9 px-3 rounded-md border outline-none text-sm placeholder:text-[#9AA1A9] " +
-        "border-[#E6E6E6] focus:border-[#BFD3FF] focus:ring-2 focus:ring-[#EAF2FF]"
-      }
-    />
-  );
-
-  const Select = ({ children, ...props }) => (
-    <div className="relative">
-      <select
-        {...props}
-        className={
-          "w-full h-9 pr-8 pl-3 rounded-md border outline-none text-sm appearance-none " +
-          "border-[#E6E6E6] focus:border-[#BFD3FF] focus:ring-2 focus:ring-[#EAF2FF]"
-        }
-      >
-        {children}
-      </select>
-      <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400">
-        ▾
-      </span>
-    </div>
-  );
-
+  
   const CardSVG = ({ color = "#FDE68A" }) => (
     <svg viewBox="0 0 60 74" xmlns="http://www.w3.org/2000/svg">
       <rect
@@ -1112,13 +920,11 @@ import {
   getDoctorConsultationDetails,
   putDoctorConsultationDetails,
 } from "../../../services/doctorConsultationService";
-import { toISTDate } from "../../../lib/timeUtils";
 import InputWithMeta from "@/components/GeneralDrawer/InputWithMeta";
 
 const Doc_settings = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
 
 
   // Grab global profile + actions from Zustand
@@ -2949,22 +2755,7 @@ const Doc_settings = () => {
         }}
       />
 
-      {/* Drawer: Professional Details */}
-      <ProfessionalDrawer
-        open={profOpen}
-        onClose={() => setProfOpen(false)}
-        initial={profile.registration}
-        onSave={async (reg) => {
-          try {
-            await usePracticeStore.getState().updateProfessionalDetails(reg);
-            await fetchProfessionalDetails(); // Refresh data
-            setProfOpen(false);
-          } catch (err) {
-            console.error(err);
-          }
-        }}
-      />
-
+      
       {/* Drawer: Practice Details */}
       <EditPracticeDetailsDrawer
         open={practiceOpen}

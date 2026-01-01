@@ -5,18 +5,19 @@ import Consultation from "../../../SuperAdmin/pages/Doctors/DoctorList/DoctorInf
 import Staff from "../../../SuperAdmin/pages/Doctors/DoctorList/DoctorInfo/Sections/Staff";
 
 const PageNav = ({ doctor }) => {
-  const [activeTab, setActiveTab] = useState("info");
+  const [activeTab, setActiveTab] = useState("personal");
 
   const tabs = [
-    { key: "info", label: "Info" },
-    { key: "clinical", label: "Clinical Details" },
+    { key: "personal", label: "Personal Info" },
     { key: "consultation", label: "Consultation Details" },
-    { key: "staff", label: "Staff Access" },
+    { key: "clinical", label: "Clinical Details" },
+    { key: "staff", label: "Staff Permissions" },
+    { key: "billing", label: "Billing & Subscription" },
   ];
 
   const renderContent = () => {
     switch (activeTab) {
-      case "info":
+      case "personal":
         return <Info doctor={doctor} />;
       case "clinical":
         return <Clinical doctor={doctor} />;
@@ -24,32 +25,38 @@ const PageNav = ({ doctor }) => {
         return <Consultation doctor={doctor} />;
       case "staff":
         return <Staff doctor={doctor} />;
+      case "billing":
+        return <div className="p-4 text-gray-500">Billing & Subscription (Coming Soon)</div>;
       default:
         return null;
     }
   };
 
   return (
-    <div className="w-full p-4">
+    <div className="w-full ">
       {/* Tabs */}
-      <div className="flex border-b border-gray-200">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`relative px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 
-              ${activeTab === tab.key ? "text-blue-600" : ""}`}
-          >
-            {tab.label}
-            {activeTab === tab.key && (
-              <span className="absolute bottom-0 left-0 w-full h-[2px] bg-blue-600 rounded-full"></span>
-            )}
-          </button>
-        ))}
+      <div className="px-2 border-b border-secondary-grey100">
+        <nav className="px-2 flex items-center gap-2 overflow-x-auto text-sm">
+          {tabs.map((t) => {
+            const active = activeTab === t.key;
+            return (
+              <button
+                key={t.key}
+                onClick={() => setActiveTab(t.key)}
+                className={`whitespace-nowrap px-[6px] py-1 pb-2 border-b-2 transition-colors ${active
+                    ? "border-blue-600 text-blue-primary250"
+                    : "border-transparent text-secondary-grey300 hover:text-gray-900"
+                  }`}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </nav>
       </div>
 
       {/* Content */}
-      <div className="mt-4">{renderContent()}</div>
+      <div className=" bg-secondary-grey50">{renderContent()}</div>
     </div>
   );
 };
