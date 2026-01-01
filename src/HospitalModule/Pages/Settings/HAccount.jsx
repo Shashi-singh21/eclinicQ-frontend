@@ -222,7 +222,7 @@ const {
           {/* Two-column layout: left 7, right 5 */}
           <div className="col-span-12 xl:col-span-6 space-y-6">
             <SectionCard
-              title="Basic Info"
+              title="Hospital Info"
               subtitle="Visible to Patient"
               Icon={pencil}
               onIconClick={() => setBasicOpen(true)}
