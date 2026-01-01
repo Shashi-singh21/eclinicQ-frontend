@@ -21,21 +21,18 @@ import {
   Eye,
 } from "lucide-react";
 
-const InfoField = ({ label, value, right, className, noBorder }) => (
+const InfoField = ({ label, value, right, className: Class }) => (
   <div
-    className={`
-      ${className}
-      flex flex-col gap-1 text-[14px]
-      ${noBorder ? "" : "border-b-[0.5px] border-secondary-grey100 pb-2"}
-    `}
+    className={`${Class} flex flex-col gap-1 text-[14px] border-b-[0.5px] pb-2 border-secondary-grey100`}
   >
-    <div className="text-secondary-grey200">{label}</div>
-    <div className="text-secondary-grey400 flex items-center justify-between">
+    <div className="col-span-4  text-secondary-grey200">{label}</div>
+    <div className="col-span-8 text-secondary-grey400 flex items-center justify-between">
       <span className="truncate">{value || "-"}</span>
       {right}
     </div>
   </div>
 );
+
 
   
 
@@ -48,38 +45,30 @@ const SectionCard = ({
   headerRight,
   children,
 }) => (
-  <div className="px-4 py-3 flex flex-col gap-3 rounded-lg bg-white">
-    <div className="flex items-start justify-between">
-      
-      {/* LEFT : Title */}
+  <div className="px-4 py-3 flex flex-col gap-3 bg-white rounded-lg ">
+    <div className="flex items-center justify-between">
+      {/* LEFT */}
       <div className="flex flex-col">
         <div className="flex items-center gap-1 text-sm">
           <div className="font-medium text-[14px] text-gray-900">{title}</div>
 
           {subtitle && (
-            <div className="px-1 py-[2px] bg-secondary-grey50 rounded-md text-[12px] text-gray-500 hover:text-blue-primary250 hover:border-blue-primary250 border cursor-default">
+            <div className="px-1 py-[2px] bg-secondary-grey50 rounded-md text-[12px] text-gray-500">
               {subtitle}
             </div>
           )}
         </div>
+
+        {subo && (
+          <div className="flex gap-1 text-[12px] text-secondary-grey200">
+            <span>{subo}</span>
+            <span className="text-blue-primary250">Call Us</span>
+          </div>
+        )}
       </div>
 
-      {/* RIGHT : subo + actions */}
-      <div className="flex flex-col items-end gap-1 shrink-0">
-        {subo && (
-          <>
-            <div className="flex gap-1 text-[12px] text-secondary-grey200">
-              <span>{subo}</span>
-              <span className="text-blue-primary250 cursor-pointer">
-                Call Us
-              </span>
-            </div>
-
-            {/* underline */}
-            {/* <span className="h-[0.5px] w-[50px] bg-blue-primary250" /> */}
-          </>
-        )}
-
+      {/* RIGHT */}
+      <div className="flex items-center gap-3 shrink-0">
         {headerRight}
 
         {Icon && (
@@ -277,7 +266,7 @@ const {
 
                       <div>
                   <div className="text-[12px] text-gray-500 mb-2">Establishment Proof</div>
-                  <div className="mt-1 flex items-center justify-between gap-2 w-full max-w-xs border rounded px-2 py-1 text-[12px] bg-gray-50">
+                  <div className="mt-1 flex items-center justify-between gap-2 w-full max-w-xs  border-[0.5px] border-dashed border-secondary-grey200 rounded px-2 py-1 text-[12px] bg-gray-50">
                     <span className="inline-flex items-center gap-1 text-gray-700"><FileText size={14}/> {profile.est.proof}</span>
                     <button
                               type="button"
@@ -589,49 +578,17 @@ const {
 
             {/* Verification Documents */}
             <SectionCard title="Verification Documents" subtitle="Visible to Patient" subo="To Change your Medical Proof Documents">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="relative font-medium text-[14px] text-gray-900 mt-2 pb-2 mb-2">GST Details
-                    <span className="absolute left-0 bottom-0 h-[0.5px] w-[50px] bg-blue-primary250" />
-                  </div>
-                  <InfoField label="GST Number" value={profile.gst.number}  />
-                </div>
-                <div>
-                  <div className="text-[12px] text-gray-500 mb-2">Proof of GST Registration</div>
-                  <div className="mt-1 flex items-center justify-between gap-2 w-full max-w-xs border rounded px-2 py-1 text-[12px] bg-gray-50">
-                    <span className="inline-flex items-center gap-1 text-gray-700"><FileText size={14}/> {profile.gst.proof}</span>
-                    <button
-                              type="button"
-                              title="View"
-                              className="hover:text-secondary-grey400 p-2"
-                              onClick={() => onFileView?.(fileName)}
-                            >
-                              {/* simple eye */}
-                              <img src="/Doctor_module/settings/eye.png" alt="" className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* <div className="my-3 h-px bg-gray-200" /> */}
-
-              <div className="mt-2">
-                <div className="relative font-medium text-[14px] text-gray-900 mt-2 mb-2">CIN Details
+              
+                    <div className="mt-2">
+                <div className="relative font-medium text-[14px] text-gray-900  mb-2">GST Details
                     <span className="absolute left-0 bottom-0 h-[0.5px] w-[50px] bg-blue-primary250" />
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-[13px]">
-                  <InfoField label="CIN Number" value={profile.cin.number} />
-                  <InfoField label="Registered Company Name" value={profile.cin.company} />
-                  <InfoField label="Company Type" value={profile.cin.type} />
-                  <InfoField label="Date of Incorporation" value={profile.cin.incorporation} />
-                  <InfoField label="Registered Office Address" value={profile.cin.address} />
-                  <InfoField label="State and ROC Code" value={profile.cin.stateCode} />
-                  <InfoField label="Registration Number" value={profile.cin.code} />
-                  <InfoField label="Authorized Director" value={profile.cin.director} />
-                  <InfoField label="Authorized Email (From MCA)" value={profile.cin.email}  />
+                  <InfoField label="GST Number" value={profile.gst.number} />
+                 
                  <div>
-                  <div className="text-[12px] text-gray-500 mb-2">Proof of CIN Registration</div>
-                  <div className="mt-1 flex items-center justify-between gap-2 w-full max-w-xs border rounded px-2 py-1 text-[12px] bg-gray-50">
+                  <div className="text-[14px] text-secondary-grey200 mb-2">Proof of GST Registration</div>
+                  <div className="mt-1 flex items-center justify-between gap-2 w-full  max-w-xs border-[0.5px] border-dashed border-secondary-grey200 rounded px-2 py-1 text-[12px] bg-gray-50">
                     <span className="inline-flex items-center gap-1 text-gray-700"><FileText size={14}/> {profile.gst.proof}</span>
                     <button
                               type="button"
@@ -646,17 +603,50 @@ const {
                 </div> 
                 </div>
               </div>
-               {/* <div className="my-3 h-px bg-gray-200" /> */}
-               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="relative font-medium text-[14px] text-gray-900 pb-2 mt-2 mb-2">State Health Registration Details
-                    <span className="absolute left-0 bottom-0 h-[0.5px] w-[50px] bg-blue-primary250  " />
-                  </div>
-                  <InfoField label="State Health Registration Number" value={profile.shr.number}  />
+              {/* <div className="my-3 h-px bg-gray-200" /> */}
+
+              <div className="mt-2">
+                <div className="relative font-medium text-[14px] text-gray-900  mb-2">CIN Details
+                    <span className="absolute left-0 bottom-0 h-[0.5px] w-[50px] bg-blue-primary250" />
                 </div>
-                <div>
-                  <div className="text-[12px] text-gray-500 mb-2">Proof of State Health Registration</div>
-                  <div className="mt-1 flex items-center justify-between gap-2 w-full max-w-xs border rounded px-2 py-1 text-[12px] bg-gray-50">
+                <div className="grid grid-cols-2 gap-3 text-[13px]">
+                  <InfoField label="CIN Number" value={profile.cin.number} />
+                  <InfoField label="Registered Company Name" value={profile.cin.company} />
+                  <InfoField label="Company Type" value={profile.cin.type} />
+                  <InfoField label="Date of Incorporation" value={profile.cin.incorporation} />
+                  <InfoField label="Registered Office Address" value={profile.cin.address} />
+                  <InfoField label="State and ROC Code" value={profile.cin.stateCode} />
+                  <InfoField label="Registration Number" value={profile.cin.code} />
+                  <InfoField label="Authorized Director" value={profile.cin.director} />
+                  <InfoField label="Authorized Email (From MCA)" value={profile.cin.email}  />
+                 <div>
+                  <div className="text-[14px] text-secondary-grey200 mb-2">Proof of CIN Registration</div>
+                  <div className="mt-1 flex items-center justify-between gap-2 w-full max-w-xs  border-[0.5px] border-dashed border-secondary-grey200 rounded px-2 py-1 text-[12px] bg-gray-50">
+                    <span className="inline-flex items-center gap-1 text-gray-700"><FileText size={14}/> {profile.cin.proof}</span>
+                    <button
+                              type="button"
+                              title="View"
+                              className="hover:text-secondary-grey400 p-2"
+                              onClick={() => onFileView?.(fileName)}
+                            >
+                              {/* simple eye */}
+                              <img src="/Doctor_module/settings/eye.png" alt="" className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div> 
+                </div>
+              </div>
+               {/* <div className="my-3 h-px bg-gray-200" /> */}
+                   <div className="mt-2">
+                <div className="relative font-medium text-[14px] text-gray-900  mb-2">State Health Registration Details
+                    <span className="absolute left-0 bottom-0 h-[0.5px] w-[50px] bg-blue-primary250" />
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-[13px]">
+                  <InfoField label="State Health Registration Number" value={profile.shr.number} />
+                 
+                 <div>
+                  <div className="text-[14px] text-secondary-grey200 mb-2">Proof of State Health Registration</div>
+                  <div className="mt-1 flex items-center justify-between gap-2 w-full max-w-xs  border-[0.5px] border-dashed border-secondary-grey200 rounded px-2 py-1 text-[12px] bg-gray-50">
                     <span className="inline-flex items-center gap-1 text-gray-700"><FileText size={14}/> {profile.shr.proof}</span>
                     <button
                               type="button"
@@ -668,20 +658,21 @@ const {
                               <img src="/Doctor_module/settings/eye.png" alt="" className="w-4 h-4" />
                     </button>
                   </div>
+                </div> 
                 </div>
               </div>
 
               {/* <div className="my-3 h-px bg-gray-200" /> */}
-                     <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="relative font-medium text-[14px] text-gray-900 pb-2 mt-2 mb-2">Pan Card Details
+                        <div className="mt-2">
+                <div className="relative font-medium text-[14px] text-gray-900  mb-2">PAN CARD Details
                     <span className="absolute left-0 bottom-0 h-[0.5px] w-[50px] bg-blue-primary250" />
-                  </div>
-                  <InfoField label="Pan Card Number" value={profile.pan.number} />
                 </div>
-                <div>
-                  <div className="text-[12px] text-gray-500 mb-2">Proof of Pan Card</div>
-                  <div className="mt-1 flex items-center justify-between gap-2 w-full max-w-xs border rounded px-2 py-1 text-[12px] bg-gray-50">
+                <div className="grid grid-cols-2 gap-3 text-[13px]">
+                  <InfoField label="PAN CARD Number" value={profile.pan.number} />
+
+                 <div>
+                  <div className="text-[14px] text-secondary-grey200 mb-2">Proof of Pan Card</div>
+                  <div className="mt-1 flex items-center justify-between gap-2 w-full max-w-xs  border-[0.5px] border-dashed border-secondary-grey200 rounded px-2 py-1 text-[12px] bg-gray-50">
                     <span className="inline-flex items-center gap-1 text-gray-700"><FileText size={14}/> {profile.pan.proof}</span>
                     <button
                               type="button"
@@ -693,21 +684,22 @@ const {
                               <img src="/Doctor_module/settings/eye.png" alt="" className="w-4 h-4" />
                     </button>
                   </div>
+                </div> 
                 </div>
               </div>
               
-                     <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="relative font-medium text-[14px] text-gray-900 pb-2 mt-2 mb-2">Rohini Details
+                
+             
+                 <div className="mt-2">
+                <div className="relative font-medium text-[14px] text-gray-900  mb-2">Rohini Details
                     <span className="absolute left-0 bottom-0 h-[0.5px] w-[50px] bg-blue-primary250" />
-                  </div>
-                  <InfoField label="Rohini ID" value={profile.rohini.number}  />
-                 
-
                 </div>
-                <div>
-                  <div className="text-[12px] text-gray-500 mb-2">Proof of Rohini</div>
-                  <div className="mt-1 flex items-center justify-between gap-2 w-full max-w-xs border rounded px-2 py-1 text-[12px] bg-gray-50">
+                <div className="grid grid-cols-2 gap-3 text-[13px]">
+                  <InfoField label="Rohini ID" value={profile.rohini.number} />
+                 
+                 <div>
+                  <div className="text-[14px] text-secondary-grey200 mb-2">Proof of Rohini</div>
+                  <div className="mt-1 flex items-center justify-between gap-2 w-full max-w-xs  border-[0.5px] border-dashed border-secondary-grey200  rounded px-2 py-1 text-[12px] bg-gray-50">
                     <span className="inline-flex items-center gap-1 text-gray-700"><FileText size={14}/> {profile.rohini.proof}</span>
                     <button
                               type="button"
@@ -719,20 +711,20 @@ const {
                               <img src="/Doctor_module/settings/eye.png" alt="" className="w-4 h-4" />
                     </button>
                   </div>
+                </div> 
                 </div>
               </div>
-             
-                     <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="relative font-medium text-[14px] text-gray-900 pb-2 mt-2 mb-2">NABH Acceditation Details
+
+                  <div className="mt-2">
+                <div className="relative font-medium text-[14px] text-gray-900  mb-2">NABH Acceditation Details
                     <span className="absolute left-0 bottom-0 h-[0.5px] w-[50px] bg-blue-primary250" />
-                  </div>
-                  <InfoField label="NABH Number" value={profile.nabh.number}  />
-                  
                 </div>
-                <div>
-                  <div className="text-[12px] text-gray-500 mb-2">Proof of NABH</div>
-                  <div className="mt-1 flex items-center justify-between gap-2 w-full max-w-xs border rounded px-2 py-1 text-[12px] bg-gray-50">
+                <div className="grid grid-cols-2 gap-3 text-[13px]">
+                  <InfoField label="NABH Number" value={profile.nabh.number} />
+
+                 <div>
+                  <div className=" text-[14px] text-secondary-grey200 mb-2">Proof of NABH</div>
+                  <div className="mt-1 flex items-center justify-between gap-2 w-full max-w-xs  border-[0.5px] border-dashed border-secondary-grey200 rounded px-2 py-1 text-[12px] bg-gray-50">
                     <span className="inline-flex items-center gap-1 text-gray-700"><FileText size={14}/> {profile.nabh.proof}</span>
                     <button
                               type="button"
@@ -744,8 +736,11 @@ const {
                               <img src="/Doctor_module/settings/eye.png" alt="" className="w-4 h-4" />
                     </button>
                   </div>
+                </div> 
                 </div>
               </div>
+                 
+               
                 
             </SectionCard>
             </div>
