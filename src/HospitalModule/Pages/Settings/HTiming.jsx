@@ -1,175 +1,133 @@
-import React, { useMemo, useState, useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import AvatarCircle from '../../../components/AvatarCircle'
+// HTiming.jsx
+import React, { useState } from 'react'
 import Toggle from '../../../components/FormItems/Toggle'
 import TimeInput from '../../../components/FormItems/TimeInput'
-import { hospital as coverImg } from '../../../../public/index.js'
+import { Checkbox } from '../../../components/ui/checkbox'
+import { Trash2 } from 'lucide-react'
 
-const SectionCard = ({ children }) => (
-  <div className=" rounded-lg ">
-    
-    <div className="p-4">{children}</div>
-  </div>
-)
+export default function HTiming() {
+  const dayList = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
-export default function HTiming(){
-  const location = useLocation()
-  const navigate = useNavigate()
+  const [schedule, setSchedule] = useState(() =>
+    dayList.map(day => ({
+      day,
+      available: true,
+      is24Hours: false,
+      sessions: [{ startTime: '09:00', endTime: '18:00' }]
+    }))
+  )
 
-  const tabs = [
-    { key: 'account', label: 'Account Details', path: '/hospital/settings/account' },
-    { key: 'timing', label: 'Timing and Schedule', path: '/hospital/settings/timing' },
-    { key: 'surgeries', label: 'Surgeries', path: '/hospital/settings/surgeries' },
-    { key: 'staff', label: 'Staff Permissions', path: '/hospital/settings/staff-permissions' },
-    { key: 'security', label: 'Security Settings', path: '/hospital/settings/security' },
-  ]
-
-  const activeKey = useMemo(() => {
-    const p = location.pathname
-    if (p.endsWith('/settings/account')) return 'account'
-    if (p.endsWith('/settings/timing')) return 'timing'
-    if (p.endsWith('/settings/surgeries')) return 'surgeries'
-    if (p.endsWith('/settings/staff-permissions')) return 'staff'
-    if (p.endsWith('/settings/security')) return 'security'
-    return 'timing'
-  }, [location.pathname])
-
-  const [activeTab, setActiveTab] = useState(activeKey)
-  useEffect(() => setActiveTab(activeKey), [activeKey])
-
-  const profile = useMemo(() => ({ name: 'Manipal Hospital - Baner', status: 'Active', location: 'Baner, Pune' }), [])
-
-  const dayList = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
-  const [availability, setAvailability] = useState(() => dayList.reduce((a,d)=>({ ...a, [d]: true }), {}))
-  const [allDay, setAllDay] = useState(() => dayList.reduce((a,d)=>({ ...a, [d]: false }), {}))
-  const [sessions, setSessions] = useState(() => dayList.reduce((a,d)=>({ ...a, [d]: 1 }), {}))
-
-  const addSession = (day) => setSessions((s) => ({ ...s, [day]: (s[day]||0) + 1 }))
+  const updateDay = (dayName, updates) => {
+    setSchedule(prev => prev.map(d => d.day === dayName ? { ...d, ...updates } : d))
+  }
 
   return (
-    <div className="px-6 pb-10 bg-secondary-grey50">
-      {/* Header with banner + avatar + tabs (hospital) */}
-      <div className="-mx-6">
-        <div className="relative">
-          <img src={coverImg} alt="cover" className="w-full h-40 object-cover" />
-          <div className="absolute -bottom-10 left-1/2 -translate-x-1/2">
-            <div className="rounded-full ring-4 ring-white shadow-md">
-              <AvatarCircle name={profile.name} size="l" color="blue" className="w-24 h-24 text-3xl" />
-            </div>
-          </div>
-        </div>
-        <div className=" border-b border-gray-200">
-          <div className="px-6 pt-10">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {schedule.map((dayData) => {
+        const { day, available, is24Hours, sessions } = dayData
+
+        const handleUpdate = (updates) => updateDay(day, updates)
+
+        return (
+          <div key={day} className="border h-auto min-h-[46px] rounded-lg border-gray-200 p-3 bg-white transition-all duration-200">
+            {/* Header Row: Day Name + Toggle */}
             <div className="flex items-center justify-between">
-              <div className="text-center mx-auto">
-                <div className="text-lg font-medium text-gray-900">{profile.name}</div>
-                <div className="text-green-600 text-sm">{profile.status}</div>
+              <span className="text-sm font-semibold text-gray-700">{day}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">Available</span>
+                <Toggle
+                  checked={available}
+                  onChange={(e) => handleUpdate({ available: e.target.checked })}
+                />
               </div>
-              <div className="text-sm text-gray-600">{profile.location}</div>
             </div>
-            <nav className="mt-3 flex items-center gap-6 overflow-x-auto text-sm">
-              {tabs.map((t) => (
-                <button key={t.key} onClick={() => navigate(t.path)} className={`whitespace-nowrap pb-3 border-b-2 transition-colors ${activeTab===t.key? 'border-blue-600 text-gray-900' : 'border-transparent text-gray-600 hover:text-gray-900'}`}>
-                  {t.label}
-                </button>
 
-              ))}
-            </nav>
-           
-          </div>
-         
-        </div>
-       
-      </div>
+            {/* Expanded Content */}
+            {available && (
+              <div className="mt-3 border-t border-secondary-grey100 pt-4 space-y-3">
+                {/* Sessions List (only if not 24 hours) */}
+                {!is24Hours && sessions && (
+                  <div className="space-y-4">
+                    {sessions.map((session, sIdx) => (
+                      <div key={sIdx} className="flex items-center justify-between min-w-0 mb-3 last:mb-0">
+                        <div className='flex items-center gap-2 min-w-0'>
+                          <span className="text-sm whitespace-nowrap text-secondary-grey300">Availability Time:</span>
+                          <TimeInput
+                            value={session.startTime}
+                            onChange={(e) => {
+                              const newSessions = [...sessions]
+                              newSessions[sIdx] = { ...newSessions[sIdx], startTime: e.target.value }
+                              handleUpdate({ sessions: newSessions })
+                            }}
+                            className=""
+                          />
+                          <span className="text-sm text-gray-400">-</span>
+                          <TimeInput
+                            value={session.endTime}
+                            onChange={(e) => {
+                              const newSessions = [...sessions]
+                              newSessions[sIdx] = { ...newSessions[sIdx], endTime: e.target.value }
+                              handleUpdate({ sessions: newSessions })
+                            }}
+                            className=""
+                          />
+                        </div>
 
-      {/* Timing and Schedule content */}
-      {activeTab === 'timing' && (
-        <div className="mt-4">
-           
-          <SectionCard>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {dayList.map((day) => {
-                const enabled = availability[day]
-                const count = sessions[day] || 0
-                return (
-                  <div key={day} className="border border-gray-200 bg-white rounded-lg p-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[15px] font-medium secondary:text-gray-400">{day}</span>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <span>Available</span>
-                        <div onClick={()=>setAvailability((a)=>({ ...a, [day]: !a[day] }))}>
-                          <Toggle checked={enabled} />
+                        <div className="flex items-center gap-2 ml-2">
+                          {/* Delete Button (only if > 1 session) */}
+                          {sessions.length > 1 && sIdx !== sessions.length - 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newSessions = sessions.filter((_, i) => i !== sIdx)
+                                handleUpdate({ sessions: newSessions })
+                              }}
+                              className="text-gray-400 hover:text-red-500 transition-colors"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+
+                          {/* Add More Button (only on last item) */}
+                          {sIdx === sessions.length - 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (sessions.length >= 6) {
+                                  alert("Maximum 6 slots allowed")
+                                  return
+                                }
+                                const newSessions = [...sessions, { startTime: '09:00', endTime: '18:00' }]
+                                handleUpdate({ sessions: newSessions })
+                              }}
+                              className="text-sm text-blue-600 hover:bg-blue-50 p-1 rounded-md ml-2 whitespace-nowrap"
+                            >
+                              + Add More
+                            </button>
+                          )}
                         </div>
                       </div>
-                    </div>
-                     <div className="my-3 h-px bg-gray-200" />
-                    <div className={`mt-2 space-y-2 ${!enabled ? 'opacity-60' : ''}`}>
-                      {/* first session row label */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                    
-                    {/* Label */}
-                    <div className="text-sm text-secondary-gray-300 sm:w-[140px]">
-                      Availability Time:
-                    </div>
-
-                    {/* Time inputs */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1">
-                      
-                      <TimeInput
-                        label=""
-                        disabled={!enabled || allDay[day]}
-                        defaultValue="09:00 AM"
-                      />
-
-                      {/* Dash */}
-                      <span className="hidden sm:flex items-center justify-center text-[14px] text-secondary-gray-300">
-                        –
-                      </span>
-
-                      <TimeInput
-                        label=""
-                        disabled={!enabled || allDay[day]}
-                        defaultValue="06:00 PM"
-                      />
-                    </div>
-
-                    {/* Add more */}
-                    <div className="text-right sm:text-left sm:w-[90px]">
-                      <button
-                        type="button"
-                        disabled={!enabled || allDay[day]}
-                        onClick={() => addSession(day)}
-                        className={`text-sm text-blue-600 ${
-                          !enabled || allDay[day]
-                            ? "opacity-50 cursor-not-allowed"
-                            : "hover:underline"
-                        }`}
-                      >
-                        + Add More
-                      </button>
-                    </div>
+                    ))}
                   </div>
+                )}
 
-                      {/* extra sessions */}
-                      {Array.from({ length: Math.max(0, count-1) }).map((_, i) => (
-                        <div key={i} className="grid grid-cols-12 items-center gap-2">
-                          <div className="col-span-12 sm:col-span-3 text-sm text-gray-700">Availability Time:</div>
-                          <div className="col-span-6 sm:col-span-3"><TimeInput label="" disabled={!enabled || allDay[day]} defaultValue={'03:00 PM'} /></div>
-                          <div className="col-span-6 sm:col-span-3"><TimeInput label="" disabled={!enabled || allDay[day]} defaultValue={'06:00 PM'} /></div>
-                        </div>
-                      ))}
-                      <label className="flex items-center gap-2 text-[13px] text-gray-700">
-                        <input type="checkbox" className="h-4 w-4" checked={allDay[day]} onChange={(e)=>setAllDay((a)=>({ ...a, [day]: e.target.checked }))} />
-                        <span>Available 24 Hours</span>
-                      </label>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </SectionCard>
-        </div>
-      )}
+                {/* 24 Hours Toggle Row */}
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id={`24h-${day}`}
+                    checked={is24Hours}
+                    onCheckedChange={(checked) => handleUpdate({ is24Hours: !!checked })}
+                    className="w-4 h-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                  />
+                  <label htmlFor={`24h-${day}`} className="text-xs text-gray-500 cursor-pointer select-none">
+                    Available 24 Hours
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }

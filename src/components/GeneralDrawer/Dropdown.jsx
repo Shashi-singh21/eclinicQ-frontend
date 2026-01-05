@@ -22,6 +22,7 @@ export default function Dropdown({
   itemClassName = "",
   // value of currently selected item for highlighting
   selectedValue,
+  direction = "down",
 }) {
   const panelRef = useRef(null);
   const anchorRef = useRef(null);
@@ -37,18 +38,39 @@ export default function Dropdown({
   }, [open, onClose]);
 
   // Calculate position based on anchor element
-  useEffect(() => {
-    if (open && anchorRef.current) {
-      const rect = anchorRef.current.getBoundingClientRect();
-      setPosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width,
-      });
+ useEffect(() => {
+  if (open && anchorRef.current) {
+    const rect = anchorRef.current.getBoundingClientRect();
+    const GAP = 8;
+
+    const pos = {
+      left: rect.left,
+      width: rect.width,
+    };
+
+    if (direction === "up") {
+      pos.bottom = window.innerHeight - rect.top + GAP;
+    } else {
+      pos.top = rect.bottom + GAP;
     }
-  }, [open]);
+
+    setPosition(pos);
+  }
+}, [open, direction]);
+
 
   if (!open) return <div ref={anchorRef} className={anchorClassName} />;
+
+  const dropdownStyle = {
+    left: `${position.left}px`,
+    width: position.width ? `${position.width}px` : "360px",
+  };
+
+  if (direction === "up") {
+    dropdownStyle.bottom = `${position.bottom}px`;
+  } else {
+    dropdownStyle.top = `${position.top}px`;
+  }
 
   const dropdown = (
     <>
@@ -57,11 +79,7 @@ export default function Dropdown({
       <div
         ref={panelRef}
         className={`fixed z-[9999] rounded-md border border-gray-200 bg-white shadow-lg ${className}`}
-        style={{
-          top: `${position.top}px`,
-          left: `${position.left}px`,
-          width: position.width ? `${position.width}px` : "360px",
-        }}
+        style={dropdownStyle}
         onClick={(e) => e.stopPropagation()}
       >
         <ul className="max-h-[240px] overflow-auto py-2 px-2 flex flex-col gap-1 scrollbar-hide">
@@ -72,11 +90,10 @@ export default function Dropdown({
               <li key={String(it.value)}>
                 <button
                   type="button"
-                  className={`w-full text-left px-3 py-2 text-sm text-secondary-grey400 rounded-md ${
-                    isSel
-                      ? "bg-blue-50 text-blue-600"
-                      : "hover:bg-secondary-grey50"
-                  } ${itemClassName}`}
+                  className={`w-full text-left px-3 py-2 text-sm text-secondary-grey400 rounded-md ${isSel
+                    ? "bg-blue-50 text-blue-600"
+                    : "hover:bg-secondary-grey50"
+                    } ${itemClassName}`}
                   onClick={() => {
                     onSelect?.(it);
                     onClose?.();

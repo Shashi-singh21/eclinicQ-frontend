@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
-import { 
-  Input,
-  Dropdown,
-  Upload,
-  Radio,
-  FormContainer,
-  FormSection,
-  FormFieldRow
+import React, { useState, useEffect } from 'react';
+import {
+  FormFieldRow,
+  RegistrationHeader
 } from '../../../../components/FormItems';
+import InputWithMeta from '../../../../components/GeneralDrawer/InputWithMeta';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { ChevronDown } from 'lucide-react';
 import useHospitalDoctorDetailsStore from '../../../../store/useHospitalDoctorDetailsStore';
 import useDoctorRegistrationStore from '../../../../store/useDoctorRegistrationStore';
+import CustomUpload from '../Doctor_registration/CustomUpload';
 
 const Hos_2 = () => {
   // Use dedicated hospital doctor details store
@@ -18,20 +17,42 @@ const Hos_2 = () => {
   // Minimal local state to control PG conditional fields
   const [hasPG, setHasPG] = useState('');
 
+  // Dropdown open states
+  const [councilOpen, setCouncilOpen] = useState(false);
+  const [gradOpen, setGradOpen] = useState(false);
+  const [gradCollegeOpen, setGradCollegeOpen] = useState(false);
+  const [pgDegreeOpen, setPgDegreeOpen] = useState(false);
+  const [pgCollegeOpen, setPgCollegeOpen] = useState(false);
+  const [specOpen, setSpecOpen] = useState(false);
+  const [addSpecOpen, setAddSpecOpen] = useState({}); // { [index]: boolean }
+
   // Registration store only for additional specialization rows
   const regStore = useDoctorRegistrationStore();
   const { userId: regUserId } = regStore;
   const { additionalPractices, addPractice, updatePractice, setDocument } = drStore;
 
-  // Make sure the doctor userId from Step1 is mirrored here
-  if (!drStore.userId && regUserId) {
-    setField('userId', String(regUserId));
-  }
+  const getDoc = (no) => drStore.documents?.find(d => d.no === no);
 
-  // Options replicated from Doctor Step2
+  // Make sure the doctor userId from Step1 is mirrored here
+  // Note: logic in Step1 might handle this, but safeguard here
+  useEffect(() => {
+    if (!drStore.userId && regUserId) {
+      setField('userId', String(regUserId));
+    }
+  }, [regUserId, drStore.userId, setField]);
+
+  useEffect(() => {
+    // If store already has PG data, set radio to yes
+    if (drStore.pgMedicalDegreeType || drStore.pgMedicalDegreeUniversityName) {
+      setHasPG('yes');
+    } else {
+      setHasPG('no');
+    }
+  }, []);
+
   const councilOptions = [
     { value: "Maharashtra Medical Council", label: "Maharashtra Medical Council" },
-  { value: "Medical Council of India", label: "Medical Council of India" },
+    { value: "Medical Council of India", label: "Medical Council of India" },
     { value: "Andhra Pradesh Medical Council", label: "Andhra Pradesh Medical Council" },
     { value: "Arunachal Pradesh Medical Council", label: "Arunachal Pradesh Medical Council" },
     { value: "Assam Medical Council", label: "Assam Medical Council" },
@@ -81,7 +102,7 @@ const Hos_2 = () => {
   ];
 
 
-  const [formErrors, setFormErrors] = React.useState({});
+  const [formErrors, setFormErrors] = useState({});
 
   // Validation functions
   const validateField = (name, value) => {
@@ -107,6 +128,7 @@ const Hos_2 = () => {
         return '';
       case 'experience':
         if (!value) return 'Required';
+        // Allow 0
         if (!/^\d+$/.test(value) || Number(value) < 0) return 'Invalid years';
         return '';
       case 'pgDegree':
@@ -119,9 +141,7 @@ const Hos_2 = () => {
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    // ...existing code...
+  const handleInputChange = (name, value) => {
     switch (name) {
       case 'councilNumber':
         setField('medicalCouncilRegNo', value);
@@ -170,255 +190,341 @@ const Hos_2 = () => {
       default:
         break;
     }
+
     setFormErrors((prev) => ({
       ...prev,
       [name]: validateField(name, value)
     }));
   };
 
-  const commonFieldProps = {
-    compulsory: true,
-    required: true
-  };
-
   return (
-    <FormContainer>
-      <FormSection
+    <div className="flex flex-col h-full bg-white rounded-md shadow-sm overflow-hidden">
+      <RegistrationHeader
         title="Register as Doctor"
         subtitle="Complete the following information to register as a doctor in the system"
-      >
-        <div className="space-y-6">
+      />
+
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="max-w-[700px] mx-auto space-y-5">
+
           {/* Medical Registration */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-sm font-semibold text-gray-900">
               Medical Registration
             </h2>
             <FormFieldRow>
               <div className="w-full">
-                <Input
+                <InputWithMeta
                   label="Medical Council Registration Number"
-                  name="councilNumber"
+                  requiredDot={true}
                   value={drStore.medicalCouncilRegNo || ''}
-                  onChange={handleInputChange}
-                  {...commonFieldProps}
+                  onChange={(val) => handleInputChange('councilNumber', val)}
+                  placeholder="Hospital Name" /* Matches placeholder in image */
                 />
                 {formErrors.councilNumber && <span className="text-red-500 text-xs">{formErrors.councilNumber}</span>}
               </div>
               <div className="w-full">
-                <Dropdown
+                <InputWithMeta
                   label="Registration Council"
-                  name="councilName"
                   value={drStore.medicalCouncilName || ''}
-                  onChange={handleInputChange}
-                  options={councilOptions}
-                  placeholder="Select Council"
-                  {...commonFieldProps}
+                  requiredDot
+                  placeholder="Select Medical Council"
+                  RightIcon={ChevronDown}
+                  readonlyWhenIcon={true}
+                  onIconClick={() => setCouncilOpen(!councilOpen)}
+                  dropdownOpen={councilOpen}
+                  onRequestClose={() => setCouncilOpen(false)}
+                  dropdownItems={councilOptions}
+                  onSelectItem={(item) => {
+                    handleInputChange('councilName', item.value);
+                    setCouncilOpen(false);
+                  }}
+                  compulsory
                 />
                 {formErrors.councilName && <span className="text-red-500 text-xs">{formErrors.councilName}</span>}
               </div>
             </FormFieldRow>
             <FormFieldRow>
               <div className="w-full">
-                <Input
+                <InputWithMeta
                   label="Registration Year"
-                  name="regYear"
+                  requiredDot={true}
                   value={drStore.medicalCouncilRegYear || ''}
-                  onChange={handleInputChange}
-                  {...commonFieldProps}
+                  onChange={(val) => handleInputChange('regYear', val)}
+                  placeholder="Enter Year"
+                  meta="Visible to Patient"
                 />
                 {formErrors.regYear && <span className="text-red-500 text-xs">{formErrors.regYear}</span>}
-                <p className="text-xs text-gray-400 mt-1">Visible to Patient</p>
               </div>
-              <Upload
-                label="Upload MRN Proof"
-                compulsory={true}
-                onUpload={key => setDocument({ no: 1, type: 'medical_license', url: key })}
-              />
+              <div className="w-full">
+                <CustomUpload
+                  label="Upload MRN Proof"
+                  compulsory={true}
+                  onUpload={(key, name) => setDocument({ no: 1, type: 'medical_license', url: key, fileName: name })}
+                  meta="Support Size upto 1MB in .png, .jpg, .svg, .webp"
+                  uploadedKey={getDoc(1)?.url}
+                  fileName={getDoc(1)?.fileName}
+                />
+              </div>
             </FormFieldRow>
           </div>
 
-          {/* Education Details */}
-          <div className="space-y-4 mb-3">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Education Details
+          <div className='border-t border-secondary-grey200/20 my-4'></div>
+
+          {/* Qualifications */}
+          <div className="space-y-4">
+            <h2 className="text-sm font-semibold text-gray-900">
+              Qualifications
             </h2>
             <FormFieldRow>
               <div className="w-full">
-                <Dropdown
-                  label="Graduation Degree"
-                  name="graduation"
+                <InputWithMeta
+                  label="Graduation"
                   value={drStore.medicalDegreeType || ''}
-                  onChange={handleInputChange}
-                  options={gradDegreeOptions}
-                  placeholder="Select Degree"
-                  {...commonFieldProps}
+                  requiredDot
+                  placeholder="Select Degree Type"
+                  RightIcon={ChevronDown}
+                  readonlyWhenIcon={true}
+                  onIconClick={() => setGradOpen(!gradOpen)}
+                  dropdownOpen={gradOpen}
+                  onRequestClose={() => setGradOpen(false)}
+                  dropdownItems={gradDegreeOptions}
+                  onSelectItem={(item) => {
+                    handleInputChange('graduation', item.value);
+                    setGradOpen(false);
+                  }}
+                  compulsory
                 />
                 {formErrors.graduation && <span className="text-red-500 text-xs">{formErrors.graduation}</span>}
               </div>
               <div className="w-full">
-                <Dropdown
+                <InputWithMeta
                   label="College/ University"
-                  name="graduationCollege"
                   value={drStore.medicalDegreeUniversityName || ''}
-                  onChange={handleInputChange}
-                  options={collegeOptions}
-                  placeholder="Select College/University"
-                  {...commonFieldProps}
+                  requiredDot
+                  infoIcon
+                  placeholder="Search Name of Institution"
+                  RightIcon={ChevronDown}
+                  readonlyWhenIcon={true}
+                  onIconClick={() => setGradCollegeOpen(!gradCollegeOpen)}
+                  dropdownOpen={gradCollegeOpen}
+                  onRequestClose={() => setGradCollegeOpen(false)}
+                  dropdownItems={collegeOptions}
+                  onSelectItem={(item) => {
+                    handleInputChange('graduationCollege', item.value);
+                    setGradCollegeOpen(false);
+                  }}
+                  compulsory
                 />
                 {formErrors.graduationCollege && <span className="text-red-500 text-xs">{formErrors.graduationCollege}</span>}
               </div>
             </FormFieldRow>
             <FormFieldRow>
               <div className="w-full">
-                <Input
-                  label="Graduation Year"
-                  name="graduationYear"
+                <InputWithMeta
+                  label="Year of Completion"
+                  requiredDot={true}
                   value={drStore.medicalDegreeYearOfCompletion || ''}
-                  onChange={handleInputChange}
-                  {...commonFieldProps}
+                  onChange={(val) => handleInputChange('graduationYear', val)}
+                  placeholder="Enter Year"
                 />
                 {formErrors.graduationYear && <span className="text-red-500 text-xs">{formErrors.graduationYear}</span>}
               </div>
-              <Upload 
-                label="Upload Degree Proof" 
-                compulsory={true} 
-                onUpload={key => setDocument({ no: 2, type: 'degree_certificate', url: key })}
-              />
+              <div className="w-full">
+                <CustomUpload
+                  label="Upload Degree Proof"
+                  compulsory={true}
+                  onUpload={(key, name) => setDocument({ no: 2, type: 'degree_certificate', url: key, fileName: name })}
+                  meta="Support Size upto 1MB in .png, .jpg, .svg, .webp"
+                  uploadedKey={getDoc(2)?.url}
+                  fileName={getDoc(2)?.fileName}
+                />
+              </div>
             </FormFieldRow>
           </div>
 
-          {/* Post Graduation */}
-          <div className="space-y-4">
-            <Radio
-              label="Do you have Post Graduation Degree?"
-              name="hasPG"
+          {/* Post Graduation Question */}
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-secondary-grey400">Do you have Post Graduation Degree ?</span>
+            <RadioGroup
+              className="flex gap-4"
               value={hasPG}
-              onChange={handleInputChange}
-              options={[
-                { value: "yes", label: "Yes" },
-                { value: "no", label: "No" }
-              ]}
-            />
-            {hasPG === "yes" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-4">
-                  <Dropdown
-                    label="Post Graduate Degree"
-                    name="pgDegree"
-                    value={drStore.pgMedicalDegreeType || ''}
-                    onChange={handleInputChange}
-                    options={pgDegreeOptions}
-                    placeholder="Select Degree"
-                    {...commonFieldProps}
-                  />
-                  {formErrors.pgDegree && <span className="text-red-500 text-xs">{formErrors.pgDegree}</span>}
-                  <Input
-                    label="Year of Completion"
-                    name="pgYear"
-                    value={drStore.pgMedicalDegreeYearOfCompletion || ''}
-                    onChange={handleInputChange}
-                    {...commonFieldProps}
-                  />
-                  {formErrors.pgYear && <span className="text-red-500 text-xs">{formErrors.pgYear}</span>}
-                </div>
-                <div className="space-y-4">
-                  <Dropdown
-                    label="College/ University"
-                    name="pgCollege"
-                    value={drStore.pgMedicalDegreeUniversityName || ''}
-                    onChange={handleInputChange}
-                    options={collegeOptions}
-                    placeholder="Select College/University"
-                    {...commonFieldProps}
-                  />
-                  {formErrors.pgCollege && <span className="text-red-500 text-xs">{formErrors.pgCollege}</span>}
-                  <Upload 
-                    label="Upload Degree Proof" 
-                    compulsory={false}
-                    onUpload={key => setDocument({ no: 3, type: 'specialization_certificate', url: key })}
-                  />
-                </div>
+              onValueChange={(val) => handleInputChange('hasPG', val)}
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="yes" id="pg_yes" />
+                <label htmlFor="pg_yes" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-secondary-grey300">Yes</label>
               </div>
-            )}
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="no" id="pg_no" />
+                <label htmlFor="pg_no" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-secondary-grey300">No</label>
+              </div>
+            </RadioGroup>
           </div>
 
-          <div className='border mb'></div>
+          {hasPG === "yes" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <InputWithMeta
+                  label="Post Graduate Degree"
+                  value={drStore.pgMedicalDegreeType || ''}
+                  requiredDot
+                  placeholder="Select Degree Type"
+                  RightIcon={ChevronDown}
+                  readonlyWhenIcon={true}
+                  onIconClick={() => setPgDegreeOpen(!pgDegreeOpen)}
+                  dropdownOpen={pgDegreeOpen}
+                  onRequestClose={() => setPgDegreeOpen(false)}
+                  dropdownItems={pgDegreeOptions}
+                  onSelectItem={(item) => {
+                    handleInputChange('pgDegree', item.value);
+                    setPgDegreeOpen(false);
+                  }}
+                />
+                {formErrors.pgDegree && <span className="text-red-500 text-xs">{formErrors.pgDegree}</span>}
+
+                <InputWithMeta
+                  label="Year of Completion"
+                  requiredDot={true}
+                  value={drStore.pgMedicalDegreeYearOfCompletion || ''}
+                  onChange={(val) => handleInputChange('pgYear', val)}
+                  placeholder="Enter Year"
+                />
+                {formErrors.pgYear && <span className="text-red-500 text-xs">{formErrors.pgYear}</span>}
+
+              </div>
+              <div className="space-y-4">
+                <InputWithMeta
+                  label="College/ University"
+                  value={drStore.pgMedicalDegreeUniversityName || ''}
+                  requiredDot
+                  infoIcon
+                  placeholder="Search Name of Institution"
+                  RightIcon={ChevronDown}
+                  readonlyWhenIcon={true}
+                  onIconClick={() => setPgCollegeOpen(!pgCollegeOpen)}
+                  dropdownOpen={pgCollegeOpen}
+                  onRequestClose={() => setPgCollegeOpen(false)}
+                  dropdownItems={collegeOptions}
+                  onSelectItem={(item) => {
+                    handleInputChange('pgCollege', item.value);
+                    setPgCollegeOpen(false);
+                  }}
+                />
+                {formErrors.pgCollege && <span className="text-red-500 text-xs">{formErrors.pgCollege}</span>}
+
+                <div className="w-full">
+                  <CustomUpload
+                    label="Upload Degree Proof"
+                    compulsory={false}
+                    onUpload={(key, name) => setDocument({ no: 3, type: 'specialization_certificate', url: key, fileName: name })}
+                    meta="Support Size upto 1MB in .png, .jpg, .svg, .webp"
+                    uploadedKey={getDoc(3)?.url}
+                    fileName={getDoc(3)?.fileName}
+                  />
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          <div className='border-t border-secondary-grey200/20 my-4'></div>
 
           {/* Practice Details */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold text-gray-900">Practice Details</h2>
-              <button
-                type="button"
-                onClick={addPractice}
-                title="Add specialization"
-                className="w-6 h-6 flex items-center justify-center rounded border border-gray-300 text-gray-600 hover:bg-gray-50"
-                aria-label="Add specialization"
-              >
-                +
-              </button>
-            </div>
+            <h2 className="text-sm font-semibold text-gray-900">
+              Practice Details
+            </h2>
             <FormFieldRow>
               <div className="w-full">
-                <Dropdown
-                  label="Specialization"
-                  name="specialization"
+                <InputWithMeta
+                  label="Primary Specialization"
                   value={typeof drStore.specialization === 'object' ? (drStore.specialization?.value || drStore.specialization?.name || '') : (drStore.specialization || '')}
-                  onChange={handleInputChange}
-                  options={specializationOptions}
-                  placeholder="Select Specialization"
-                  {...commonFieldProps}
+                  requiredDot
+                  placeholder="Select Degree Type"
+                  RightIcon={ChevronDown}
+                  readonlyWhenIcon={true}
+                  onIconClick={() => setSpecOpen(!specOpen)}
+                  dropdownOpen={specOpen}
+                  onRequestClose={() => setSpecOpen(false)}
+                  dropdownItems={specializationOptions}
+                  onSelectItem={(item) => {
+                    handleInputChange('specialization', item.value);
+                    setSpecOpen(false);
+                  }}
+                  compulsory
                 />
                 {formErrors.specialization && <span className="text-red-500 text-xs">{formErrors.specialization}</span>}
               </div>
               <div className="w-full">
-                <Input
+                <InputWithMeta
                   label="Year of Experience"
-                  name="experience"
+                  requiredDot={true}
                   value={drStore.experienceYears || ''}
-                  onChange={handleInputChange}
+                  onChange={(val) => handleInputChange('experience', val)}
                   placeholder="Enter Year"
-                  {...commonFieldProps}
                 />
                 {formErrors.experience && <span className="text-red-500 text-xs">{formErrors.experience}</span>}
               </div>
             </FormFieldRow>
 
+            <button
+              type="button"
+              onClick={addPractice}
+              className="text-blue-primary250 text-sm hover:underline font-medium"
+            >
+              + Add More Speciality
+            </button>
+
+            {/* Additional Practices */}
             {Array.isArray(additionalPractices) && additionalPractices.length > 0 && (
-              <div className="space-y-3">
+              <div className="space-y-4 pt-2">
                 {additionalPractices.map((p, idx) => (
-                  <FormFieldRow key={idx}>
-                    <Dropdown
-                      label="Specialization"
-                      name={`additional_specialization_${idx}`}
-                      value={typeof p.specialization === 'object' ? (p.specialization?.value || p.specialization?.name || '') : (p.specialization || '')}
-                      onChange={e => {
-                        const val = e.target.value;
-                        const opt = specializationOptions.find(o => o.value === val);
-                        updatePractice(idx, { specialization: { name: opt?.label || val, value: val } });
-                      }}
-                      options={specializationOptions}
-                      placeholder="Select Specialization"
-                      compulsory
-                      required
-                    />
-                    <Input
-                      label="Year of Experience"
-                      name={`additional_experience_${idx}`}
-                      value={p.experienceYears}
-                      onChange={e => updatePractice(idx, { experienceYears: e.target.value })}
-                      placeholder="Enter Year"
-                      compulsory
-                      required
-                    />
-                  </FormFieldRow>
+                  <div key={idx} className="bg-gray-50 p-3 rounded border border-gray-100 relative">
+                    <div className="absolute right-2 top-2">
+                      <button type="button" onClick={() => drStore.removePractice(idx)} className="text-red-400 text-xs">Remove</button>
+                    </div>
+                    <FormFieldRow>
+                      <div className="w-full">
+                        <InputWithMeta
+                          label="Specialization"
+                          value={typeof p.specialization === 'object' ? (p.specialization?.value || p.specialization?.name || '') : (p.specialization || '')}
+                          requiredDot
+                          placeholder="Select Specialization"
+                          RightIcon={ChevronDown}
+                          readonlyWhenIcon={true}
+                          onIconClick={() => setAddSpecOpen(prev => ({ ...prev, [idx]: !prev[idx] }))}
+                          dropdownOpen={addSpecOpen[idx]}
+                          onRequestClose={() => setAddSpecOpen(prev => ({ ...prev, [idx]: false }))}
+                          dropdownItems={specializationOptions}
+                          onSelectItem={(item) => {
+                            updatePractice(idx, { specialization: { name: item.label || item.value, value: item.value } });
+                            setAddSpecOpen(prev => ({ ...prev, [idx]: false }));
+                          }}
+                          compulsory
+                        />
+                      </div>
+                      <div className="w-full">
+                        <InputWithMeta
+                          label="Year of Experience"
+                          requiredDot={true}
+                          value={p.experienceYears || ''}
+                          onChange={(val) => updatePractice(idx, { experienceYears: val })}
+                          placeholder="Enter Year"
+                        />
+                      </div>
+                    </FormFieldRow>
+                  </div>
                 ))}
               </div>
             )}
+
           </div>
+
+          <div className="pb-8"></div>
         </div>
-      </FormSection>
-    </FormContainer>
+      </div>
+    </div>
   );
 };
 

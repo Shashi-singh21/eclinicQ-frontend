@@ -7,40 +7,34 @@ const cn = (...classes) => classes.filter(Boolean).join(" ");
 // Color tokens for "ghost" style (border + soft background + colored text)
 const colorTokens = {
   gray: {
-    text: "text-gray-700",
-    border: "border-gray-200",
-    bg: "bg-gray-50",
-    hoverBg: "hover:bg-gray-100",
-  },
-  blue: {
-    text: "text-blue-600",
-    border: "border-blue-300",
-    bg: "bg-blue-50",
-    hoverBg: "hover:bg-blue-100",
-  },
-  orange: {
-    text: "text-orange-600",
-    border: "border-orange-300",
-    bg: "bg-orange-50",
-    hoverBg: "hover:bg-orange-100",
-  },
-  green: {
-    text: "text-green-600",
-    border: "border-green-300",
-    bg: "bg-green-50",
-    hoverBg: "hover:bg-green-100",
-  },
-  yellow: {
-    text: "text-amber-600",
-    border: "border-amber-300",
-    bg: "bg-amber-50",
-    hoverBg: "hover:bg-amber-100",
+    text: "text-secondary-grey400",
+    border: "border-secondary-grey50",
+    bg: "bg-secondary-grey50",
+    hoverBorder: "hover:border-secondary-grey300",
   },
   red: {
     text: "text-red-600",
     border: "border-red-300",
     bg: "bg-red-50",
     hoverBg: "hover:bg-red-100",
+  },
+  warning: {
+    text: "text-warning2-400",
+    border: "border-warning2-50",
+    bg: "bg-warning2-50",
+    hoverBorder: "hover:border-warning2-400",
+  },
+  blue: {
+    text: "text-blue-primary250",
+    border: "border-blue-primary50",
+    bg: "bg-blue-primary50",
+    hoverBorder: "hover:border-blue-primary250",
+  },
+  success: {
+    text: "text-success-300",
+    border: "border-success-100",
+    bg: "bg-success-100",
+    hoverBorder: "hover:border-success-300",
   },
 };
 
@@ -57,28 +51,14 @@ const legacyToColor = {
 
 // Size tokens
 const sizeTokens = {
+  xs: "flex h-[22px] px-[6px] text-sm rounded-sm",
   s: "h-6 px-2 text-xs rounded-md",
   l: "h-8 px-3 text-sm rounded-lg",
   small: "h-6 px-2 text-xs rounded-md", // legacy alias
   large: "h-8 px-3 text-sm rounded-md", // legacy alias
 };
 
-/**
- * Badge component
- *
- * Props:
- * - type: 'ghost' | 'solid' (default 'ghost')
- * - hover: boolean (adds hover background tint) default false
- * - size: 's' | 'l' | 'small' | 'large'
- * - color: 'gray' | 'blue' | 'orange' | 'green' | 'yellow' | 'red'
- * - variant: legacy alias ('primary'|'secondary'|'tertiary'|'success'|'error'|'disable'|'ghost')
- * - leadingIcon / trailingIcon: ReactNode (optional)
- * - dropdown: boolean to show chevron
- * - chevron: 'down' | 'up' (default 'down')
- * - showText: boolean to render label text (default true)
- * - className: extra class names
- * - children: label text if provided
- */
+
 const Badge = ({
   type = "ghost",
   hover = false,
@@ -102,11 +82,15 @@ const Badge = ({
 
   // Style by type
   const base =
-    "inline-flex items-center gap-1 border font-medium select-none transition-colors";
+    "inline-flex items-center gap-1 border select-none transition-colors";
+
+  // Custom logic: new modern tokens have explicit hoverBorder and expect a visible initial border
+  const isModern = !!t.hoverBorder;
+
   const ghost = cn(
     t.text,
-    "border-transparent",
-    `hover:${t.border}`,
+    isModern ? t.border : "border-transparent",
+    isModern ? t.hoverBorder : `hover:${t.border}`,
     t.bg,
     hover ? t.hoverBg : ""
   );
@@ -114,11 +98,11 @@ const Badge = ({
     "text-white",
     resolvedColor === "blue" && "bg-blue-600 border-blue-600 hover:bg-blue-700",
     resolvedColor === "green" &&
-      "bg-green-600 border-green-600 hover:bg-green-700",
+    "bg-green-600 border-green-600 hover:bg-green-700",
     resolvedColor === "orange" &&
-      "bg-orange-600 border-orange-600 hover:bg-orange-700",
+    "bg-orange-600 border-orange-600 hover:bg-orange-700",
     resolvedColor === "yellow" &&
-      "bg-amber-500 border-amber-500 hover:bg-amber-600",
+    "bg-amber-500 border-amber-500 hover:bg-amber-600",
     resolvedColor === "red" && "bg-red-600 border-red-600 hover:bg-red-700",
     resolvedColor === "gray" && "bg-gray-600 border-gray-600 hover:bg-gray-700",
     hover ? "" : ""

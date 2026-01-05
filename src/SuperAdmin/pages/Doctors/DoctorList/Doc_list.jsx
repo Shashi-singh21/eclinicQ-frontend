@@ -1,15 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import Header from '../../../../components/DoctorList/Header'
-import Table from '../../../../components/DoctorList/Table'
 import { getAllDoctorsBySuperAdmin } from '../../../../services/doctorService'
 import useAuthStore from '../../../../store/useAuthStore'
+import SampleTable from '../../../../pages/SampleTable'
+import { doctorColumns } from './columns'
+import sampleData from './data.json'
+import { useNavigate } from 'react-router-dom';
 
 const Doc_list = () => {
+  const navigate = useNavigate();
   const isAuthed = useAuthStore((s) => Boolean(s.token))
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [active, setActive] = useState([])
   const [inactive, setInactive] = useState([])
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
 
   useEffect(() => {
     let ignore = false
@@ -30,54 +36,33 @@ const Doc_list = () => {
         const serverMsg = e?.response?.data?.message || e?.message || ''
         const isAuthError = status === 401 || status === 403 || /forbidden/i.test(serverMsg) || /SUPER_ACCESS/i.test(serverMsg)
         if (!isAuthError) {
-          setError('Failed to fetch doctors')
+          // setError('Failed to fetch doctors')
+          console.error("API failed, falling back to sample data", e)
         } else {
           // suppress exposing server auth/permission messages to the UI
           setError(null)
         }
-        // Fallback: seed with dummy data for exploration
-        const dummy = [
-          {
-            docId: 'DOC001', userId: 'user-001', name: 'Dr. Anita Sharma', gender: 'F',
-            contactNumber: '9876543210', email: 'anita.sharma@example.com', location: 'Mumbai',
-            specializations: ['General Physician', 'Diabetology'], designation: 'MBBS, MD', yearOfExperience: 12
-          },
-          {
-            docId: 'DOC002', userId: 'user-002', name: 'Dr. Rajiv Menon', gender: 'M',
-            contactNumber: '9123456780', email: 'rajiv.menon@example.com', location: 'Bengaluru',
-            specializations: ['Cardiology'], designation: 'MBBS, DM (Cardio)', yearOfExperience: 15
-          },
-          {
-            docId: 'DOC003', userId: 'user-003', name: 'Dr. Meera Iyer', gender: 'F',
-            contactNumber: '9001234567', email: 'meera.iyer@example.com', location: 'Chennai',
-            specializations: ['Dermatology', 'Cosmetology'], designation: 'MBBS, MD (Derm)', yearOfExperience: 9
-          }
-        ]
-        setActive(dummy)
-        setInactive([])
+
+        // Use sample data from JSON
+        const a = sampleData.filter(d => d.status === 'Active')
+        // Ensure inactive or other statuses are handled; sample data might just have Active/Inactive
+        const i = sampleData.filter(d => d.status !== 'Active')
+
+        setActive(a)
+        setInactive(i)
       } finally {
         if (!ignore) setLoading(false)
       }
     }
-  if (isAuthed) load()
+    if (isAuthed) load()
     else {
-      // Not authed: still show dummy list for exploration
-      const dummy = [
-        {
-          docId: 'DOC004', userId: 'user-004', name: 'Dr. Karan Gupta', gender: 'M',
-          contactNumber: '9812345678', email: 'karan.gupta@example.com', location: 'Delhi',
-          specializations: ['Orthopedics'], designation: 'MBBS, MS (Ortho)', yearOfExperience: 11
-        },
-        {
-          docId: 'DOC005', userId: 'user-005', name: 'Dr. Sana Khan', gender: 'F',
-          contactNumber: '9890011223', email: 'sana.khan@example.com', location: 'Pune',
-          specializations: ['ENT'], designation: 'MBBS, MS (ENT)', yearOfExperience: 7
-        }
-      ]
-      setActive(dummy)
-      setInactive([])
+      // Not authed: use sample data
+      const a = sampleData.filter(d => d.status === 'Active')
+      const i = sampleData.filter(d => d.status !== 'Active')
+      setActive(a)
+      setInactive(i)
       setLoading(false)
-  setError(null)
+      setError(null)
     }
     return () => {
       ignore = true
@@ -87,18 +72,22 @@ const Doc_list = () => {
   const doctorsAll = useMemo(() => {
     // Map API response to UI table shape
     const mapOne = (d, status) => ({
-  id: d?.docId || '',
-  userId: d?.userId || '',
+      id: d?.docId || '',
+      userId: d?.userId || '',
       name: d?.name || '',
-  gender: d?.gender || '',
+      gender: d?.gender || '',
       contact: d?.contactNumber || '',
       email: d?.email || '',
       location: d?.location || '',
-      specialization: Array.isArray(d?.specializations) ? d.specializations[0] : d?.specializations,
+      specialization: Array.isArray(d?.specializations) ? (d.specializations[0] || '') : (d?.specializations || ''),
       specializationMore: Array.isArray(d?.specializations) && d.specializations.length > 1 ? d.specializations.length - 1 : 0,
       designation: d?.designation || '',
-      exp: d?.yearOfExperience != null ? `${d.yearOfExperience} yrs exp` : '',
-      status,
+      exp: d?.yearOfExperience != null ? `${d.yearOfExperience} years of experience` : '',
+      status: d?.planStatus || status, // prefer explicit plan status if available
+      rating: d?.rating || 4.0,
+      startDate: d?.startDate || '02/02/2024',
+      plan: d?.plan || 'Basic',
+      planStatus: d?.planStatus || 'Active',
     })
     return [
       ...active.map((d) => mapOne(d, 'Active')),
@@ -115,23 +104,49 @@ const Doc_list = () => {
   const [selected, setSelected] = useState('all')
 
   const doctors = useMemo(() => {
-    if (selected === 'active') return doctorsAll.filter(d => d.status === 'Active')
-    if (selected === 'inactive') return doctorsAll.filter(d => d.status === 'Inactive')
-    return doctorsAll
+    let filtered = doctorsAll;
+    if (selected === 'active') filtered = doctorsAll.filter(d => d.status === 'Active')
+    if (selected === 'inactive') filtered = doctorsAll.filter(d => d.status === 'Inactive')
+    return filtered;
   }, [doctorsAll, selected])
 
-  return (
-    <div className="pb-2">{/* no fixed footer now; small bottom padding */}
-      <div className="mt-2">
-        {/* Header sits outside, no outline */}
-  <Header counts={counts} selected={selected} onChange={setSelected} addLabel="Add New Doctor" addPath="/register/doctor" />
+  // Reset page when filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [selected]);
 
-        {/* Table has its own outline */}
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden m-3">
-          {loading && <div className="p-6 text-gray-600">Loading doctors…</div>}
-          {!loading && error && <div className="p-6 text-red-600">{String(error)}</div>}
-          {!loading && !error && <Table doctors={doctors} />}
-        </div>
+  const pagedData = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return doctors.slice(start, start + pageSize);
+  }, [doctors, page, pageSize]);
+
+  const handleRowClick = (doc) => {
+    navigate(`/doctor/${encodeURIComponent(doc.userId || doc.id)}`, { state: { doctor: doc } });
+  };
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="shrink-0 mt-2">
+        <Header counts={counts} selected={selected} onChange={setSelected} addLabel="Add New Doctor" addPath="/register/doctor" />
+      </div>
+
+      <div className="h-[calc(100vh-140px)] overflow-hidden m-3 border border-gray-200 rounded-lg shadow-sm bg-white">
+        {loading && <div className="p-6 text-gray-600">Loading doctors…</div>}
+        {!loading && error && <div className="p-6 text-red-600">{String(error)}</div>}
+        {!loading && !error && (
+          <SampleTable
+            columns={doctorColumns}
+            data={pagedData}
+            page={page}
+            pageSize={pageSize}
+            total={doctors.length}
+            onPageChange={setPage}
+            stickyLeftWidth={300}
+            stickyRightWidth={110}
+            onRowClick={handleRowClick}
+            hideSeparators={true}
+          />
+        )}
       </div>
     </div>
   )

@@ -1,99 +1,62 @@
-import React, { useMemo, useState, useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import AvatarCircle from '../../../components/AvatarCircle'
-import Input from '../../../components/FormItems/Input'
-import { hospital as coverImg } from '../../../../public/index.js'
+import React, { useState } from 'react'
+import InputWithMeta from '../../../components/GeneralDrawer/InputWithMeta'
+import PasswordRequirements from '../../../components/FormItems/PasswordRequirements'
 
-const SectionCard = ({ title, children }) => (
-  <div className="bg-white rounded-lg border border-gray-200">
-    <div className="px-4 py-3 border-b border-gray-200">
-      <div className="text-sm font-medium text-gray-900">{title}</div>
-    </div>
-    <div className="p-4">{children}</div>
-  </div>
-)
+export default function HSecurity() {
+  const [currentPass, setCurrentPass] = useState('')
+  const [newPass, setNewPass] = useState('')
+  const [confirmPass, setConfirmPass] = useState('')
 
-export default function HSecurity(){
-  const location = useLocation()
-  const navigate = useNavigate()
-
-  const tabs = [
-    { key: 'account', label: 'Account Details', path: '/hospital/settings/account' },
-    { key: 'timing', label: 'Timing and Schedule', path: '/hospital/settings/timing' },
-    { key: 'surgeries', label: 'Surgeries', path: '/hospital/settings/surgeries' },
-    { key: 'staff', label: 'Staff Permissions', path: '/hospital/settings/staff-permissions' },
-    { key: 'security', label: 'Security Settings', path: '/hospital/settings/security' },
-  ]
-
-  const activeKey = useMemo(() => {
-    const p = location.pathname
-    if (p.endsWith('/settings/account')) return 'account'
-    if (p.endsWith('/settings/timing')) return 'timing'
-    if (p.endsWith('/settings/surgeries')) return 'surgeries'
-    if (p.endsWith('/settings/staff-permissions')) return 'staff'
-    if (p.endsWith('/settings/security')) return 'security'
-    return 'security'
-  }, [location.pathname])
-
-  const [activeTab, setActiveTab] = useState(activeKey)
-  useEffect(() => setActiveTab(activeKey), [activeKey])
-
-  const profile = useMemo(() => ({ name: 'Manipal Hospital - Baner', status: 'Active', location: 'Baner, Pune' }), [])
-
-  // Local UI state for password fields (UI-only)
-  const [form, setForm] = useState({ current: '', next: '', confirm: '' })
-  const onChange = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log("Verify OTP");
+  }
 
   return (
-    <div className="px-6 pb-10">
-      <div className="-mx-6">
-        <div className="relative">
-          <img src={coverImg} alt="cover" className="w-full h-40 object-cover" />
-          <div className="absolute -bottom-10 left-1/2 -translate-x-1/2">
-            <div className="rounded-full ring-4 ring-white shadow-md">
-              <AvatarCircle name={profile.name} size="l" color="blue" className="w-24 h-24 text-3xl" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white border-b border-gray-200">
-          <div className="px-6 pt-10">
-            <div className="flex items-center justify-between">
-              <div className="text-center mx-auto">
-                <div className="text-lg font-medium text-gray-900">{profile.name}</div>
-                <div className="text-green-600 text-sm">{profile.status}</div>
-              </div>
-              <div className="text-sm text-gray-600">{profile.location}</div>
-            </div>
-            <nav className="mt-3 flex items-center gap-6 overflow-x-auto text-sm">
-              {tabs.map((t) => (
-                <button key={t.key} onClick={() => navigate(t.path)} className={`whitespace-nowrap pb-3 border-b-2 transition-colors ${activeTab===t.key? 'border-blue-600 text-gray-900' : 'border-transparent text-gray-600 hover:text-gray-900'}`}>
-                  {t.label}
-                </button>
-              ))}
-            </nav>
-          </div>
-        </div>
-      </div>
+    <div className=" max-w-[382px]">
+      <div className="space-y-4">
+        <InputWithMeta
+          label="Enter Current Password"
+          requiredDot={true}
+          type="password"
+          placeholder=""
+          value={currentPass}
+          onChange={setCurrentPass}
+          className=""
+        />
 
-      <div className="mt-4">
-        <SectionCard title="Security Settings">
-          <div className="max-w-xl space-y-3">
-            <Input label="Enter Current Password" compulsory type="password" placeholder="Enter Password" value={form.current} onChange={onChange('current')} />
-            <Input label="New Password" compulsory type="password" placeholder="Enter Password" value={form.next} onChange={onChange('next')} />
-            <Input label="Confirm Password" compulsory type="password" placeholder="Enter Password" value={form.confirm} onChange={onChange('confirm')} />
-            <button type="button" className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm">Send OTP and Verify</button>
-            <div className="mt-4">
-              <div className="text-sm font-medium text-gray-800 mb-2">Password Requirements</div>
-              <ul className="text-[13px] text-gray-700 space-y-1">
-                <li>○ At least 8 -15 characters long</li>
-                <li>○ Contains uppercase letter (A-Z)</li>
-                <li>○ Contains lowercase letter (a-z)</li>
-                <li>○ Contains number (0-9)</li>
-                <li>○ Contains special character (!@#$%*^&*)</li>
-              </ul>
-            </div>
-          </div>
-        </SectionCard>
+        <InputWithMeta
+          label="New Password"
+          requiredDot={true}
+          type="password"
+          placeholder="Enter Password"
+          value={newPass}
+          onChange={setNewPass}
+          className=""
+        />
+
+        <InputWithMeta
+          label="Confirm Password"
+          requiredDot={true}
+          type="password"
+          placeholder="Enter Password"
+          value={confirmPass}
+          onChange={setConfirmPass}
+          className=""
+        />
+
+        <div className="">
+          <button
+            onClick={handleSubmit}
+            className="bg-blue-primary250 text-white text-[14px] font-medium h-8 px-2 rounded-sm hover:bg-blue-600 transition-colors shadow-sm"
+          >
+            Send OTP and Verify
+          </button>
+        </div>
+
+        <div className="">
+          <PasswordRequirements password={newPass} />
+        </div>
       </div>
     </div>
   )

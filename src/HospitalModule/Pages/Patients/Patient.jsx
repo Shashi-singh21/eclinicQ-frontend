@@ -1,64 +1,102 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import PatientHeader from '../../../components/PatientList/Header';
-import PatientTable from '../../Components/PatientList/Table.jsx';
-import AddPatientDrawer from '../../../components/PatientList/AddPatientDrawer';
-import PatientDrawer from '../../Components/PatientList/PatientDrawer.jsx';
-import useDoctorPatientListStore from '../../../store/useDoctorPatientListStore';
+import React, { useMemo, useState, useCallback } from 'react'
+import Header from '../../../components/DoctorList/Header'
+import AddPatientDrawer from '../../../components/PatientList/AddPatientDrawer'
+import AppointmentLogDrawer from '../../../components/PatientList/AppointmentLogDrawer'
+import ScheduleAppointmentDrawer from '../../../components/PatientList/ScheduleAppointmentDrawer'
+import SampleTable from '../../../pages/SampleTable'
+import { getPatientColumns } from './columns'
+import patientData from './data.json'
+import PatientDetailsDrawer from './PatientDetailsDrawer'
 
-const demoPatients = [
-  { name: 'Rahul Sharma', gender: 'M', dob: '03/14/1990 (33Y)', patientId: 'P654321', contact: '+91 9876543210', email: 'rajesh.kumar@example.com', location: 'Akola, MH', lastVisit: '02/02/2025 | 12:30 PM', reason: 'Routine check-up for overall health assessment.' },
-  { name: 'Arjun Singh', gender: 'M', dob: '09/21/1988 (35Y)', patientId: 'P456789', contact: '+91 7654321098', email: 'suresh.patel@mail.com', location: 'Jaipur, RJ', lastVisit: '02/02/2025 | 12:30 PM', reason: 'Follow-up visit for ongoing treatment.' },
-  { name: 'Kavya Nair', gender: 'F', dob: '05/16/1987 (36Y)', patientId: 'P789123', contact: '+91 5432109876', email: 'vikram.agarwal@service.com', location: 'Chennai, TN', lastVisit: '02/02/2025 | 12:30 PM', reason: 'Evaluation of recent weight and fatigue.' },
-];
+const Patients = () => {
+  const [selected, setSelected] = useState('all')
+  const [addOpen, setAddOpen] = useState(false)
+  const [page, setPage] = useState(1);
+  const [logDrawerOpen, setLogDrawerOpen] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedPatientForSchedule, setSelectedPatientForSchedule] = useState(null);
+  const [selectedPatientDetails, setSelectedPatientDetails] = useState(null);
+  const pageSize = 10;
 
-export default function HPatients() {
-  const [selected, setSelected] = useState('all');
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
-  const [selectedPatient, setSelectedPatient] = useState(null);
-  const { patients, loading, error, fetchPatients, clearPatientsStore } = useDoctorPatientListStore();
+  // Filter logic (placeholder)
+  const patientsFiltered = useMemo(() => {
+    // Basic filtering simulation
+    if (selected === 'active') return patientData.filter(p => p.status === 'Active');
+    if (selected === 'inactive') return patientData.filter(p => p.status === 'Inactive');
+    return patientData;
+  }, [selected]);
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        await fetchPatients();
-      } catch (e) {
-        if (mounted) {
-          // fallback handled below
-        }
-      }
-    })();
-    return () => {
-      mounted = false;
-      clearPatientsStore();
-    };
-  }, [fetchPatients, clearPatientsStore]);
+  const pagedData = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return patientsFiltered.slice(start, start + pageSize);
+  }, [patientsFiltered, page, pageSize]);
 
-  const displayPatients = loading ? [] : (patients && patients.length > 0 ? patients : (error ? demoPatients : []));
-  // Match header used by doctor/hospital sections: All/Active/Inactive/Draft
-  const counts = useMemo(() => ({ all: displayPatients.length, active: displayPatients.length, inactive: 0, draft: 0 }), [displayPatients]);
+  const counts = useMemo(() => ({
+    all: patientData.length,
+    active: patientData.filter(p => p.status === 'Active').length,
+    inactive: patientData.filter(p => p.status === 'Inactive').length,
+    draft: 0
+  }), [])
 
-  const handleRowClick = (p) => {
-    setSelectedPatient(p);
-    setDrawerOpen(true);
-  };
+  const handleOpenLog = useCallback((row) => {
+    setLogDrawerOpen(true);
+  }, []);
+
+  const handleOpenSchedule = useCallback((row) => {
+    setSelectedPatientForSchedule(row);
+    setScheduleOpen(true);
+  }, []);
+
+  const columns = useMemo(() => getPatientColumns(handleOpenLog, handleOpenSchedule), [handleOpenLog, handleOpenSchedule]);
 
   return (
-    <div className="flex flex-col gap-2">
-  <PatientHeader counts={counts} selected={selected} onChange={setSelected} addLabel="Add New Patient" addPath={() => setAddOpen(true)} />
-      {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <div className="flex items-center gap-3">
-            <div className="h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
-            <div className="text-sm text-gray-600">Loading patients...</div>
-          </div>
-        </div>
-      ) : (
-        <PatientTable patients={displayPatients} onRowClick={handleRowClick} />
-      )}
-  <PatientDrawer open={drawerOpen} patient={selectedPatient || {}} onClose={() => setDrawerOpen(false)} />
-  <AddPatientDrawer open={addOpen} onClose={() => setAddOpen(false)} onSave={(data)=>{ /* TODO: API */ setAddOpen(false); }} />
+    <div className="flex flex-col h-full bg-secondary-grey50 overflow-hidden">
+      <div className="shrink-0 mt-2">
+        <Header
+          counts={counts}
+          selected={selected}
+          onChange={setSelected}
+          tabs={[{ key: 'all', label: 'All' }, { key: 'active', label: 'Active' }, { key: 'inactive', label: 'Inactive' }, { key: 'draft', label: 'Draft' }]}
+          showCounts={true}
+          addLabel="Add New Patient"
+          addPath={() => setAddOpen(true)} // Keep drawer capability if needed, or null
+        />
+      </div>
+
+      <div className="h-[calc(100vh-140px)] overflow-hidden m-3 border border-gray-200 rounded-lg shadow-sm bg-white">
+        <SampleTable
+          columns={columns}
+          data={pagedData}
+          page={page}
+          pageSize={pageSize}
+          total={patientsFiltered.length}
+          onPageChange={setPage}
+          stickyLeftWidth={260}
+          stickyRightWidth={160}
+          onRowClick={(row) => {
+            setSelectedPatientDetails(row);
+            setDetailsOpen(true);
+          }}
+          hideSeparators={false} // Show dividers
+        />
+      </div>
+
+      <AddPatientDrawer open={addOpen} onClose={() => setAddOpen(false)} onSave={() => setAddOpen(false)} />
+      <AppointmentLogDrawer open={logDrawerOpen} onClose={() => setLogDrawerOpen(false)} />
+      <ScheduleAppointmentDrawer
+        open={scheduleOpen}
+        onClose={() => setScheduleOpen(false)}
+        patient={selectedPatientForSchedule}
+        onSchedule={() => setScheduleOpen(false)}
+      />
+      <PatientDetailsDrawer
+        isOpen={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
+        patient={selectedPatientDetails}
+      />
     </div>
-  );
+  )
 }
+
+export default Patients

@@ -33,15 +33,12 @@ import HDashboard from "./HospitalModule/Pages/Dashboard/HDashboard";
 import HQueue from "./HospitalModule/Pages/Queue/Queue";
 import HPatients from "./HospitalModule/Pages/Patients/Patient";
 import HPatientDetails from "./HospitalModule/Pages/Patients/PatientDetails";
-import HAccount from "./HospitalModule/Pages/Settings/HAccount";
+import HSettings from "./HospitalModule/Pages/Settings/HSettings";
 import HCalendar from "./HospitalModule/Pages/Calendar/Calendar";
 import HDoctors from "./HospitalModule/Pages/Doctors/Doctors";
-import HTiming from "./HospitalModule/Pages/Settings/HTiming";
-import HStaffPermissions from "./HospitalModule/Pages/Settings/HStaffPermissions";
+import HDoctorDetailsPage from "./HospitalModule/Pages/Doctors/DoctorInfo/DoctorDetailsPage";
 import HRxTemplate from "./HospitalModule/Pages/Settings/HRxTemplate";
 import HSubscriptions from "./HospitalModule/Pages/Settings/HSubscriptions";
-import HSurgeries from "./HospitalModule/Pages/Settings/HSurgeries";
-import HSecurity from "./HospitalModule/Pages/Settings/HSecurity";
 import HFDLayout from "./HospitalFDModule/Components/Layout/HFDLayout";
 import HFDQueue from "./HospitalFDModule/Pages/Queue/Queue";
 import HFDPatients from "./HospitalFDModule/Pages/Patients/Patient";
@@ -77,32 +74,33 @@ function App() {
         <Route path="patients" element={<Patients />} />
         <Route path="settings" element={<Settings />} />
 
-        {/* Registration flow with single routes */}
-        <Route
-          path="register/doctor"
-          element={
-            <RegistrationProvider>
-              <Layout_registration_new />
-            </RegistrationProvider>
-          }
-        />
-        <Route
-          path="register/hospital"
-          element={
-            <RegistrationProvider>
-              <Layout_registration_new />
-            </RegistrationProvider>
-          }
-        />
-        <Route
-          path="register/patient"
-          element={
-            <RegistrationProvider>
-              <Layout_registration_new />
-            </RegistrationProvider>
-          }
-        />
       </Route>
+
+      {/* Registration flow with single routes - Moved outside Layout to remove main sidebar */}
+      <Route
+        path="register/doctor"
+        element={
+          <RegistrationProvider>
+            <Layout_registration_new />
+          </RegistrationProvider>
+        }
+      />
+      <Route
+        path="register/hospital"
+        element={
+          <RegistrationProvider>
+            <Layout_registration_new />
+          </RegistrationProvider>
+        }
+      />
+      <Route
+        path="register/patient"
+        element={
+          <RegistrationProvider>
+            <Layout_registration_new />
+          </RegistrationProvider>
+        }
+      />
 
       <Route path="onboarding" element={<OnboardingFlow />} />
       {/* Unified sign-in for doctor / hospital / fd / hfd */}
@@ -161,15 +159,16 @@ function App() {
         <Route path="patients" element={<HPatients />} />
         <Route path="calendar" element={<HCalendar />} />
         <Route path="doctors" element={<HDoctors />} />
+        <Route path="doctor/:id" element={<HDoctorDetailsPage />} />
         <Route path="patients/:id" element={<HPatientDetails />} />
-        <Route path="settings/account" element={<HAccount />} />
-        <Route path="settings/timing" element={<HTiming />} />
-        <Route path="settings/surgeries" element={<HSurgeries />} />
+        <Route path="settings/account" element={<HSettings />} />
+        <Route path="settings/timing" element={<HSettings />} />
+        <Route path="settings/surgeries" element={<HSettings />} />
         <Route
           path="settings/staff-permissions"
-          element={<HStaffPermissions />}
+          element={<HSettings />}
         />
-        <Route path="settings/security" element={<HSecurity />} />
+        <Route path="settings/security" element={<HSettings />} />
         <Route path="settings/rx-template" element={<HRxTemplate />} />
         <Route
           path="settings/subscriptions-billing"

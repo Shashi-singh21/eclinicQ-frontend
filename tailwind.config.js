@@ -21,7 +21,7 @@ export default {
           grey400: "#424242",
           grey300: "#626060",
           grey200: "#8E8E8E",
-          grey150: "#D1D5DB",
+          grey150: "#B8B8B8",
           grey100: "#D6D6D6",
           grey50: "#F9F9F9",
         },
@@ -49,7 +49,7 @@ export default {
           primary100: "3EAF3F",
         },
         blue: {
-          primary400: "#1E3A8A",
+          primary400: "#0E4395",
           primary300: "#0D47A1",
           primary250: "#2372EC",
           primary150: "#96BFFF",
@@ -62,7 +62,7 @@ export default {
           50: "#FFF8F8",
         },
         success: {
-          400: "#16A34A",
+          400: "#2E7D32",
           300: "#3EAF3F",
           200: "#4ADE80",
           100: "#F2FFF3",

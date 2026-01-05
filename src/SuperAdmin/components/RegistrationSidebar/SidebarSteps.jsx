@@ -1,6 +1,12 @@
 import React from "react";
+
 import { Check } from "lucide-react";
 import { useRegistration } from "../../context/RegistrationContext.jsx"; 
+
+import { Check, FileText, User, Building2, ClipboardList, CreditCard, Stethoscope, CheckCircle, Package, ChevronRight, ArrowLeft } from "lucide-react";
+import { useRegistration } from "../../context/RegistrationContext.jsx";
+import { useNavigate } from "react-router-dom";
+
 import {
   accountBlue, 
   stethoscopeBlue,
@@ -13,10 +19,12 @@ import {
   
 } from "../../../../public/index.js";
 
+// ... (keep steps arrays as is)
+
 const doctorSteps = [
-  { 
-    id: 1, 
-    title: "Account Creation", 
+  {
+    id: 1,
+    title: "Account Creation",
     icon: (isCompleted, isCurrent) => (
       <img
         src={accountBlue}
@@ -25,9 +33,9 @@ const doctorSteps = [
       />
     )
   },
-  { 
-    id: 2, 
-    title: "Professional Details", 
+  {
+    id: 2,
+    title: "Professional Details",
     icon: (isCompleted, isCurrent) => (
       <img
         src={stethoscopeBlue}
@@ -36,9 +44,9 @@ const doctorSteps = [
       />
     )
   },
-  { 
-    id: 3, 
-    title: "Documents Verification", 
+  {
+    id: 3,
+    title: "Documents Verification",
     icon: (isCompleted, isCurrent) => (
       <img
         src={documentBlue}
@@ -47,9 +55,9 @@ const doctorSteps = [
       />
     )
   },
-  { 
-    id: 4, 
-    title: "Review & Create", 
+  {
+    id: 4,
+    title: "Review & Create",
     icon: (isCompleted, isCurrent) => (
       <img
         src={reviewBlue}
@@ -58,9 +66,9 @@ const doctorSteps = [
       />
     )
   },
-  { 
-    id: 5, 
-    title: "Package & Payment", 
+  {
+    id: 5,
+    title: "Package & Payment",
     icon: (isCompleted, isCurrent) => (
       <img
         src={packageBlue}
@@ -81,9 +89,9 @@ const doctorSteps = [
 ];
 
 const hospitalSteps = [
-  { 
-    id: 1, 
-    title: "Account Creation", 
+  {
+    id: 1,
+    title: "Account Creation",
     icon: (isCompleted, isCurrent) => (
       <img
         src={accountBlue}
@@ -92,9 +100,9 @@ const hospitalSteps = [
       />
     )
   },
-  { 
-    id: 2, 
-    title: "Doctor Registration", 
+  {
+    id: 2,
+    title: "Doctor Registration",
     icon: (isCompleted, isCurrent) => (
       <img
         src={stethoscopeBlue}
@@ -103,9 +111,9 @@ const hospitalSteps = [
       />
     )
   },
-  { 
-    id: 3, 
-    title: "Hospital Details", 
+  {
+    id: 3,
+    title: "Hospital Details",
     icon: (isCompleted, isCurrent) => (
       <img
         src={hospitalIcon}
@@ -114,9 +122,9 @@ const hospitalSteps = [
       />
     )
   },
-  { 
-    id: 4, 
-    title: "Documents Verification", 
+  {
+    id: 4,
+    title: "Documents Verification",
     icon: (isCompleted, isCurrent) => (
       <img
         src={documentBlue}
@@ -125,9 +133,9 @@ const hospitalSteps = [
       />
     )
   },
-  { 
-    id: 5, 
-    title: "Review & Create", 
+  {
+    id: 5,
+    title: "Review & Create",
     icon: (isCompleted, isCurrent) => (
       <img
         src={reviewBlue}
@@ -136,9 +144,9 @@ const hospitalSteps = [
       />
     )
   },
-  { 
-    id: 6, 
-    title: "Package & Payment", 
+  {
+    id: 6,
+    title: "Package & Payment",
     icon: (isCompleted, isCurrent) => (
       <img
         src={packageBlue}
@@ -160,6 +168,7 @@ const hospitalSteps = [
 
 export default function SidebarSteps({ currentStep }) {
   const { registrationType, formData } = useRegistration();
+  const navigate = useNavigate();
 
   // For hospital registration, conditionally show steps based on isDoctor selection
   let steps;
@@ -175,7 +184,7 @@ export default function SidebarSteps({ currentStep }) {
   } else {
     steps = hospitalSteps;
   }
-  
+
   const title = registrationType === 'doctor' ? 'Doctor Registration Form' : 'Hospital Registration Form';
 
   // Helper function to render icon
@@ -188,9 +197,30 @@ export default function SidebarSteps({ currentStep }) {
 
   return (
     <div className="h-full px-6 pb-9 pt-6 gap-6 bg-white w-[307px] flex flex-col">
-      {/* Header */}
-      <div className="">
-        <h2 className="text-sm font-semibold text-[#8E8E8E]">
+      {/* Header with Discard Button */}
+      <div className="flex flex-col gap-2 ">
+        <button
+  onClick={() => navigate('/dashboard')}
+  className="
+  w-fit
+    group flex items-center gap-1
+    text-secondary-grey400
+    border-b border-transparent
+    transition-all
+    hover:border-[#2372EC]
+  "
+>
+  <ArrowLeft
+    size={16}
+    className="stroke-[1.5] transition-colors group-hover:text-[#2372EC]"
+  />
+  <span className="text-sm font-normal transition-colors group-hover:text-[#2372EC]">
+    Discard
+  </span>
+</button>
+
+
+        <h2 className="text-sm font-semibold text-secondary-grey400">
           {title}
         </h2>
       </div>
@@ -199,7 +229,7 @@ export default function SidebarSteps({ currentStep }) {
       <div className="w-[259px] flex flex-col relative">
         {/* Vertical connecting line */}
         <div className="absolute left-[26px] top-[26px] bottom-[26px] w-[1px] bg-[#E8E8E8]"></div>
-        
+
         <div className="space-y-7">
           {steps.map((step, index) => {
             // For hospital registration when step 2 is hidden, adjust step numbers
@@ -207,7 +237,7 @@ export default function SidebarSteps({ currentStep }) {
             if (registrationType === 'hospital' && formData.isDoctor === 'no' && step.id > 2) {
               adjustedStepNumber = step.id - 1;
             }
-            
+
             const isCompleted = adjustedStepNumber < currentStep;
             const isCurrent = adjustedStepNumber === currentStep;
             const isUpcoming = adjustedStepNumber > currentStep;
@@ -228,7 +258,7 @@ export default function SidebarSteps({ currentStep }) {
                     {isCompleted ? (
                       <div className="w-6 h-6 border-[1.5px] border-[#2E7D32] bg-[#6DDB72] rounded-full flex items-center justify-center">
                         <Check size={14} className="text-[#2E7D32]" />
-                        
+
                       </div>
                     ) : (
                       <div
@@ -272,7 +302,7 @@ export default function SidebarSteps({ currentStep }) {
                         </div>
                       )}
                     </div>
-                    
+
                     {/* Arrow for current step */}
                     {isCurrent && (
                      <img

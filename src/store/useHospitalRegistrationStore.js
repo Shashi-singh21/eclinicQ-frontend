@@ -1,6 +1,16 @@
 import { create } from 'zustand';
 import axiosInstance from '../lib/axios';
 
+const DEFAULT_SCHEDULE = [
+  { day: 'Sunday', available: false, is24Hours: false, sessions: [{ startTime: '09:00', endTime: '18:00' }] },
+  { day: 'Monday', available: true, is24Hours: false, sessions: [{ startTime: '09:00', endTime: '18:00' }] },
+  { day: 'Tuesday', available: true, is24Hours: false, sessions: [{ startTime: '09:00', endTime: '18:00' }] },
+  { day: 'Wednesday', available: true, is24Hours: false, sessions: [{ startTime: '09:00', endTime: '18:00' }] },
+  { day: 'Thursday', available: true, is24Hours: false, sessions: [{ startTime: '09:00', endTime: '18:00' }] },
+  { day: 'Friday', available: true, is24Hours: false, sessions: [{ startTime: '09:00', endTime: '18:00' }] },
+  { day: 'Saturday', available: true, is24Hours: false, sessions: [{ startTime: '09:00', endTime: '18:00' }] },
+];
+
 const initialState = {
   name: '',
   type: '',
@@ -14,6 +24,7 @@ const initialState = {
   city: '',
   state: '',
   pincode: '',
+  website: '',
   url: '',
   logo: '',
   image: '',
@@ -26,7 +37,7 @@ const initialState = {
   accreditation: [],
   adminId: '',
   documents: [],
-  operatingHours: [], // stores selected day names in Title Case e.g. ["Sunday", "Monday", ...]
+  schedule: JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)), // Deep copy for initial state
   loading: false,
   error: null,
   success: false,
@@ -55,7 +66,14 @@ const useHospitalRegistrationStore = create((set, get) => ({
 
   setDocuments: (docs) => set({ documents: docs }),
 
-  setOperatingHours: (hours) => set({ operatingHours: hours }),
+  setSchedule: (newSchedule) => set({ schedule: newSchedule }),
+
+  // Helper to update a specific day in the schedule
+  updateDay: (dayName, updates) => set((state) => ({
+    schedule: state.schedule.map(d =>
+      d.day === dayName ? { ...d, ...updates } : d
+    )
+  })),
 
   reset: () => set(initialState),
 
@@ -67,8 +85,6 @@ const useHospitalRegistrationStore = create((set, get) => ({
       if (!state.adminId || String(state.adminId).trim() === '') {
         throw new Error('Missing adminId. Please complete Step 1 (Owner Account Creation) first.');
       }
-      const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
-      const toTitle = (d) => d.charAt(0).toUpperCase() + d.slice(1);
 
       // Build address object as required by backend
       const addressObj = {
@@ -90,20 +106,17 @@ const useHospitalRegistrationStore = create((set, get) => ({
         ? String(state.establishmentYear)
         : '';
 
-      // Operating hours: include only selected days, uppercase dayOfWeek, allow empty timeRanges when 24h
-      const selectedDays = Array.isArray(state.operatingHours) ? state.operatingHours : [];
-      const toLower = (s) => String(s || '').toLowerCase();
+      // Operating hours mapping
       const toUpper = (s) => String(s || '').toUpperCase();
-      const opHours = selectedDays.map((title) => {
-        const dlow = toLower(title);
-        const is24Hours = !!state[`${dlow}24Hours`];
-        const startTime = state[`${dlow}StartTime`] || '09:00';
-        const endTime = state[`${dlow}EndTime`] || '18:00';
+      const opHours = state.schedule.filter(d => d.available).map((d) => {
         return {
-          dayOfWeek: toUpper(title),
+          dayOfWeek: toUpper(d.day),
           isAvailable: true,
-          is24Hours,
-          timeRanges: is24Hours ? [] : [{ startTime, endTime }],
+          is24Hours: d.is24Hours,
+          timeRanges: d.is24Hours ? [] : d.sessions.map(s => ({
+            startTime: s.startTime,
+            endTime: s.endTime
+          })),
         };
       });
 
@@ -145,6 +158,7 @@ const useHospitalRegistrationStore = create((set, get) => ({
         city: state.city || '',
         state: state.state || '',
         pincode: String(state.pincode || ''),
+        website: state.website || '',
         url: state.url || '',
         logo: state.logo || '',
         image: state.image || '',

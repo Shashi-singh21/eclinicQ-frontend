@@ -14,7 +14,7 @@ const Hos_7 = () => {
     // Cleanup function to restore scrolling and popstate
     return () => {
       document.body.style.overflow = 'unset';
-      document.documentElement.style.overflow = 'unset';
+      document.documentElement.style.overflow = 'unset';     
       window.removeEventListener('popstate', handlePopState);
     };
   }, []);

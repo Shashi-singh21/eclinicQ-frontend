@@ -1,18 +1,18 @@
 import React from 'react'
 
+
 const ReviewBanner = ({
   className = '',
   icon = null,
   title = 'Ready to Activate',
-  message = "Your hospital account is ready to be activated. Some verifications are still in progress but won't delay your access.",
   tone = 'success'
 }) => {
   const tones = {
     success: {
-      bg: 'bg-green-50',
-      border: 'border-green-200',
-      text: 'text-green-700',
-      title: 'text-green-800'
+      bg: 'bg-success-100',
+      border: 'border-success-300',
+      text: 'text-success-400',
+      title: 'text-success-400'
     },
     warn: {
       bg: 'bg-yellow-50',
@@ -24,11 +24,10 @@ const ReviewBanner = ({
   const t = tones[tone] || tones.success
 
   return (
-    <div className={`${t.bg} border ${t.border} rounded-lg p-4 flex items-start ${className}`}>
-      {icon && <div className="mr-3 mt-0.5 flex-shrink-0">{icon}</div>}
+    <div className={`${t.bg} border ${t.border} rounded-lg px-3 py-2 flex items-center gap-1 ${className}`}>
+      {icon && <div className=" mt-0.5 flex-shrink-0">{icon}</div>}
       <div>
         <p className={`${t.title} font-medium text-sm`}>{title}</p>
-        <p className={`${t.text} text-sm mt-1`}>{message}</p>
       </div>
     </div>
   )

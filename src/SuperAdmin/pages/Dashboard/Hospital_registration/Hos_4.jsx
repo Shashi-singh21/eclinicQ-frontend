@@ -1,216 +1,216 @@
-import React from "react";
-import { Info } from "lucide-react";
+import React, { useState } from 'react';
 import useHospitalRegistrationStore from '../../../../store/useHospitalRegistrationStore';
-import { 
-  Input,
-  Radio,
-  Upload,
-  FormContainer,
-  FormSection,
-  FormFieldRow
-} from "../../../../components/FormItems";
+import {
+  FormFieldRow,
+  RegistrationHeader,
+  ProgressBar
+} from '../../../../components/FormItems';
+import InputWithMeta from '../../../../components/GeneralDrawer/InputWithMeta';
+import CustomUpload from '../Doctor_registration/CustomUpload';
+import RadioButton from '../../../../components/GeneralDrawer/RadioButton';
 
 const Hos_4 = () => {
   const {
     gstin,
-    abhaId,
     hasCin,
     cinNumber,
     stateHealthReg,
     panCard,
     rohiniId,
     nabhAccreditation,
-    documents,
     setField,
     setDocument,
-    setDocuments
   } = useHospitalRegistrationStore();
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setField(name, type === 'radio' ? value : value);
+  const handleInputChange = (field, value) => {
+    setField(field, value);
   };
 
   return (
-    <FormContainer>
-      <FormSection
+    <div className="flex flex-col h-full bg-white rounded-md shadow-sm overflow-hidden">
+      <RegistrationHeader
         title="Documents Verification"
         subtitle="Provide your Document Numbers and Upload Supporting Document for verification"
       >
-        <div className="space-y-6 max-w-4xl mx-auto">
-          {/* Warning Banner */}
-          <div className="bg-orange-50 border border-orange-200 text-orange-700 p-4 rounded-lg flex items-start gap-2">
-            <Info className="w-5 h-5 mt-0.5" />
-            <p className="text-sm">
-              <span className="font-semibold">Automated Verification ID</span>
-              <br />
-              We'll instantly verify the following IDs through their respective APIs. At least one verified ID is required to proceed.
-            </p>
-          </div>
+        
+      </RegistrationHeader>
 
-          {/* GSTIN & ABHA Row */}
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="max-w-[700px] mx-auto space-y-4">
+
+          {/* GSTIN Section */}
           <FormFieldRow>
-            {/* GSTIN */}
-            <div className="flex flex-col gap-2">
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <Input
-                    label="GSTIN"
-                    name="gstin"
-                    placeholder="Enter 15-digit GSTIN"
-                    value={gstin || ''}
-                    onChange={handleInputChange}
-                    compulsory={true}
-                    required={true}
-                  />
-                </div>
-                <div className="flex items-end">
-                  <button className="px-4 py-1 bg-gray-100 border rounded-lg text-sm font-medium hover:bg-gray-200">
-                    Verify
-                  </button>
-                </div>
+            {/* Left Col: GSTIN Input + Fetched Data */}
+            <div className="w-full flex flex-col gap-3">
+              <div className="relative">
+                <InputWithMeta
+                  label="GSTIN"
+                  infoIcon
+                  requiredDot
+                  placeholder="Enter 15-digit GSTIN"
+                  value={gstin || ''}
+                  onChange={(v) => handleInputChange('gstin', v)}
+                />
+                <button
+                  type="button"
+                  className="absolute right-2 top-[31px] text-xs bg-secondary-grey50 px-[6px] py-[1px] rounded-sm text-secondary-grey300 hover:text-blue-primary250 transition-colors"
+                >
+                  Verify
+                </button>
               </div>
-              <div className="mt-3 border rounded-lg p-3 text-sm text-gray-600 bg-gray-50">
-                <p className="font-medium mb-1">Fetched Details from GSTIN</p>
-                <p>Legal Business Name :</p>
-                <p>Registered Address :</p>
-                <p>Status :</p>
-              </div>
-              <Upload 
-                label="Upload GSTIN Document"
-                onUpload={(key) => setDocument({ type: 'GST', no: gstin || '', url: key })}
-              />
+
+             
             </div>
 
-            {/* ABHA */}
-            <div className="flex flex-col gap-2">
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <Input
-                    label="ABHA Facility ID"
-                    name="abhaId"
-                    placeholder="Enter Abha ID"
-                    value={abhaId || ''}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="flex items-end">
-                  <button className="px-4 py-1 bg-gray-100 border rounded-lg text-sm font-medium hover:bg-gray-200 ">
-                    Verify
-                  </button>
-                </div>
-              </div>
-              <div className="mt-3 border rounded-lg p-3 text-sm text-gray-600 bg-gray-50">
-                <p className="font-medium mb-1">Fetched Details from ABHA</p>
-                <p>Legal Business Name :</p>
-                <p>Registered Address :</p>
-                <p>Status :</p>
-              </div>
-              <Upload 
-                label="Upload ABHA Facility Proof"
-                onUpload={(key) => setDocument({ type: 'ABHA', no: abhaId || '', url: key })}
+            {/* Right Col: Upload */}
+            <div className="w-full">
+              <CustomUpload
+                label="Upload Proof"
+                noView={false}
+                uploadContent="Upload File"
+                onUpload={(key) => setDocument({ type: 'GST', no: gstin || '', url: key })}
+                meta="Support Size upto 5MB in .pdf, .jpg, .doc"
               />
             </div>
           </FormFieldRow>
 
-          {/* CIN Question */}
-          <div className="space-y-3">
-            <Radio
-              label="Do you have CIN (Corporate Hospital Registration Number)?"
-              name="hasCin"
-              value={hasCin}
-              onChange={handleInputChange}
-              options={[
-                { value: "yes", label: "Yes" },
-                { value: "no", label: "No" }
-              ]}
-            />
-            {hasCin === 'yes' && (
-              <div>
-                <Input
-                  label="CIN Number"
-                  name="cinNumber"
-                  placeholder="Enter CIN Number"
-                  value={cinNumber || ''}
-                  onChange={handleInputChange}
+           {/* Fetched Details Box */}
+              <div className="border flex flex-col gap-2 border-secondary-grey150/60 rounded-lg p-3 bg-white ">
+                <p className="text-sm font-semibold text-secondary-grey400">Fetched Details from GSTIN</p>
+                <div className=" text-sm text-secondary-grey200 flex flex-col gap-1.5">
+                  <p>Legal Business Name :</p>
+                  <p>Registered Address :</p>
+                  <p>Status :</p>
+                </div>
+              </div>
+
+          {/* Other Documents List */}
+          <div className="space-y-4">
+            {/* State Health Reg */}
+            <FormFieldRow>
+              <div className="w-full">
+                <InputWithMeta
+                  label="State Health Registration Number"
+                  requiredDot
+                  placeholder="Enter State Registration Number"
+                  value={stateHealthReg || ''}
+                  onChange={(v) => handleInputChange('stateHealthReg', v)}
                 />
               </div>
-            )}
+              <div className="w-full">
+                <CustomUpload
+                  label="Upload Proof"
+                  uploadContent="Upload File"
+                  noView={false}
+                  onUpload={(key) => setDocument({ type: 'State Health Reg No', no: stateHealthReg || '', url: key })}
+                  meta="Support Size upto 5MB in .pdf, .jpg, .doc"
+                />
+              </div>
+            </FormFieldRow>
+
+            {/* PAN Card */}
+            <FormFieldRow>
+              <div className="w-full">
+                <InputWithMeta
+                  label="PAN Card of Hospital"
+                  requiredDot
+                  placeholder="Enter State Registration Number" // Placeholder matched image text if visible, or generic
+                  value={panCard || ''}
+                  onChange={(v) => handleInputChange('panCard', v)}
+                />
+              </div>
+              <div className="w-full">
+                <CustomUpload
+                  label="Upload Proof"
+                  noView={false}
+                  uploadContent="Upload File"
+                  onUpload={(key) => setDocument({ type: 'Pan Card', no: panCard || '', url: key })}
+                  meta="Support Size upto 5MB in .pdf, .jpg, .doc"
+                />
+              </div>
+            </FormFieldRow>
+
+            {/* Rohini ID */}
+            <FormFieldRow>
+              <div className="w-full">
+                <InputWithMeta
+                  label="Rohini ID"
+                  placeholder="Enter 13-digit Rohini ID"
+                  value={rohiniId || ''}
+                  onChange={(v) => handleInputChange('rohiniId', v)}
+                />
+              </div>
+              <div className="w-full">
+                <CustomUpload
+                  label="Upload Proof"
+                  noView={false}
+                  uploadContent="Upload File"
+                  onUpload={(key) => setDocument({ type: 'Rohini ID', no: rohiniId || '', url: key })}
+                  meta="Support Size upto 5MB in .pdf, .jpg, .doc"
+                />
+              </div>
+            </FormFieldRow>
+
+            {/* NABH Accreditation */}
+            <FormFieldRow>
+              <div className="w-full">
+                <InputWithMeta
+                  label="NABH Accreditation"
+                  placeholder="Enter NABH Accreditation ID"
+                  value={nabhAccreditation || ''}
+                  onChange={(v) => handleInputChange('nabhAccreditation', v)}
+                />
+              </div>
+              <div className="w-full">
+                <CustomUpload
+                  label="Upload Proof"
+                  noView={false}
+                  uploadContent="Upload File"
+                  onUpload={(key) => setDocument({ type: 'NABH', no: nabhAccreditation || '', url: key })}
+                  meta="Support Size upto 5MB in .pdf, .jpg, .doc"
+                />
+              </div>
+            </FormFieldRow>
           </div>
 
-          <div className="border" />
+          <div className="border-t border-secondary-grey200/20"></div>
 
-          {/* Other Documents */}
-          <div className="space-y-4">
-            {[
-              {
-                name: "stateHealthReg",
-                label: "State Health Registration Number",
-                required: true,
-                placeholder: "Enter State Registration Number",
-              },
-              {
-                name: "panCard",
-                label: "PAN Card of Hospital",
-                required: true,
-                placeholder: "Enter PAN Number",
-              },
-              {
-                name: "rohiniId",
-                label: "Rohini ID",
-                placeholder: "Enter 13-digit Rohini ID",
-              },
-              {
-                name: "nabhAccreditation",
-                label: "NABH Accreditation",
-                placeholder: "Enter NABH Accreditation ID",
-              },
-            ].map((field, i) => (
-              <FormFieldRow key={i}>
-                <div className="space-y-3">
-                  <Input
-                    label={field.label}
-                    name={field.name}
-                    placeholder={field.placeholder}
-                    value={(() => {
-                      switch(field.name) {
-                        case 'stateHealthReg': return stateHealthReg || '';
-                        case 'panCard': return panCard || '';
-                        case 'rohiniId': return rohiniId || '';
-                        case 'nabhAccreditation': return nabhAccreditation || '';
-                        default: return '';
-                      }
-                    })()}
-                    onChange={handleInputChange}
-                    compulsory={field.required}
-                    required={field.required}
-                  />
-                  <p className="text-xs text-gray-500">
-                    Upload Supporting Document of Size 4MB in .pdf format
-                  </p>
-                </div>
-                <div className="flex items-start ">
-                  <Upload 
-                    label="Upload File" 
-                    className="w-full"
-                    onUpload={(key) => {
-                      const map = {
-                        stateHealthReg: { type: 'State Health Reg No', no: stateHealthReg || '' },
-                        panCard: { type: 'Pan Card', no: panCard || '' },
-                        rohiniId: { type: 'Rohini ID', no: rohiniId || '' },
-                        nabhAccreditation: { type: 'NABH', no: nabhAccreditation || '' },
-                      };
-                      const meta = map[field.name];
-                      if (meta) setDocument({ ...meta, url: key });
-                    }}
-                  />
-                </div>
-              </FormFieldRow>
-            ))}
+          {/* CIN Question */}
+          <div className="flex items-center justify-between py-">
+            <p className="text-sm text-secondary-grey400 ">Do you have CIN (Corporate Hospital Registration Number)?</p>
+            <div className="flex gap-4 ">
+              <RadioButton
+                name="hasCin"
+                value="yes"
+                label="Yes"
+                checked={hasCin === 'yes'}
+                onChange={() => setField('hasCin', 'yes')}
+              />
+              <RadioButton
+                name="hasCin"
+                value="no"
+                label="No"
+                checked={hasCin === 'no'}
+                onChange={() => setField('hasCin', 'no')}
+              />
+            </div>
           </div>
+
+          {hasCin === 'yes' && (
+            <div className="">
+              <InputWithMeta
+                label="CIN Number"
+                placeholder="Enter CIN Number"
+                value={cinNumber || ''}
+                onChange={(v) => handleInputChange('cinNumber', v)}
+              />
+            </div>
+          )}
+
+          <div className='pb-4'></div>
         </div>
-      </FormSection>
-    </FormContainer>
+      </div>
+    </div>
   );
 };
 

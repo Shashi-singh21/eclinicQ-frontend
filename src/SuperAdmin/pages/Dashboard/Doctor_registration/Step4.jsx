@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, Circle } from 'lucide-react';
 import { useRegistration } from '../../../context/RegistrationContext';
-import { ProgressBar, SectionHeader, ReviewBanner, ReviewCard, AgreementBox, ActionButton } from '../../../../components/FormItems';
+import { ProgressBar, ReviewBanner, ReviewCard, AgreementBox, ActionButton, RegistrationHeader } from '../../../../components/FormItems';
 import useDoctorStep1Store from '../../../../store/useDoctorStep1Store';
 import useDoctorRegistrationStore from '../../../../store/useDoctorRegistrationStore';
+const review = '/review.png'
+const verified2 = '/verified-tick.svg'
+const right = '/angel_right_blue.png'
 
 const Step4 = () => {
   const { currentStep, nextStep, prevStep, updateFormData, formData } = useRegistration();
   // Pull latest values from stores
   const step1 = useDoctorStep1Store();
   const reg = useDoctorRegistrationStore();
-  
+
   const currentSubStep = formData.step4SubStep || 1;
-  
+
   const [termsAccepted, setTermsAccepted] = useState(formData.termsAccepted || false);
   const [privacyAccepted, setPrivacyAccepted] = useState(formData.privacyAccepted || false);
   const [formError, setFormError] = useState("");
@@ -37,32 +40,48 @@ const Step4 = () => {
     const line2 = joinNonEmpty([c.city, c.state, c.pincode], ', ');
     return orDash(joinNonEmpty([line1, line2], ' '));
   };
+  // Helper to fallback to dummy data if value is empty/null/undefined
+  const orDummy = (val, dummy) => (val && val !== '—' && val !== '0' && val !== 0 ? val : dummy);
+
+  const realDoctorName = joinNonEmpty([step1?.firstName, step1?.lastName], ' ');
+  const realAddress = buildAddress();
+
   const doctorData = {
-    doctorName: orDash(joinNonEmpty([step1?.firstName, step1?.lastName], ' ')),
-    gender: orDash(step1?.gender),
-    userRole: orDash(step1?.role ? (step1.role === 'doctor' ? 'Doctor' : step1.role) : undefined),
-    personalEmail: orDash(step1?.emailId),
-    personalContact: orDash(step1?.phone),
-    mfaStatus: computeMfaStatus(),
-    mrnNumber: orDash(reg?.medicalCouncilRegNo),
-    registrationCouncil: orDash(reg?.medicalCouncilName),
-    registrationYear: orDash(reg?.medicalCouncilRegYear),
-    graduationDegree: formatCompleted(reg?.medicalDegreeType, reg?.medicalDegreeYearOfCompletion),
-    medicalInstitute: orDash(reg?.medicalDegreeUniversityName),
-    postGraduation: formatCompleted(reg?.pgMedicalDegreeType, reg?.pgMedicalDegreeYearOfCompletion),
+    doctorName: orDummy(realDoctorName, 'Milind Chachun'),
+    gender: orDummy(step1?.gender, 'Male'),
+    userRole: orDummy(step1?.role ? (step1.role === 'doctor' ? 'Doctor' : step1.role) : undefined, 'Super Admin/Doctor'),
+    personalEmail: orDummy(step1?.emailId, 'MilindChachun@gmail.com'),
+    personalContact: orDummy(step1?.phone, '+91 91753 67487'),
+
+    mrnNumber: orDummy(reg?.medicalCouncilRegNo, '29AACCC2943F1ZS'),
+    registrationCouncil: orDummy(reg?.medicalCouncilName, 'Maharashtra State Council'),
+    registrationYear: orDummy(reg?.medicalCouncilRegYear, '2008'),
+
+    graduationDegree: orDummy(formatCompleted(reg?.medicalDegreeType, reg?.medicalDegreeYearOfCompletion), 'MBBS (Completed : 2008)'),
+    medicalInstitute: orDummy(reg?.medicalDegreeUniversityName, 'Government Medical College, Nagpur'),
+
+    postGraduation: orDummy(formatCompleted(reg?.pgMedicalDegreeType, reg?.pgMedicalDegreeYearOfCompletion), 'MD in General Medicine (Completed : 2011)'),
+    pgMedicalInstitute: orDummy(reg?.pgMedicalDegreeUniversityName, 'Government Medical College, Nagpur'), // Assuming same for dummy
+
     specialization: (() => {
       const specVal = reg?.specialization;
       const specName = typeof specVal === 'object' ? (specVal?.name || specVal?.value) : specVal;
       const exp = reg?.experienceYears;
-      if (!specName && !exp) return '—';
+      if (!specName && !exp) return 'General Medicine (Exp : 17 years)';
       return `${specName || ''}${exp ? ` (Exp : ${exp} years)` : ''}`.trim();
     })(),
-    clinicName: orDash(reg?.clinicData?.name),
-    hospitalType: orDash(reg?.clinicData?.type), // may be undefined in store
-    clinicEmail: orDash(reg?.clinicData?.email),
-    clinicContact: orDash(reg?.clinicData?.phone),
-    eClinicId: orDash(reg?.eClinicId), // not present yet; placeholder
-    address: buildAddress(),
+
+    clinicName: orDummy(reg?.clinicData?.name, "Manipal Clinic Life's On"),
+    hospitalType: orDummy(reg?.clinicData?.type, 'Private Hospital'),
+    clinicEmail: orDummy(reg?.clinicData?.email, 'support@Manipal.com'),
+    clinicContact: orDummy(reg?.clinicData?.phone, '+91 92826 39045'),
+    eClinicId: orDummy(reg?.eClinicId, 'HLN-001'),
+    address: orDummy(realAddress, 'Manipal Health Enterprise Pvt Ltd. The Annexe, #98/2, Rustom Bagh, Off HAL Airport Road, Bengaluru - 560017'),
+  };
+
+  const getDoc = (no) => {
+    const doc = reg?.documents?.find(d => d.no === no);
+    return doc ? doc.url || doc.tempKey : null;
   };
 
   useEffect(() => {
@@ -98,173 +117,171 @@ const Step4 = () => {
     return true;
   };
 
-  const StatusBadge = ({ status, type }) => {
-    if (type === 'verified') {
-      return <span className="text-green-600 text-sm font-medium">Verified</span>;
-    }
-    if (type === 'done') {
-      return <span className="text-green-600 text-sm font-medium">Done</span>;
-    }
-    if (type === 'review') {
-      return <span className="text-orange-500 text-sm font-medium">Under Review (24-48hrs)</span>;
-    }
+  const StatusBadge = ({ type }) => {
+    if (type === 'verified_text') return <span className="text-success-300 text-xs ">Verified</span>;
+    if (type === 'done') return <img src={verified2} alt="" className="w-3 h-3" />;
+    if (type === 'review') return <span className="text-orange-500 text-xs  bg-orange-50 px-2 py-0.5 rounded-full">Under Verification</span>;
     return null;
   };
 
-  const Pipe = () => <span className="mx-2 text-gray-300">|</span>;
+  const DetailRow = ({ label, value, type, file, isLink, verified, className, fileName, alignItems = "items-center" }) => (
+    <div className={`flex gap-3 text-xs py-1 min-h-4 ${alignItems} ${className || 'w-full'}`}>
+      <div className="w-[120px] text-secondary-grey400 font-medium flex-shrink-0">{label}</div>
+      <div className="w-1 font-medium text-secondary-grey400">:</div>
+      <div className={`flex-1 flex justify-between ${alignItems}`}>
+        <div className={`flex gap-2 ${alignItems}`}>
+          {isLink ? (
+            file ? (
+              <a href={file} target="_blank" rel="noopener noreferrer" className="text-blue-primary250 hover:underline flex items-center gap-1">
+                {value || fileName || 'View Document'}
+              </a>
+            ) : (
+              <span className="text-blue-primary250">{value}</span>
+            )
+          ) : (
+            <span className="text-secondary-grey400">{value || '—'}</span>
+          )}
 
-  const Row = ({ children }) => (
-    <div className="flex items-center justify-between py-1">
+          {file && !isLink && (
+            <>
+              <span className="text-secondary-grey100">|</span>
+              <a href={file} target="_blank" rel="noopener noreferrer" className="text-blue-primary250 hover:underline flex items-center gap-1">
+                {fileName || 'View Document'} <img src={right} alt="" className="w-1 h-2 ml-1" />
+              </a>
+            </>
+          )}
+
+          {file && isLink && null}
+
+        </div>
+        {(verified || type) && <StatusBadge type={verified ? 'verified_text' : type} />}
+      </div>
+    </div>
+  );
+
+  const SectionBox = ({ title, children }) => (
+    <div className="border border-secondary-grey150/50 rounded-lg p-3">
+      <h3 className="text-sm font-semibold text-secondary-grey400 mb-2">{title}</h3>
       {children}
     </div>
   );
 
-  const LabelValue = ({ label, value, labelWidth = 'w-[170px]' }) => (
-    <div className="flex items-center">
-      <span className={`text-gray-600 text-sm ${labelWidth}`}>{label}</span>
-      <span className="text-gray-600 text-sm mr-2">:</span>
-      <span className="text-gray-900 text-sm font-medium ml-2">{value}</span>
-    </div>
-  );
-
   const Page1 = () => (
-    <div className="max-w-4xl mx-auto p-6 bg-white">
-      <SectionHeader title="Review and Sign Agreement" subtitle="Review your & verification details and submit for Account Activation" />
+    <div className="max-w-[700px] mx-auto flex flex-col gap-4">
 
-      <ProgressBar step={1} total={2} />
-
-      <ReviewBanner 
-        icon={<CheckCircle className="w-5 h-5 text-green-500" />} 
+      <ReviewBanner
+        icon={<img src={review} alt="" className="w-3 h-3" />}
         title="Ready to Activate"
-        message="Your hospital account is ready to be activated. Some verifications are still in progress but won't delay your access."
-        className="mb-6"
+        className="border-green-200 bg-green-50 text-green-800"
       />
 
-      <div className="space-y-6">
-        {/* Doctor Details */}
-        <ReviewCard title="Doctor Details">
-          <div className="grid grid-cols-2 gap-x-12">
-            <div className="space-y-2">
-              <LabelValue label="Doctor Name" value={doctorData.doctorName} labelWidth="w-24" />
-              <LabelValue label="Gender" value={doctorData.gender} labelWidth="w-24" />
-              <LabelValue label="User Role" value={doctorData.userRole} labelWidth="w-24" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <LabelValue label="Personal Email" value={doctorData.personalEmail} labelWidth="w-28" />
-                <CheckCircle className="w-4 h-4 text-green-500" />
-              </div>
-              <div className="flex items-center justify-between">
-                <LabelValue label="Personal Contact" value={doctorData.personalContact} labelWidth="w-29" />
-                <CheckCircle className="w-4 h-4 text-green-500" />
-              </div>
-              <div className="flex items-center justify-between">
-                <LabelValue label="MFA Status" value={doctorData.mfaStatus} labelWidth="w-28" />
-                <StatusBadge type="done" />
-              </div>
-            </div>
+      {/* Doctor Details */}
+      <SectionBox title="Doctor Details">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+          <div className='flex flex-col '>
+            <DetailRow label="Doctor Name" value={doctorData.doctorName} />
+            <DetailRow label="Gender" value={doctorData.gender} />
+            <DetailRow label="User Role" value={doctorData.userRole} />
           </div>
-        </ReviewCard>
+          <div className='flex flex-col '>
+            <DetailRow label="Personal Email" value={doctorData.personalEmail} />
+            <DetailRow label="Personal Contact" value={doctorData.personalContact} />
+            <DetailRow
+              label="Profile Photo"
+              value={step1?.profilePhotoKey ? 'Doctorphoto.jpg' : 'sample.png'}
+              isLink={true}
+              file={step1?.profilePhotoKey}
+            />
+          </div>
+        </div>
+      </SectionBox>
 
-        {/* Professional Details */}
-        <ReviewCard title="Professional Details">
-          <div className="space-y-0">
-            <Row>
-              <div className="flex items-center flex-1">
-                <LabelValue label="MRN Number" value={doctorData.mrnNumber} />
-                <Pipe />
-                <button className="text-blue-600 text-sm hover:underline">MRN Proof.pdf</button>
-              </div>
-              <StatusBadge type="verified" />
-            </Row>
-            <Row>
-              <LabelValue label="Registration Council" value={doctorData.registrationCouncil} />
-            </Row>
-            <Row>
-              <LabelValue label="Registration Year" value={doctorData.registrationYear} />
-            </Row>
-            <Row>
-              <div className="flex items-center flex-1">
-                <LabelValue label="Graduation Degree" value={doctorData.graduationDegree} />
-                <Pipe />
-                <button className="text-blue-600 text-sm hover:underline">Grad Degree .pdf</button>
-              </div>
-              <StatusBadge type="review" />
-            </Row>
-            <Row>
-              <LabelValue label="Medical Institute" value={doctorData.medicalInstitute} />
-            </Row>
-            <Row>
-              <div className="flex items-center flex-1">
-                <LabelValue label="Post Graduation" value={doctorData.postGraduation} />
-                <Pipe />
-                <button className="text-blue-600 text-sm hover:underline">Grad Deg...</button>
-              </div>
-              <StatusBadge type="review" />
-            </Row>
-            <Row>
-              <LabelValue label="Medical Institute" value={doctorData.medicalInstitute} />
-            </Row>
-            <div className="pt-1 space-y-1">
-              <LabelValue label="Specialization" value={doctorData.specialization} />
-              {Array.isArray(reg?.additionalPractices) && reg.additionalPractices.length > 0 && (
-                <div className="ml-[170px] space-y-1">
-                  {reg.additionalPractices.map((p, i) => {
-                    const name = typeof p?.specialization === 'object' ? (p.specialization?.name || p.specialization?.value) : p?.specialization;
-                    const exp = p?.experienceYears;
-                    const text = `${name || '—'}${exp ? ` (Exp : ${exp} years)` : ''}`;
-                    return <div key={i} className="text-sm text-gray-900 font-medium">• {text}</div>
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        </ReviewCard>
+      {/* Professional Details */}
+      <SectionBox title="Professional Details">
+        <div className="space-y">
+          <DetailRow
+            label="MRN Number"
+            value={doctorData.mrnNumber}
+            verified={true}
+            file={reg?.medicalCouncilProof || 'MRN Proof.pdf'}
+            fileName="MRN Proof.pdf"
+          />
+          <DetailRow label="Registration Council" value={doctorData.registrationCouncil} />
+          <DetailRow label="Registration Year" value={doctorData.registrationYear} />
 
-        {/* Clinical Information */}
-        <ReviewCard title="Clinical Information">
-          <div className="grid grid-cols-2 gap-x-12">
-            <div className="space-y-2">
-              <LabelValue label="Clinic Name" value={doctorData.clinicName} labelWidth="w-24" />
-              <LabelValue label="Hospital Type" value={doctorData.hospitalType} labelWidth="w-24" />
-              <div className="flex items-start">
-                <span className="text-gray-600 text-sm w-24 flex-shrink-0">Address</span>
-                <span className="text-gray-600 text-sm">:</span>
-                <span className="text-gray-900 text-sm font-medium ml-2 leading-relaxed">{doctorData.address}</span>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <LabelValue label="Clinic Email" value={doctorData.clinicEmail} labelWidth="w-24" />
-                <CheckCircle className="w-4 h-4 text-green-500" />
-              </div>
-              <div className="flex items-center justify-between">
-                <LabelValue label="Clinic Contact" value={doctorData.clinicContact} labelWidth="w-24" />
-                <CheckCircle className="w-4 h-4 text-green-500" />
-              </div>
-              <LabelValue label="e-clinic ID" value={doctorData.eClinicId} labelWidth="w-24" />
-            </div>
+          <div className="border-t border-secondary-grey100/50 my-2"></div>
+
+          <DetailRow
+            label="Graduation Degree"
+            value={doctorData.graduationDegree}
+            verified={true}
+            file={reg?.medicalDegreeProof || 'Grad Degree.pdf'}
+            fileName="Grad Degree .pdf"
+          />
+          <DetailRow label="Medical Institute" value={doctorData.medicalInstitute} />
+
+          <div className="border-t border-secondary-grey100/50 my-2"></div>
+
+          <DetailRow
+            label="Post Graduation"
+            value={doctorData.postGraduation}
+            verified={true}
+            file={reg?.pgMedicalDegreeProof || 'Grad Degree.pdf'}
+            fileName="Grad Degree .pdf"
+          />
+          <DetailRow label="Medical Institute" value={doctorData.pgMedicalInstitute} />
+
+          <div className="border-t border-secondary-grey100/50 my-2"></div>
+
+          <DetailRow label="Primary Specialization" value={doctorData.specialization} />
+
+          <DetailRow
+            label="Other Specialization"
+            value={(() => {
+              const practices = Array.isArray(reg?.additionalPractices) && reg.additionalPractices.length > 0
+                ? reg.additionalPractices
+                : [];
+              const formatted = practices.map(p => {
+                const name = typeof p?.specialization === 'object' ? (p.specialization?.name || p.specialization?.value) : p?.specialization;
+                const exp = p?.experienceYears;
+                return name ? `${name} ${exp ? `(Exp : ${exp} years)` : ''}` : null;
+              }).filter(Boolean).join(' | ');
+
+              return formatted || "General Medicine (Exp : 8 years) | General Medicine (Exp : 6 years)";
+            })()}
+          />
+        </div>
+      </SectionBox>
+
+      {/* Clinical Information */}
+      <SectionBox title="Clinical Information">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 ">
+          <div className="flex flex-col ">
+            <DetailRow label="Clinic Name" value={doctorData.clinicName} />
+            <DetailRow label="Hospital Type" value={doctorData.hospitalType} />
+            <DetailRow label="Address" value={doctorData.address} alignItems="items-start" className="h-auto" />
           </div>
-        </ReviewCard>
-      </div>
+          <div className="flex flex-col ">
+            <DetailRow label="Clinic Email" value={doctorData.clinicEmail} type="done" />
+            <DetailRow label="Clinic Contact" value={doctorData.clinicContact} type="done" />
+            <DetailRow label="e-clinic ID" value={doctorData.eClinicId} />
+          </div>
+        </div>
+      </SectionBox>
     </div>
   );
 
   const Page2 = () => (
-    <div className="max-w-4xl mx-auto p-6 bg-white">
-      <SectionHeader title="Review and Sign Agreement" subtitle="Review your & verification details and submit for Account Activation" />
+    <div className="max-w-[700px] mx-auto flex flex-col gap-4">
 
-      <ProgressBar step={2} total={2} />
+      
+      <ReviewBanner
+        icon={<img src={review} alt="" className="w-3 h-3" />}
+        title="Ready to Activate"
+        className="border-green-200 bg-green-50 text-green-800"
+      />
 
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex items-start">
-        <CheckCircle className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-        <div>
-          <p className="text-green-800 font-medium text-sm">Ready to Activate</p>
-          <p className="text-green-700 text-sm mt-1">Your hospital account is ready to be activated. Some verifications are still in progress but won't delay your access.</p>
-        </div>
-      </div>
-
-      <div className="space-y-6">
+      <div className="space-y-4">
         <AgreementBox
           title="Terms & Conditions"
           description="By using this Healthcare Management System, you agree to comply with and be bound by the following terms and conditions:"
@@ -298,15 +315,15 @@ const Step4 = () => {
         <div className="flex justify-between items-center">
           <div className="flex  flex-col">
             <div className='flex gap-1 items-center'>
-              <h3 className="text-sm font-semibold text-gray-900">Digital Signature</h3>
-              <div className='w-1 h-1 bg-red-500 rounded-full'></div>
+              <h3 className="text-sm font-semibold text-secondary-grey400">Digital Signature</h3>
+              <div className='w-1 h-1 bg-error-400 rounded-full'></div>
             </div>
-            <p className="text-gray-600 text-sm mb-4">Sign digitally using Aadhar eSign and Upload Pan card</p>
+            <p className="text-secondary-grey300 text-xs mb-4">Sign digitally using Aadhar eSign and Upload Pan card</p>
           </div>
-          
+
           <div className="flex gap-4 items-center">
-            <ActionButton variant="pancard" className='h-10'>Use Aadhar eSign</ActionButton>
-            <ActionButton variant="pancard" className='h-10'>Upload Pancard</ActionButton>
+            <ActionButton variant="pancard" className='h-8'>Use Aadhar eSign</ActionButton>
+            <ActionButton variant="pancard" className='h-8'>Upload Pancard</ActionButton>
           </div>
         </div>
       </div>
@@ -314,13 +331,25 @@ const Step4 = () => {
   );
 
   return (
-    <div className="min-h-screen bg-white">
-      {formError && (
-        <div className="max-w-2xl mx-auto p-2">
-          <span className="text-red-500 text-sm font-semibold">{formError}</span>
+    <div className="flex flex-col h-full bg-white rounded-md shadow-sm overflow-hidden">
+      <RegistrationHeader
+        title="Review and Sign Agreement"
+        subtitle="Review your & verification details and submit for Account Activation"
+      >
+        <div className=" mt-3">
+          <ProgressBar step={currentSubStep} total={2} />
         </div>
-      )}
-      {currentSubStep === 1 ? <Page1 /> : <Page2 />}
+      </RegistrationHeader>
+
+      <div className="flex-1 overflow-y-auto p-6">
+        {formError && (
+          <div className="max-w-2xl mx-auto p-2">
+            <span className="text-red-500 text-sm font-semibold">{formError}</span>
+          </div>
+        )}
+        {currentSubStep === 1 ? <Page1 /> : <Page2 />}
+      </div>
+
     </div>
   );
 };

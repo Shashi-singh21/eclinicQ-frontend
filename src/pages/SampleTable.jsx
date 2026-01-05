@@ -118,17 +118,6 @@ const defaultData = Array.from({ length: 30 }).map((_, i) => ({
   sugar: "98 mg/dL",
 }));
 
-/**
- * SampleTable Component (Reusable)
- * props:
- * - columns: array of column configs (default provided)
- * - data: array of row objects (default provided)
- * - page: current page (1-based)
- * - pageSize: rows per page
- * - total: total rows for pagination display
- * - onPageChange: (nextPage) => void handler
- * - stickyLeftWidth, stickyRightWidth: px widths for sticky columns
- */
 export default function SampleTable({
   columns = defaultColumns,
   data = defaultData,
@@ -138,6 +127,8 @@ export default function SampleTable({
   onPageChange,
   stickyLeftWidth = 280,
   stickyRightWidth = 120,
+  onRowClick,
+  hideSeparators = false,
 }) {
   // For backward compatibility, if a consumer passes `header` as plain string
   // and also sets `icon: false`, we respect it by wrapping on the fly.
@@ -179,15 +170,20 @@ export default function SampleTable({
   };
 
   return (
-    <div className="relative h-[calc(100vh-120px)] z-10 rounded-xl border-[0.5px] no-scrollbar border-secondary-grey100 bg-white overflow-hidden">
-      {/* Scroll Area: leave space for sticky footer */}
-      <div className="h-full no-scrollbar overflow-auto pb-16">
+    <div className="flex flex-col h-full z-10 rounded-xl  no-scrollbar border-secondary-grey100/50 bg-white overflow-hidden">
+      <style>{`
+        tr:has(.ns-cell:hover) .ns-cell {
+          background-color: #F9F9F9;
+        }
+      `}</style>
+      {/* Scroll Area: flex-1 to take available space */}
+      <div className="flex-1 no-scrollbar overflow-auto">
         <table
-          className={`w-full border-collapse text-sm table-auto`}
+          className={`w-full border-collapse text-sm table-fixed`}
           style={{ minWidth }}
         >
           {/* Header */}
-          <thead className="sticky top-0 z-40 border-b border-secondary-grey100">
+          <thead className="sticky top-0 z-40 border-b border-secondary-grey100/50">
             <tr>
               {columns.map((col) => {
                 // Base header cell style; prevent wrapping for cleaner column alignment
@@ -203,52 +199,39 @@ export default function SampleTable({
                   col.sticky === "left"
                     ? { minWidth: STICKY_LEFT_WIDTH, width: STICKY_LEFT_WIDTH }
                     : col.sticky === "right"
-                    ? {
+                      ? {
                         minWidth: STICKY_RIGHT_WIDTH,
                         width: STICKY_RIGHT_WIDTH,
                       }
-                    : col.width
-                    ? { minWidth: col.width, width: col.width }
-                    : undefined;
+                      : col.width
+                        ? { minWidth: col.width, width: col.width }
+                        : undefined;
                 const showRightDivider =
                   col.sticky === "left" ||
                   (!col.sticky && col.key !== lastColKey);
                 const showLeftDivider = col.sticky === "right";
+
+                const headerClass = col.headerClassName ? ` ${col.headerClassName}` : "";
+
                 return (
                   <th
                     key={col.key}
-                    className={`${base}${stickyLeft}${stickyRight}${align}`}
+                    className={`${base}${stickyLeft}${stickyRight}${align}${headerClass} ${hideSeparators ? "" : "border-r"} `}
                     style={widthStyle}
                   >
                     {renderHeaderContent(col)}
 
-                    {showRightDivider && (
-                      <span
-                        className="pointer-events-none absolute right-0 w-px bg-secondary-grey100"
-                        style={{ top: "-1px", height: "calc(100% + 1px)" }}
-                      ></span>
-                    )}
-                    {showLeftDivider && (
-                      <span
-                        className="pointer-events-none absolute left-0 w-px bg-secondary-grey100"
-                        style={{ top: "-1px", height: "calc(100% + 1px)" }}
-                      ></span>
-                    )}
                     {/* Edge shadows for sticky columns */}
                     {col.sticky === "left" && (
                       <span
-                        className="pointer-events-none absolute right-0 top-0 h-full w-2"
-                        style={{
-                          boxShadow: "inset -6px 0 6px -6px rgba(0,0,0,0.08)",
-                        }}
+                        className={`${hideSeparators ? "" : "border-r"} pointer-events-none absolute right-0 top-0 h-full w-2"`}
+
                       ></span>
                     )}
                     {col.sticky === "right" && (
                       <span
-                        className="pointer-events-none absolute left-0 top-0 h-full w-2"
-                        style={{
-                          boxShadow: "inset 6px 0 6px -6px rgba(0,0,0,0.08)",
-                        }}
+                        className={`${hideSeparators ? "" : "border-l"} pointer-events-none absolute left-0 top-0 h-full w-2`}
+
                       ></span>
                     )}
                   </th>
@@ -260,13 +243,24 @@ export default function SampleTable({
           {/* Body */}
           <tbody>
             {data.map((row, i) => (
-              <tr key={i} className="border-t hover:bg-gray-50">
+              <tr
+                key={i}
+                className={`border-b group`}
+              >
                 {columns.map((col) => {
                   // Prevent wrapping; keep sticky widths only on sticky columns
                   const base =
-                    "px-3 h-[54px] bg-white relative whitespace-nowrap text-left";
+                    "px-3 min-h-[54px] py-2 bg-white relative whitespace-normal text-left break-words align-middle transition-colors";
+
+                  const isSticky = col.sticky === 'left' || col.sticky === 'right';
+                  // Sticky cells: highlight individually on hover
+                  // Non-sticky cells: highlight ONLY when a fellow non-sticky cell is hovered (via CSS below)
+                  const hoverClass = isSticky
+                    ? ' hover:bg-secondary-grey50'
+                    : ' ns-cell';
+
                   const stickyLeft =
-                    col.sticky === "left" ? " sticky left-0 z-30" : ""; // below header (z-50)
+                    col.sticky === "left" ? " bg-white sticky left-0 z-30" : ""; // below header (z-50)
                   const stickyRight =
                     col.sticky === "right" ? " sticky right-0 z-30" : "";
                   const align = col.align === "center" ? " " : "";
@@ -278,7 +272,7 @@ export default function SampleTable({
                     rawContent
                   ) : (
                     <span
-                      className="text-secondary-grey300"
+                      className=" text-secondary-grey300"
                       style={{
                         fontFamily: "Inter",
                         fontWeight: 400,
@@ -294,57 +288,50 @@ export default function SampleTable({
                   const widthStyle =
                     col.sticky === "left"
                       ? {
-                          minWidth: STICKY_LEFT_WIDTH,
-                          width: STICKY_LEFT_WIDTH,
-                        }
+                        minWidth: STICKY_LEFT_WIDTH,
+                        width: STICKY_LEFT_WIDTH,
+                      }
                       : col.sticky === "right"
-                      ? {
+                        ? {
                           minWidth: STICKY_RIGHT_WIDTH,
                           width: STICKY_RIGHT_WIDTH,
                         }
-                      : col.width
-                      ? { minWidth: col.width, width: col.width }
-                      : undefined;
+                        : col.width
+                          ? { minWidth: col.width, width: col.width }
+                          : undefined;
                   const showRightDivider = col.sticky === "left";
                   const showLeftDivider = col.sticky === "right";
                   const nonStickyBorder =
-                    !col.sticky && col.key !== lastColKey ? " border-r" : "";
+                    (!hideSeparators && !col.sticky && col.key !== lastColKey) ? " border-r" : "";
+
+                  // Clickable logic: only if sticky left and onRowClick exists
+                  const isClickable = col.sticky === "left" && onRowClick;
+
+                  const cellStyle = {
+                    ...(widthStyle || {}),
+                    ...(col.height ? { height: col.height } : {}),
+                  };
 
                   return (
                     <td
                       key={col.key}
-                      className={`${base}${nonStickyBorder}${stickyLeft}${stickyRight}${align}${cellClass}`}
-                      style={widthStyle}
+                      className={`${base}${hoverClass}${nonStickyBorder}${stickyLeft}${stickyRight}${align}${cellClass} ${isClickable ? 'cursor-pointer' : ''}`}
+                      style={cellStyle}
+                      onClick={() => isClickable && onRowClick(row)}
                     >
                       {content}
-                      {/* Overlay divider to ensure separator renders above bg for sticky columns; extend by 1px to meet header line */}
-                      {showRightDivider && (
-                        <span
-                          className="pointer-events-none absolute right-0 w-px bg-secondary-grey100"
-                          style={{ top: 0, height: "calc(100% + 1px)" }}
-                        ></span>
-                      )}
-                      {showLeftDivider && (
-                        <span
-                          className="pointer-events-none absolute left-0 w-px bg-secondary-grey100"
-                          style={{ top: 0, height: "calc(100% + 1px)" }}
-                        ></span>
-                      )}
+
                       {/* Edge shadows for sticky columns */}
                       {col.sticky === "left" && (
                         <span
-                          className="pointer-events-none absolute right-0 top-0 h-full w-2"
-                          style={{
-                            boxShadow: "inset -6px 0 6px -6px rgba(0,0,0,0.08)",
-                          }}
+                          className={`${hideSeparators ? "" : "border-r"} pointer-events-none absolute right-0 top-0 h-full w-2`}
+
                         ></span>
                       )}
                       {col.sticky === "right" && (
                         <span
-                          className="pointer-events-none absolute left-0 top-0 h-full w-2"
-                          style={{
-                            boxShadow: "inset 6px 0 6px -6px rgba(0,0,0,0.08)",
-                          }}
+                          className={`${hideSeparators ? "" : "border-l"} pointer-events-none absolute left-0 top-0 h-full w-2`}
+
                         ></span>
                       )}
                     </td>
@@ -357,7 +344,7 @@ export default function SampleTable({
       </div>
 
       {/* Sticky pagination footer */}
-      <div className="sticky bottom-0 left-0 right-0 z-30 bg-monochrom-white border-t border-secondary-grey100">
+      <div className="z-30 bg-monochrom-white border-t border-secondary-grey100/50">
         <TablePagination
           page={page}
           pageSize={pageSize}

@@ -50,6 +50,7 @@ import ExperienceDrawerNew from "./Drawers/ExperienceDrawer.jsx";
 import InviteStaffDrawer from "./Drawers/InviteStaffDrawer.jsx";
 import RoleDrawerShared from "./Drawers/RoleDrawer.jsx";
 import EditPracticeDetailsDrawer from "./Drawers/EditPracticeDetailsDrawer.jsx";
+import SecurityTab from "./Tabs/SecurityTab.jsx";
 
 // Global drawer animation keyframes (used by all drawers in this page)
 const DrawerKeyframes = () => (
@@ -116,7 +117,7 @@ const SectionCard = ({
           <div className="font-medium text-[14px] text-gray-900">{title}</div>
 
           {subtitle && (
-            <div className="px-1 py-[2px] bg-secondary-grey50 rounded-md text-[12px] text-gray-500">
+            <div className="px-1 border border-secondary-grey50 bg-secondary-grey50 rounded-sm text-[12px] text-gray-500 hover:border hover:border-blue-primary150 hover:text-blue-primary250 cursor-pointer">
               {subtitle}
             </div>
           )}
@@ -140,9 +141,9 @@ const SectionCard = ({
             className="p-1 text-gray-500 hover:bg-gray-50"
           >
             {typeof Icon === "string" ? (
-              <img src={Icon} alt="icon" className="w-7 h-7" />
+              <img src={Icon} alt="icon" className="w-6 h-6" />
             ) : (
-              <Icon className="w-7 h-7" />
+              <Icon className="w-6 h-6" />
             )}
           </button>
         )}
@@ -358,7 +359,7 @@ const StaffTab = () => {
     </button>
   );
 
-  
+
   const CardSVG = ({ color = "#FDE68A" }) => (
     <svg viewBox="0 0 60 74" xmlns="http://www.w3.org/2000/svg">
       <rect
@@ -1350,26 +1351,6 @@ const Doc_settings = () => {
                       setEduEditMode("edit");
                       setEduOpen(true);
                     }}
-                  // rightActions={
-                  //   <button
-                  //     onClick={() => {
-                  //       setEduEditData({
-                  //         id: ed.id,
-                  //         school: ed.instituteName,
-                  //         gradType: ed.graduationType,
-                  //         degree: ed.degree,
-                  //         field: ed.fieldOfStudy || "",
-                  //         start: ed.startYear?.toString() || "",
-                  //         end: ed.completionYear?.toString() || "",
-                  //         proof: ed.proofDocumentUrl || "",
-                  //       });
-                  //       setEduEditMode("edit");
-                  //       setEduOpen(true);
-                  //     }}
-                  //     className="text-gray-400 hover:text-blue-600"
-                  //     title="Edit"
-                  //   ></button>
-                  // }
                   />
                 ))}
               </div>
@@ -1458,7 +1439,7 @@ const Doc_settings = () => {
           </div>
 
           {/* Right column */}
-          <div className="col-span-12 xl:col-span-6 space-y-4">
+          <div className="col-span-12 xl:col-span-6 space-y-6">
             <SectionCard
               title="Professional Details"
               subtitle="Visible to Patient"
@@ -2033,7 +2014,7 @@ const Doc_settings = () => {
                               setConsultationDirty(true);
                             }}
                           />
-                          <div className="text-sm text-secondary-grey300 whitespace-nowrap h-5 w-[8.5px] opacity-50">|</div>
+                          <div className="text-sm text-secondary-grey300 whitespace-nowrap h-5 w-[8px] opacity-50">|</div>
                           <span className="text-sm text-secondary-grey300 whitespace-nowrap">
                             Token Available:
                           </span>
@@ -2334,7 +2315,7 @@ const Doc_settings = () => {
 
                   <div className="text-secondary-grey200 text-sm flex flex-col gap-1">
                     <span>Establishment Proof</span>
-                     <div className="h-[32px]  w-full border-[0.5px] border-dashed border-secondary-grey200 rounded-md flex items-center justify-between px-2 text-sm overflow-x-hidden bg-secondary-grey50">
+                    <div className="h-[32px]  w-full border-[0.5px] border-dashed border-secondary-grey200 rounded-md flex items-center justify-between px-2 text-sm overflow-x-hidden bg-secondary-grey50">
                       <span className="flex items-center gap-3 text-secondary-grey300 flex-1 min-w-0 p-[0.5px]">
                         <img src="/Doctor_module/settings/pdf_black.png" alt="file" className="h-6 w-6" />
                         <span className="whitespace-normal break-words break-all overflow-hidden text-secondary-grey400">
@@ -2381,8 +2362,8 @@ const Doc_settings = () => {
                         ) : null}
                       </span>
                     </div>
-                    </div>
-                  
+                  </div>
+
                 </div>
 
                 {/* About */}
@@ -2469,78 +2450,7 @@ const Doc_settings = () => {
       ) : activeTab === "staff" ? (
         <StaffTab />
       ) : (
-        <div className="p-4 flex justify-left">
-          <div className=" rounded-lg p-4 shadow-sm w-full max-w-md">
-            <h2 className="text-base font-semibold text-gray-900 mb-2">
-              Change Password
-            </h2>
-            <form className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Current Password <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="password"
-                  className="w-full h-8 px-2 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-blue-100"
-                  placeholder="Enter current password"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  New Password <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="password"
-                  className="w-full h-8 px-2 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-blue-100"
-                  placeholder="Enter new password"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Confirm Password <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="password"
-                  className="w-full h-8 px-2 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-blue-100"
-                  placeholder="Enter Password"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-1/2 h-8 bg-blue-600 text-white rounded-md text-xs font-medium hover:bg-blue-700 transition"
-              >
-                Send OTP and Verify
-              </button>
-            </form>
-            <div className="mt-4">
-              <h3 className="text-xs font-semibold text-gray-800 mb-1">
-                Password Requirements
-              </h3>
-              <ul className="list-none pl-0 text-xs text-gray-700 space-y-1">
-                <li className="flex items-center gap-1">
-                  <span className="text-green-600">&#10003;</span> At least 8–15
-                  characters long
-                </li>
-                <li className="flex items-center gap-1">
-                  <span className="text-green-600">&#10003;</span> Contains
-                  uppercase letter (A-Z)
-                </li>
-                <li className="flex items-center gap-1">
-                  <span className="text-green-600">&#10003;</span> Contains
-                  lowercase letter (a-z)
-                </li>
-                <li className="flex items-center gap-1">
-                  <span className="text-green-600">&#10003;</span> Contains
-                  number (0-9)
-                </li>
-                <li className="flex items-center gap-1">
-                  <span className="text-green-600">&#10003;</span> Contains
-                  special character (!@#$%^&amp;*)
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        <SecurityTab />
       )}
 
       {/* Drawer: Edit Basic Info (shared component) */}
@@ -2755,7 +2665,7 @@ const Doc_settings = () => {
         }}
       />
 
-      
+
       {/* Drawer: Practice Details */}
       <EditPracticeDetailsDrawer
         open={practiceOpen}

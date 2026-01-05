@@ -41,7 +41,7 @@ export default function RadioButton({
         {/* inner dot */}
         <span
           className={
-            "block rounded-full " + (checked ? "w-[10px] h-[10px] bg-white" : "w-0 h-0")
+            "block rounded-full " + (checked ? "w-2.5 h-2.5 bg-white" : "w-0 h-0")
           }
         />
       </span>

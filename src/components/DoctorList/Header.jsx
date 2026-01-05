@@ -38,7 +38,7 @@ export default function Header({
   const activeTabs = Array.isArray(tabs) && tabs.length ? tabs : defaultTabs;
 
   return (
-    <div className="flex items-center justify-between px-4 py-2 bg-white">
+    <div className="flex items-center justify-between px-4 py-2 ">
       {/* Left header: tabs or counts-only */}
       {showTabs ? (
         <div

@@ -27,19 +27,21 @@ function HospitalList() {
         if (ignore) return;
         const status = e?.response?.status;
         const serverMsg = e?.response?.data?.message || e?.message || '';
-        const isAuthError = status === 401 || status === 403 || /forbidden/i.test(serverMsg) || /SUPER_ACCESS/i.test(serverMsg);
-        if (!isAuthError) {
-          setError('Failed to fetch hospitals');
-        } else {
-          // suppress showing server permission errors to the UI and render dummy list
-          setError(null);
-        }
+        // suppress showing server permission errors to the UI and render dummy list
+        setError(null);
+
         // Fallback dummy hospitals for exploration when unauthorized/forbidden
         const dummy = [
           {
-            id: "HO-0268790",
+            id: "1",
+            hospitalCode: "HO-0268790",
             name: "Manipal Hospital",
-            address: "Jawahar Nagar, Akola(MH) - 444001",
+            address: {
+              street: "Jawahar Nagar",
+              city: "Akola",
+              state: "MH",
+              pincode: "444001"
+            },
             email: "manipal@gmail.com",
             phone: "+91 91753 67847",
             type: "Multi-speciality",
@@ -51,9 +53,15 @@ function HospitalList() {
             image: "/hospital-sample.png",
           },
           {
-            id: "HO-0435621",
+            id: "2",
+            hospitalCode: "HO-0435621",
             name: "Apollo Hospital",
-            address: "Civil Lines, Nagpur(MH) - 440001",
+            address: {
+              street: "Civil Lines",
+              city: "Nagpur",
+              state: "MH",
+              pincode: "440001"
+            },
             email: "apollo@gmail.com",
             phone: "+91 98234 56123",
             type: "Super-speciality",
@@ -65,9 +73,15 @@ function HospitalList() {
             image: "/hospital-sample.png",
           },
           {
-            id: "HO-0178943",
+            id: "3",
+            hospitalCode: "HO-0178943",
             name: "Care Hospital",
-            address: "Pimple Saudagar, Pune(MH) - 411027",
+            address: {
+              street: "Pimple Saudagar",
+              city: "Pune",
+              state: "MH",
+              pincode: "411027"
+            },
             email: "carehospital@gmail.com",
             phone: "+91 77090 12345",
             type: "General",
@@ -86,14 +100,20 @@ function HospitalList() {
         if (!ignore) setLoading(false);
       }
     };
-  if (isAuthed) load();
+    if (isAuthed) load();
     else {
       // Not authed: still show dummy hospitals for exploration
       const dummy = [
         {
-          id: "HO-1001001",
+          id: "4",
+          hospitalCode: "HO-1001001",
           name: "CityCare Clinic",
-          address: "HSR Layout, Bengaluru, KA - 560102",
+          address: {
+            street: "HSR Layout",
+            city: "Bengaluru",
+            state: "KA",
+            pincode: "560102"
+          },
           email: "citycare@example.com",
           phone: "+91 90000 11111",
           type: "Clinic",
@@ -105,9 +125,15 @@ function HospitalList() {
           image: "/hospital-sample.png",
         },
         {
-          id: "HO-1001002",
+          id: "5",
+          hospitalCode: "HO-1001002",
           name: "LifeLine Hospital",
-          address: "Andheri West, Mumbai, MH - 400053",
+          address: {
+            street: "Andheri West",
+            city: "Mumbai",
+            state: "MH",
+            pincode: "400053"
+          },
           email: "lifeline@example.com",
           phone: "+91 98888 22222",
           type: "Multi-speciality",
@@ -122,7 +148,7 @@ function HospitalList() {
       setActive(dummy);
       setInactive([]);
       setLoading(false);
-  setError(null);
+      setError(null);
     }
     return () => {
       ignore = true;
@@ -166,17 +192,17 @@ function HospitalList() {
     return hospitals;
   }, [hospitals, selected]);
 
-  return(
-  <div className="flex flex-col h-full">
-    <div className="sticky mt-2 top-0 z-10 bg-white ">
-  <Header counts={counts} selected={selected} onChange={setSelected} addLabel="Add New Hospital" addPath="/register/hospital" />
+  return (
+    <div className="flex flex-col h-full">
+      <div className="sticky mt-2 top-0 z-10 bg-white ">
+        <Header counts={counts} selected={selected} onChange={setSelected} addLabel="Add New Hospital" addPath="/register/hospital" />
+      </div>
+      <div className="flex-1 overflow-y-auto p-3">
+        {loading && <div className="p-6 text-gray-600">Loading hospitals…</div>}
+        {!loading && error && <div className="p-6 text-red-600">{String(error)}</div>}
+        {!loading && !error && <HospitalGrid hospitals={hospitalsFiltered} />}
+      </div>
     </div>
-    <div className="flex-1 overflow-y-auto p-3">
-      {loading && <div className="p-6 text-gray-600">Loading hospitals…</div>}
-      {!loading && error && <div className="p-6 text-red-600">{String(error)}</div>}
-      {!loading && !error && <HospitalGrid hospitals={hospitalsFiltered} />}
-    </div>
-  </div>
   )
 }
 
