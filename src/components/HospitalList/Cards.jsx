@@ -139,7 +139,7 @@ const Cards = ({ hospital }) => {
           {resolvedLogo || hospital.logo ? (
             <img src={resolvedLogo || hospital.logo} alt="Logo" className="w-16 h-16 rounded-full object-cover " onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/hospital-sample.png'; }} />
           ) : (
-            <AvatarCircle name={hospital.name} size="xl" color={isActive ? "orange" : "grey"} />
+            <AvatarCircle name={hospital.name} size="f4" color={isActive ? "orange" : "grey"} />
           )}
           {/* Verified Tick */}
           <div className="absolute -top-1 -right-0">

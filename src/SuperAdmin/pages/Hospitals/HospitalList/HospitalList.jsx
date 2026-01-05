@@ -3,6 +3,7 @@ import Header from "../../../../components/DoctorList/Header";
 import HospitalGrid from "../../../../components/HospitalList/HospitalGrid";
 import { getAllHospitalsBySuperAdmin } from "../../../../services/hospitalService";
 import useAuthStore from "../../../../store/useAuthStore";
+import TablePagination from "@/pages/TablePagination";
 
 function HospitalList() {
   const isAuthed = useAuthStore((s) => Boolean(s.token));
@@ -194,7 +195,7 @@ function HospitalList() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="sticky mt-2 top-0 z-10 bg-white ">
+      <div className="sticky mt-2 top-0 z-10 ">
         <Header counts={counts} selected={selected} onChange={setSelected} addLabel="Add New Hospital" addPath="/register/hospital" />
       </div>
       <div className="flex-1 overflow-y-auto p-3">
@@ -202,6 +203,10 @@ function HospitalList() {
         {!loading && error && <div className="p-6 text-red-600">{String(error)}</div>}
         {!loading && !error && <HospitalGrid hospitals={hospitalsFiltered} />}
       </div>
+      <div className="bg-white fixed bottom-0 w-full flex items-center justify-center pr-20">
+        <TablePagination></TablePagination>
+      </div>
+      
     </div>
   )
 }
