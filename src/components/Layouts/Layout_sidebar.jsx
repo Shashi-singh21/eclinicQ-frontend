@@ -18,7 +18,7 @@ export default function Layout() {
         </div>
         
         {/* Scrollable Content */}
-        <div className="flex-1 pt-12 overflow-auto no-scrollbar">
+        <div className="flex-1 pt-12 overflow-auto no-scrollbar bg-secondary-grey50">
           <Outlet />
         </div>
       </div>

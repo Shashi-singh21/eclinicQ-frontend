@@ -9,7 +9,7 @@ const Dashboard = () => {
 
   return (
     <>
-      <div className='p-5 flex flex-col gap-6'>
+      <div className='p-5 flex flex-col gap-6 bg-white'>
         {/* Heading and search live in navbar per mock; no extra top tabs here */}
 
         {/* Platform Overview using Overview_cards */}
