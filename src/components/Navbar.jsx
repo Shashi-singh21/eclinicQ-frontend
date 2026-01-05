@@ -175,7 +175,7 @@ const Navbar = () => {
 
   return (
     <>
-      <div className='w-full h-12 border-b-[0.5px]  border-[#D6D6D6] flex items-center px-4 justify-between'>
+      <div className='w-full h-12 border-b-[0.5px]  border-secondary-grey100/50 flex items-center px-4 justify-between'>
         <div>
           <span className='text-sm text=[#424242]'>Super Admin</span>
         </div>
