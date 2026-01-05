@@ -37,7 +37,8 @@ const AvatarCircle = ({ name, size = 'md', color = 'blue', className = '', icon 
         color: text,
         borderColor: border,
         borderStyle: 'solid',
-        borderWidth: '0.5px', // approximates 0.5px across displays
+        borderWidth: '0.5px', // approximates 0.5px across d
+        // isplays
       }}
     >
       {icon || initial}

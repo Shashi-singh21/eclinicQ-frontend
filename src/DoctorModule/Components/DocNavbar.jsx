@@ -53,7 +53,7 @@ import {
 const Partition = () => {
   return (
     <div className="w-[8px] h-[20px] flex gap-[10px] items-center justify-center">
-      <div className="w-[2px] h-full bg-[#B8B8B8]"></div>
+      <div className="w-[1px] h-full bg-secondary-grey100/50"></div>
     </div>
   );
 };
