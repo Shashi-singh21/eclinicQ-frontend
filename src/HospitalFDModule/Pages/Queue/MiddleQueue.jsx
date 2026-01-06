@@ -225,7 +225,9 @@ export default function MiddleQueue({ doctorId: propsDoctorId, dummyMode = false
                               bg-white
                               ${sessionStatus === 'completed'
 									? 'border border-success-200 bg-[linear-gradient(90deg,rgba(39,202,64,0.08)_0%,rgba(39,202,64,0)_25%,rgba(39,202,64,0)_75%,rgba(39,202,64,0.08)_100%)]'
-									: 'border border-blue-primary250 bg-[linear-gradient(90deg,rgba(35,114,236,0.08)_0%,rgba(35,114,236,0)_25%,rgba(35,114,236,0)_75%,rgba(35,114,236,0.08)_100%)]'
+									: sessionStatus === 'admitted'
+										? 'border border-[#D4AF37] bg-[linear-gradient(90deg,rgba(212,175,55,0.15)_0%,rgba(212,175,55,0.05)_25%,rgba(212,175,55,0.05)_75%,rgba(212,175,55,0.15)_100%)]'
+										: 'border border-blue-primary250 bg-[linear-gradient(90deg,rgba(35,114,236,0.08)_0%,rgba(35,114,236,0)_25%,rgba(35,114,236,0)_75%,rgba(35,114,236,0.08)_100%)]'
 								}
                             `}
 						>
@@ -273,13 +275,19 @@ export default function MiddleQueue({ doctorId: propsDoctorId, dummyMode = false
 										</button>
 									</div>
 								)}
+								{sessionStatus === 'admitted' && (
+									<div className="flex items-center gap-2 text-[#D4AF37] font-medium text-sm mr-6">
+										<img src={verified} alt="" className='w-5 h-5' />
+										<span>Patient Admitted</span>
+									</div>
+								)}
 								{sessionStatus === 'completed' && (
 									<div className="flex items-center gap-2 text-success-300 font-medium text-sm mr-6">
 										<img src={verified} alt="" className="w-5 h-5" />
 										<span>Visit Completed</span>
 									</div>
 								)}
-								{sessionStatus !== 'completed' && (
+								{sessionStatus !== 'completed' && sessionStatus !== 'admitted' && (
 									<button
 										onClick={(e) => handleActionMenuClick(e, 'active_patient_card')}
 										className={`px-2 rounded-full transition-colors ${activeActionMenuToken === 'active_patient_card' ? 'bg-gray-100' : ''}`}
@@ -558,7 +566,13 @@ export default function MiddleQueue({ doctorId: propsDoctorId, dummyMode = false
 							<button className="flex items-center gap-2 px-4 py-2 text-sm text-secondary-grey400 hover:bg-gray-50 text-left w-full">
 								<Calendar className="h-4 w-4" /> Reschedule
 							</button>
-							<button className="flex items-center gap-2 px-4 py-2 text-sm text-secondary-grey400 hover:bg-gray-50 text-left w-full">
+							<button
+								onClick={() => {
+									setSessionStatus('admitted');
+									setActiveActionMenuToken(null);
+								}}
+								className="flex items-center gap-2 px-4 py-2 text-sm text-secondary-grey400 hover:bg-gray-50 text-left w-full"
+							>
 								<BedDouble className="h-4 w-4" /> Mark as Admitted
 							</button>
 							<button
@@ -576,7 +590,13 @@ export default function MiddleQueue({ doctorId: propsDoctorId, dummyMode = false
 							<button className="flex items-center gap-2 px-4 py-2 text-sm text-secondary-grey400 hover:bg-gray-50 text-left w-full">
 								<User className="h-4 w-4" /> View Profile
 							</button>
-							<button className="flex items-center gap-2 px-4 py-2 text-sm text-secondary-grey400 hover:bg-gray-50 text-left w-full">
+							<button
+								onClick={() => {
+									setSessionStatus('admitted');
+									setActiveActionMenuToken(null);
+								}}
+								className="flex items-center gap-2 px-4 py-2 text-sm text-secondary-grey400 hover:bg-gray-50 text-left w-full"
+							>
 								<BedDouble className="h-4 w-4" /> Mark as Admitted
 							</button>
 							<button className="flex items-center gap-2 px-4 py-2 text-sm text-secondary-grey400 hover:bg-gray-50 text-left w-full">
