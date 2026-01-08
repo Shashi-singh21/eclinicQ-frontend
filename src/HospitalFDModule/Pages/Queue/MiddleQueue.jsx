@@ -15,7 +15,7 @@ import { getDoctorMe } from '../../../services/authService';
 import { classifyISTDayPart, buildISTRangeLabel } from '../../../lib/timeUtils';
 import Button from '@/components/Button';
 import SessionTimer from '../../../components/SessionTimer';
-import PreScreeningForm from './PreScreeningForm';
+import PreScreeningForm from './PreScreeningForm.jsx';
 const search = '/superAdmin/Doctors/SearchIcon.svg';
 const pause = '/fd/Pause.svg';
 const checkRound = '/fd/Check Round.svg';
@@ -130,7 +130,12 @@ export default function MiddleQueue({ doctorId: propsDoctorId, dummyMode = false
 	const [selectedSlot, setSelectedSlot] = useState(slotOptions[0]);
 
 	useEffect(() => {
-		const handleClickOutside = () => setActiveActionMenuToken(null);
+	const handleClickOutside = (e) => {
+		if (e.target.closest('.prescreening-drawer') || e.target.closest('.prescreening-button')) {
+			return;
+		}
+		setActiveActionMenuToken(null);
+	};
 		const handleScroll = () => setActiveActionMenuToken(null);
 		window.addEventListener('click', handleClickOutside);
 		window.addEventListener('scroll', handleScroll, true);
@@ -490,7 +495,8 @@ export default function MiddleQueue({ doctorId: propsDoctorId, dummyMode = false
 														)
 													) : (
 														<button 
-														onClick={() => {
+														onClick={(e) => {
+															e.stopPropagation();
 															console.log("ADD PRE-SCREENING CLICKED", row.token);
 															setSelectedPatient(row);
 															setShowPreScreening(true);
@@ -633,8 +639,9 @@ export default function MiddleQueue({ doctorId: propsDoctorId, dummyMode = false
 				onClose={() => setShowWalkInDrawer(false)}
 				doctorId={propsDoctorId}
 			/>
-			{showPreScreening && (
+	<div className="prescreening-drawer">
 	<PreScreeningForm
+	    open={showPreScreening}
 		token={selectedPatient?.token}
 		patientData={selectedPatient}
 		onClose={() => {
@@ -642,7 +649,7 @@ export default function MiddleQueue({ doctorId: propsDoctorId, dummyMode = false
 			setSelectedPatient(null);
 		}}
 	/>
-)}
+	</div>
 
 
 			{/* Dropdown Menu Portal */}
