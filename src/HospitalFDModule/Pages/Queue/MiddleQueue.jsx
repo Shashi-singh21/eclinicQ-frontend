@@ -15,6 +15,7 @@ import { getDoctorMe } from '../../../services/authService';
 import { classifyISTDayPart, buildISTRangeLabel } from '../../../lib/timeUtils';
 import Button from '@/components/Button';
 import SessionTimer from '../../../components/SessionTimer';
+import PreScreeningForm from './PreScreeningForm';
 const search = '/superAdmin/Doctors/SearchIcon.svg';
 const pause = '/fd/Pause.svg';
 const checkRound = '/fd/Check Round.svg';
@@ -114,8 +115,9 @@ export default function MiddleQueue({ doctorId: propsDoctorId, dummyMode = false
 	const [slotOpen, setSlotOpen] = useState(false);
 	const [currentDate, setCurrentDate] = useState(new Date());
 	const [checkedInTokens, setCheckedInTokens] = useState({});
-
+	const [showPreScreening, setShowPreScreening] = useState(false);
 	const [activeActionMenuToken, setActiveActionMenuToken] = useState(null);
+	const [selectedPatient, setSelectedPatient] = useState(null);
 	const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
 	const [sessionStatus, setSessionStatus] = useState('idle'); // 'idle' | 'ongoing' | 'completed'
 
@@ -487,7 +489,13 @@ export default function MiddleQueue({ doctorId: propsDoctorId, dummyMode = false
 															</button>
 														)
 													) : (
-														<button className='w-full inline-flex justify-center items-center gap-2 h-[32px] min-w-[32px] p-2 rounded-sm border-[1px] text-sm font-medium border-[#BFD6FF] bg-[#F3F8FF] text-[#2372EC] hover:bg-[#2372EC] hover:text-white transition-colors'>
+														<button 
+														onClick={() => {
+															console.log("ADD PRE-SCREENING CLICKED", row.token);
+															setSelectedPatient(row);
+															setShowPreScreening(true);
+														}}
+														className='w-full inline-flex justify-center items-center gap-2 h-[32px] min-w-[32px] p-2 rounded-sm border-[1px] text-sm font-medium border-[#BFD6FF] bg-[#F3F8FF] text-[#2372EC] hover:bg-[#2372EC] hover:text-white transition-colors'>
 															Add Pre-screening
 														</button>
 													)}
@@ -582,7 +590,7 @@ export default function MiddleQueue({ doctorId: propsDoctorId, dummyMode = false
 											const isCheckedIn = checkedInTokens[row.token];
 											return (
 												<div className="flex items-center justify-between">
-													{!isCheckedIn ? (
+													{!checkedInTokens[row.token] ? (
 														<button
 															onClick={() => setCheckedInTokens(prev => ({ ...prev, [row.token]: true }))}
 															className="w-full px-3 py-1 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50 bg-white"
@@ -590,7 +598,12 @@ export default function MiddleQueue({ doctorId: propsDoctorId, dummyMode = false
 															Check-In
 														</button>
 													) : (
-														<button className='w-full inline-flex justify-center items-center gap-2 h-[32px] min-w-[32px] p-2 rounded-sm border-[1px] text-sm font-medium border-[#BFD6FF] bg-[#F3F8FF] text-[#2372EC] hover:bg-[#2372EC] hover:text-white transition-colors'>
+														<button 
+														onClick={() => {
+                                                            setSelectedPatient(row); 
+                                                            setShowPreScreening(true);
+														      }}
+														className='w-full inline-flex justify-center items-center gap-2 h-[32px] min-w-[32px] p-2 rounded-sm border-[1px] text-sm font-medium border-[#BFD6FF] bg-[#F3F8FF] text-[#2372EC] hover:bg-[#2372EC] hover:text-white transition-colors'>
 															Add Pre-screening
 														</button>
 													)}
@@ -620,6 +633,17 @@ export default function MiddleQueue({ doctorId: propsDoctorId, dummyMode = false
 				onClose={() => setShowWalkInDrawer(false)}
 				doctorId={propsDoctorId}
 			/>
+			{showPreScreening && (
+	<PreScreeningForm
+		token={selectedPatient?.token}
+		patientData={selectedPatient}
+		onClose={() => {
+			setShowPreScreening(false);
+			setSelectedPatient(null);
+		}}
+	/>
+)}
+
 
 			{/* Dropdown Menu Portal */}
 			{activeActionMenuToken && createPortal(
